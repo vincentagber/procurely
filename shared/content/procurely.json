@@ -1,0 +1,368 @@
+{
+  "site": {
+    "name": "Procurely",
+    "tagline": "Building Material",
+    "primaryColor": "#1900ff",
+    "surfaceColor": "#f6f7fd",
+    "footerColor": "#13184f",
+    "accentColor": "#ff6f4d",
+    "testimonialBackground": "#fde8df",
+    "logoDark": "/assets/design/logo-dark.png",
+    "logoLight": "/assets/design/logo-dark.png"
+  },
+  "navigation": {
+    "socialLinks": [
+      { "label": "Instagram", "href": "#" },
+      { "label": "Facebook", "href": "#" },
+      { "label": "YouTube", "href": "#" },
+      { "label": "LinkedIn", "href": "#" },
+      { "label": "Pinterest", "href": "#" },
+      { "label": "TikTok", "href": "#" }
+    ],
+    "primaryLinks": [
+      { "label": "Home", "href": "/" },
+      { "label": "How It Works", "href": "#how-it-works" },
+      { "label": "Buy Materials", "href": "#explore-products" },
+      { "label": "Blog", "href": "#contractors" }
+    ],
+    "accountLinks": [
+      { "label": "Login / Register", "href": "/login" }
+    ],
+    "submitCta": {
+      "label": "Submit BOQ / Contact",
+      "href": "#quote"
+    }
+  },
+  "hero": {
+    "title": "Procurement For Developers. Done Right",
+    "description": "BOQ-based procurement, online ordering, structured credit, and reliable delivery.",
+    "ctaLabel": "Buy Now",
+    "ctaHref": "#explore-products",
+    "backgroundImage": "/assets/design/hero-kitchen.png"
+  },
+  "features": [
+    {
+      "icon": "truck",
+      "title": "Fast delivery",
+      "description": "Same day in Lagos"
+    },
+    {
+      "icon": "shield",
+      "title": "Authentic",
+      "description": "100% Genuine Brands"
+    },
+    {
+      "icon": "headset",
+      "title": "Expert Support",
+      "description": "909 66 66"
+    }
+  ],
+  "categoriesSection": {
+    "eyebrowLead": "Shop Popular",
+    "eyebrowAccent": "Category",
+    "linkLabel": "View All",
+    "items": [
+      {
+        "id": "smart-building-materials",
+        "title": "Smart Building Materials Procurement",
+        "description": "Upload your BOQ and let us handle complex matching.",
+        "ctaLabel": "Start Procuring",
+        "href": "#quote",
+        "cardImage": "/assets/design/category-warehouse-card.png",
+        "variant": "wide"
+      },
+      {
+        "id": "rebars-category",
+        "title": "Rebars",
+        "description": "Powered by Procurely",
+        "ctaLabel": "Start Procuring",
+        "href": "#explore-products",
+        "cardImage": "/assets/design/category-rebar-card.png",
+        "variant": "tall"
+      },
+      {
+        "id": "sharp-sand-category",
+        "title": "Sharp Sand",
+        "description": "Solid foundation in every grain",
+        "ctaLabel": "Order Now",
+        "href": "#best-sellers",
+        "cardImage": "/assets/design/category-sharp-sand-card.png",
+        "variant": "wide-small"
+      },
+      {
+        "id": "plaster-sand-category",
+        "title": "Plaster Sand",
+        "description": "Smooth finish. Perfect texture.",
+        "ctaLabel": "Order Now",
+        "href": "#best-sellers",
+        "cardImage": "/assets/design/category-plaster-sand-card.png",
+        "variant": "small"
+      },
+      {
+        "id": "granite-category",
+        "title": "Granite (1/2 & 3/4)",
+        "description": "Premium aggregates",
+        "ctaLabel": "Start Procuring",
+        "href": "#best-sellers",
+        "cardImage": "/assets/design/category-granite-card.png",
+        "variant": "small"
+      }
+    ]
+  },
+  "brands": [
+    "Allisa",
+    "Amere",
+    "Belt",
+    "Bticin",
+    "Jurosa",
+    "Mape",
+    "Motu",
+    "Optimize",
+    "Spectra",
+    "Sport",
+    "Unter",
+    "Waveset"
+  ],
+  "products": [
+    {
+      "id": "sharp-sand",
+      "slug": "sharp-sand",
+      "name": "Procurely Sharp Sand",
+      "shortDescription": "A premium quality sand",
+      "category": "Decorative & Furnishing Solutions",
+      "collection": "Best Seller",
+      "price": 18500,
+      "currency": "NGN",
+      "image": "/assets/design/product-sharp-sand.png",
+      "badge": "new",
+      "featured": true,
+      "homepageSlot": "best-seller"
+    },
+    {
+      "id": "marine-boards",
+      "slug": "marine-boards",
+      "name": "Procurely Marine Boards",
+      "shortDescription": "A premium quality boards",
+      "category": "Decorative & Furnishing Solutions",
+      "collection": "Best Seller",
+      "price": 14500,
+      "currency": "NGN",
+      "image": "/assets/design/product-marine-board.png",
+      "badge": "",
+      "featured": true,
+      "homepageSlot": "best-seller"
+    },
+    {
+      "id": "granite",
+      "slug": "granite",
+      "name": "Granite (3/4 & 1/2)",
+      "shortDescription": "Premium aggregates",
+      "category": "Decorative & Furnishing Solutions",
+      "collection": "Best Seller",
+      "price": 45000,
+      "currency": "NGN",
+      "image": "/assets/design/product-granite.png",
+      "badge": "",
+      "featured": true,
+      "homepageSlot": "best-seller"
+    },
+    {
+      "id": "cement-50kg",
+      "slug": "cement-50kg",
+      "name": "Procurely Cement 50kg",
+      "shortDescription": "A premium bulk cement",
+      "category": "Decorative & Furnishing Solutions",
+      "collection": "Best Seller",
+      "price": 6800,
+      "currency": "NGN",
+      "image": "/assets/design/product-cement.png",
+      "badge": "",
+      "featured": true,
+      "homepageSlot": "best-seller"
+    },
+    {
+      "id": "plaster-sand",
+      "slug": "plaster-sand",
+      "name": "Procurely Plaster Sand",
+      "shortDescription": "A premium quality sand",
+      "category": "Decorative & Furnishing Solutions",
+      "collection": "Explore",
+      "price": 14500,
+      "currency": "NGN",
+      "image": "/assets/design/product-plaster-sand.png",
+      "badge": "",
+      "featured": false,
+      "homepageSlot": "explore"
+    },
+    {
+      "id": "rebars",
+      "slug": "rebars",
+      "name": "Procurely Rebars",
+      "shortDescription": "Premium high quality iron",
+      "category": "Decorative & Furnishing Solutions",
+      "collection": "Explore",
+      "price": 45000,
+      "currency": "NGN",
+      "image": "/assets/design/product-rebar.png",
+      "badge": "",
+      "featured": false,
+      "homepageSlot": "explore"
+    },
+    {
+      "id": "rebars-bulk",
+      "slug": "rebars-bulk",
+      "name": "Procurely Rebars Bulk Lot",
+      "shortDescription": "Premium high quality iron",
+      "category": "Decorative & Furnishing Solutions",
+      "collection": "Explore",
+      "price": 46500,
+      "currency": "NGN",
+      "image": "/assets/design/product-rebar-rack.png",
+      "badge": "new",
+      "featured": false,
+      "homepageSlot": "explore"
+    },
+    {
+      "id": "marine-board-plus",
+      "slug": "marine-board-plus",
+      "name": "Procurely Marine Board",
+      "shortDescription": "A premium quality board",
+      "category": "Decorative & Furnishing Solutions",
+      "collection": "Explore",
+      "price": 18500,
+      "currency": "NGN",
+      "image": "/assets/design/product-marine-board-sand.png",
+      "badge": "",
+      "featured": false,
+      "homepageSlot": "explore"
+    }
+  ],
+  "bestSellerSection": {
+    "monthLabel": "This Month",
+    "eyebrowLead": "Best",
+    "eyebrowAccent": "Seller",
+    "linkLabel": "View All",
+    "productIds": [
+      "sharp-sand",
+      "marine-boards",
+      "granite",
+      "cement-50kg"
+    ]
+  },
+  "promotions": {
+    "financing": {
+      "title": "Buy Now, Pay Later",
+      "description": "Pay with 4 installment, 0% interest",
+      "ctaLabel": "Start Procuring",
+      "href": "#quote",
+      "bannerImage": "/assets/design/promo-buy-now-banner.png"
+    },
+    "renovation": {
+      "title": "Renovating your home?",
+      "description": "Get a free consultation with our material experts and a customized quote for your entire project.",
+      "ctaLabel": "Get Free Quote",
+      "href": "#quote",
+      "bannerImage": "/assets/design/promo-renovation-banner.png"
+    }
+  },
+  "exploreSection": {
+    "monthLabel": "This Month",
+    "eyebrowLead": "Explore Our",
+    "eyebrowAccent": "Products",
+    "ctaLabel": "View All Product",
+    "productIds": [
+      "sharp-sand",
+      "plaster-sand",
+      "rebars",
+      "marine-boards",
+      "granite",
+      "rebars-bulk",
+      "cement-50kg",
+      "marine-board-plus"
+    ]
+  },
+  "faqs": [
+    {
+      "question": "How long does BOQ processing take?",
+      "answer": "Most BOQs are reviewed within 4 business hours, with a confirmed matched quote sent the same day for standard orders."
+    },
+    {
+      "question": "What are the credit terms?",
+      "answer": "Eligible projects can spread payments across four structured installments at 0% promotional interest, subject to KYC and project verification."
+    },
+    {
+      "question": "Can Procurely handle phased deliveries?",
+      "answer": "Yes. We support milestone-based scheduling so site teams receive the right material batches exactly when each construction phase is ready."
+    }
+  ],
+  "testimonials": {
+    "title": "What Contractors Say",
+    "items": [
+      {
+        "id": "eric-simpson",
+        "name": "Eric Simpson",
+        "role": "Project Manager, Landmark",
+        "quote": "But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born.",
+        "rating": 5,
+        "cardImage": "/assets/design/testimonial-eric.png"
+      },
+      {
+        "id": "simons-cooper",
+        "name": "Simons Cooper",
+        "role": "Interior Designer",
+        "quote": "There was a small mistake in the order. In return, I got the correct order and I could keep the wrong one for myself.",
+        "rating": 5,
+        "cardImage": "/assets/design/testimonial-simons.png"
+      },
+      {
+        "id": "kaleb-yurs",
+        "name": "Kaleb Yurs",
+        "role": "Independent Contractor",
+        "quote": "These settings don’t provide big changes but only some small CSS changes in spaces or borders for example.",
+        "rating": 5,
+        "cardImage": "/assets/design/testimonial-kaleb.png"
+      }
+    ]
+  },
+  "footer": {
+    "subscribeTitle": "Subscribe",
+    "subscribePromo": "Get 10% off your first order",
+    "address": [
+      "111 Bijoy sarani, Ikoyi,",
+      "Lagos-Island, Nigeria."
+    ],
+    "email": "sales@procurely.com",
+    "phone": "+88015-88888-9999",
+    "accountLinks": [
+      { "label": "My Account", "href": "/login" },
+      { "label": "Login / Register", "href": "/login" },
+      { "label": "About Procurely", "href": "#about" },
+      { "label": "Shop", "href": "#explore-products" }
+    ],
+    "quickLinks": [
+      { "label": "Privacy Policy", "href": "#privacy" },
+      { "label": "Terms Of Use", "href": "#terms" },
+      { "label": "FAQ", "href": "#faq" },
+      { "label": "Contact", "href": "#quote" }
+    ],
+    "qrImage": "/assets/design/footer-qr.png",
+    "paymentsImage": "/assets/design/footer-payments.png"
+  },
+  "authScreens": {
+    "login": {
+      "title": "Welcome back, continue managing your orders and requests",
+      "image": "/assets/design/auth-man.png",
+      "submitLabel": "Sign In"
+    },
+    "signup": {
+      "title": "Get started with smarter procurement",
+      "image": "/assets/design/auth-woman.png",
+      "submitLabel": "Get started"
+    },
+    "forgot": {
+      "title": "Forgot password?",
+      "description": "No worries, we'll send you reset instruction.",
+      "submitLabel": "Reset Password"
+    }
+  }
+}
