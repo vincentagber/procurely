@@ -10,7 +10,7 @@ import {
 } from "react";
 
 import { api } from "@/lib/api";
-import type { Cart, CheckoutPayload, Order } from "@/lib/types";
+import type { Cart, CheckoutPayload, Order, Product } from "@/lib/types";
 import { useUi } from "@/components/ui/ui-provider";
 
 type CartContextValue = {
@@ -29,13 +29,67 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 const cartStorageKey = "procurely-cart-token";
 
-export function CartProvider({ children }: { children: ReactNode }) {
+export type CartProviderProps = {
+  children: ReactNode;
+  hydrateFromApi?: boolean;
+  catalog?: Product[];
+  initialCart?: Cart | null;
+  initialCartToken?: string | null;
+  initialLastOrder?: Order | null;
+};
+
+function calculateCartTotals(items: Cart["items"]) {
+  const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
+  const serviceFee = subtotal >= 100000 ? 0 : subtotal > 0 ? 3500 : 0;
+
+  return {
+    subtotal,
+    serviceFee,
+    total: subtotal + serviceFee,
+  };
+}
+
+function buildCartItem(
+  product: Product,
+  quantity: number,
+  id: number,
+  cartToken: string,
+) {
+  return {
+    id,
+    cartToken,
+    quantity,
+    lineTotal: product.price * quantity,
+    product,
+  };
+}
+
+function buildEmptyCart(cartToken: string): Cart {
+  return {
+    cartToken,
+    items: [],
+    subtotal: 0,
+    serviceFee: 0,
+    total: 0,
+  };
+}
+
+export function CartProvider({
+  children,
+  hydrateFromApi = true,
+  catalog = [],
+  initialCart = null,
+  initialCartToken = null,
+  initialLastOrder = null,
+}: CartProviderProps) {
   const { openCart } = useUi();
-  const [cart, setCart] = useState<Cart | null>(null);
-  const [cartToken, setCartToken] = useState<string | null>(null);
+  const [cartToken, setCartToken] = useState<string | null>(initialCartToken);
+  const [cart, setCart] = useState<Cart | null>(
+    initialCartToken ? initialCart ?? buildEmptyCart(initialCartToken) : initialCart,
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastOrder, setLastOrder] = useState<Order | null>(null);
+  const [lastOrder, setLastOrder] = useState<Order | null>(initialLastOrder);
 
   async function hydrateCart(token: string) {
     try {
@@ -55,15 +109,62 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    if (!hydrateFromApi) {
+      const nextToken = initialCartToken || "storybook-cart";
+      setCartToken(nextToken);
+      setCart((current) => current ?? initialCart ?? buildEmptyCart(nextToken));
+      return;
+    }
+
     const storedToken = window.localStorage.getItem(cartStorageKey);
     const nextToken = storedToken || window.crypto.randomUUID();
     window.localStorage.setItem(cartStorageKey, nextToken);
     setCartToken(nextToken);
     void hydrateCart(nextToken);
-  }, []);
+  }, [hydrateFromApi, initialCart, initialCartToken]);
 
   async function addItem(productId: string, quantity = 1) {
     if (!cartToken) {
+      return;
+    }
+
+    if (!hydrateFromApi) {
+      const product = catalog.find((item) => item.id === productId);
+
+      if (!product) {
+        setError("Unable to add item to cart.");
+        return;
+      }
+
+      startTransition(() => {
+        setCart((current) => {
+          const base = current ?? buildEmptyCart(cartToken);
+          const existing = base.items.find((item) => item.product.id === productId);
+          const nextItems = existing
+            ? base.items.map((item) =>
+                item.id === existing.id
+                  ? buildCartItem(product, item.quantity + quantity, item.id, cartToken)
+                  : item,
+              )
+            : [
+                ...base.items,
+                buildCartItem(
+                  product,
+                  quantity,
+                  Math.max(0, ...base.items.map((item) => item.id)) + 1,
+                  cartToken,
+                ),
+              ];
+
+          return {
+            cartToken,
+            items: nextItems,
+            ...calculateCartTotals(nextItems),
+          };
+        });
+      });
+      setError(null);
+      openCart();
       return;
     }
 
@@ -91,6 +192,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    if (!hydrateFromApi) {
+      startTransition(() => {
+        setCart((current) => {
+          const base = current ?? buildEmptyCart(cartToken);
+          const nextItems = base.items.map((item) =>
+            item.id === id
+              ? buildCartItem(item.product, Math.max(1, quantity), item.id, cartToken)
+              : item,
+          );
+
+          return {
+            cartToken,
+            items: nextItems,
+            ...calculateCartTotals(nextItems),
+          };
+        });
+      });
+      setError(null);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -114,6 +236,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    if (!hydrateFromApi) {
+      startTransition(() => {
+        setCart((current) => {
+          const base = current ?? buildEmptyCart(cartToken);
+          const nextItems = base.items.filter((item) => item.id !== id);
+
+          return {
+            cartToken,
+            items: nextItems,
+            ...calculateCartTotals(nextItems),
+          };
+        });
+      });
+      setError(null);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -134,6 +273,42 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   async function checkout(payload: CheckoutPayload) {
     if (!cartToken) {
+      return;
+    }
+
+    if (!hydrateFromApi) {
+      const activeCart = cart ?? buildEmptyCart(cartToken);
+
+      if (activeCart.items.length === 0) {
+        setError("Cart is empty.");
+        return;
+      }
+
+      const order: Order = {
+        orderNumber: `PR-SB-${String(Math.floor(Math.random() * 100000)).padStart(5, "0")}`,
+        status: "processing",
+        customerName: payload.customerName,
+        customerEmail: payload.customerEmail,
+        phone: payload.phone,
+        address: payload.address,
+        subtotal: activeCart.subtotal,
+        serviceFee: activeCart.serviceFee,
+        total: activeCart.total,
+        createdAt: new Date().toISOString(),
+        items: activeCart.items.map((item) => ({
+          productId: item.product.id,
+          productName: item.product.name,
+          unitPrice: item.product.price,
+          quantity: item.quantity,
+          lineTotal: item.lineTotal,
+        })),
+      };
+
+      startTransition(() => {
+        setLastOrder(order);
+        setCart(buildEmptyCart(cartToken));
+      });
+      setError(null);
       return;
     }
 
@@ -164,6 +339,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   async function refreshCart() {
     if (!cartToken) {
+      return;
+    }
+
+    if (!hydrateFromApi) {
       return;
     }
 

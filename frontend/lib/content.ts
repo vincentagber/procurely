@@ -2,7 +2,7 @@ import { cache } from "react";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { ApiEnvelope, SiteContent } from "@/lib/types";
+import type { ApiEnvelope, Product, SiteContent } from "@/lib/types";
 
 const localContentPath = path.join(
   process.cwd(),
@@ -39,6 +39,59 @@ export const getProcurelyContent = cache(async (): Promise<SiteContent> => {
     return readLocalContent();
   }
 });
+
+type ProductSearchFilters = {
+  q: string;
+  slot?: string;
+  sort?: string;
+  limit?: number;
+};
+
+export const searchProducts = cache(
+  async ({ q, slot, sort = "relevance", limit = 12 }: ProductSearchFilters): Promise<Product[]> => {
+    const query = q.trim();
+
+    if (query === "") {
+      return [];
+    }
+
+    const params = new URLSearchParams({
+      q: query,
+      sort,
+      limit: String(limit),
+    });
+
+    if (slot) {
+      params.set("slot", slot);
+    }
+
+    try {
+      const response = await fetch(`${serverApiBase}/api/products?${params.toString()}`, {
+        next: { revalidate: 60 },
+        signal: AbortSignal.timeout(1500),
+      });
+
+      if (!response.ok) {
+        throw new Error("Product search failed.");
+      }
+
+      const payload = (await response.json()) as ApiEnvelope<Product[]>;
+      return payload.data;
+    } catch {
+      const content = await readLocalContent();
+      const loweredQuery = query.toLowerCase();
+
+      return content.products
+        .filter((product) =>
+          `${product.name} ${product.shortDescription} ${product.category}`
+            .toLowerCase()
+            .includes(loweredQuery),
+        )
+        .filter((product) => (slot ? product.homepageSlot === slot : true))
+        .slice(0, limit);
+    }
+  },
+);
 
 export function resolveProducts(content: SiteContent, ids: string[]) {
   return ids

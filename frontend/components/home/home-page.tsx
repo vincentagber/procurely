@@ -5,14 +5,19 @@ import { HeroSection } from "@/components/home/hero-section";
 import { ProductSection } from "@/components/home/product-section";
 import { PromoBanner } from "@/components/home/promo-banner";
 import { TestimonialSection } from "@/components/home/testimonial-section";
-import type { SiteContent } from "@/lib/types";
+import type { Product, SiteContent } from "@/lib/types";
 
 type HomePageProps = {
   content: SiteContent;
   searchQuery?: string;
+  searchResults?: Product[];
 };
 
-export function HomePage({ content, searchQuery = "" }: HomePageProps) {
+export function HomePage({
+  content,
+  searchQuery = "",
+  searchResults,
+}: HomePageProps) {
   const query = searchQuery.trim().toLowerCase();
   const resolveProducts = (ids: string[]) =>
     ids
@@ -21,13 +26,13 @@ export function HomePage({ content, searchQuery = "" }: HomePageProps) {
 
   const bestSellers = resolveProducts(content.bestSellerSection.productIds);
   const exploreProducts = resolveProducts(content.exploreSection.productIds);
-  const filteredExploreProducts = query
+  const filteredExploreProducts = searchResults ?? (query
     ? exploreProducts.filter((product) =>
         `${product.name} ${product.shortDescription} ${product.category}`
           .toLowerCase()
           .includes(query),
       )
-    : exploreProducts;
+    : exploreProducts);
 
   return (
     <>

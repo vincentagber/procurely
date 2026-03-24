@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Procurely\Api\Services;
 
 use DateTimeImmutable;
-use Procurely\Api\Support\ApiException;
 use Procurely\Api\Support\Database;
+use Procurely\Api\Support\Input;
 
 final class EngagementService
 {
@@ -17,20 +17,12 @@ final class EngagementService
 
     public function requestQuote(array $payload): array
     {
-        $companyName = trim((string) ($payload['companyName'] ?? ''));
-        $fullName = trim((string) ($payload['fullName'] ?? ''));
-        $email = mb_strtolower(trim((string) ($payload['email'] ?? '')));
-        $phone = trim((string) ($payload['phone'] ?? ''));
-        $projectLocation = trim((string) ($payload['projectLocation'] ?? ''));
-        $boqNotes = trim((string) ($payload['boqNotes'] ?? ''));
-
-        if ($companyName === '' || $fullName === '' || $phone === '' || $projectLocation === '' || $boqNotes === '') {
-            throw new ApiException('All quote request fields are required.', 422);
-        }
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new ApiException('A valid email address is required.', 422);
-        }
+        $companyName = Input::requiredString($payload, 'companyName', 'Company name', 120);
+        $fullName = Input::requiredString($payload, 'fullName', 'Full name', 120);
+        $email = Input::email($payload, 'email', 'email address');
+        $phone = Input::phone($payload, 'phone', 'phone number');
+        $projectLocation = Input::requiredString($payload, 'projectLocation', 'Project location', 160);
+        $boqNotes = Input::requiredString($payload, 'boqNotes', 'BOQ notes', 2000, false);
 
         $statement = $this->database->connection()->prepare(
             'INSERT INTO quote_requests (company_name, full_name, email, phone, project_location, boq_notes, created_at)
@@ -53,11 +45,7 @@ final class EngagementService
 
     public function subscribe(array $payload): array
     {
-        $email = mb_strtolower(trim((string) ($payload['email'] ?? '')));
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new ApiException('A valid email address is required.', 422);
-        }
+        $email = Input::email($payload, 'email', 'email address');
 
         $statement = $this->database->connection()->prepare(
             'INSERT OR IGNORE INTO newsletter_subscribers (email, created_at) VALUES (:email, :created_at)'
@@ -68,7 +56,9 @@ final class EngagementService
         ]);
 
         return [
-            'message' => 'You are subscribed to Procurely updates.',
+            'message' => $statement->rowCount() > 0
+                ? 'You are subscribed to Procurely updates.'
+                : 'This email is already subscribed to Procurely updates.',
         ];
     }
 }

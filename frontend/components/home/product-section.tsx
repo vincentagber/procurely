@@ -59,7 +59,7 @@ export function ProductSection({
       ) : null}
 
       {products.length > 0 ? (
-        <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 md:mt-10 md:gap-6 xl:grid-cols-4">
           {products.map((product, index) => (
             <ProductCard index={index} key={product.id} product={product} />
           ))}
@@ -78,7 +78,7 @@ export function ProductSection({
       {bottomActionLabel ? (
         <div className="mt-10 flex justify-center">
           <Link
-            className="inline-flex h-14 items-center justify-center rounded-[16px] bg-[var(--color-brand-blue)] px-8 text-base font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(25,0,255,0.28)]"
+            className="inline-flex h-12 items-center justify-center rounded-[14px] bg-[var(--color-brand-blue)] px-6 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(25,0,255,0.28)] sm:h-14 sm:px-8 sm:text-base"
             href="#explore-products"
           >
             {bottomActionLabel}

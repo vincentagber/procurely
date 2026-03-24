@@ -12,19 +12,33 @@ const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
+  let response: Response;
 
-  const payload = (await response.json()) as ApiEnvelope<T> | ApiErrorEnvelope;
+  try {
+    response = await fetch(`${apiBaseUrl}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...init?.headers,
+      },
+      signal: init?.signal ?? AbortSignal.timeout(8000),
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "TimeoutError") {
+      throw new Error("The request timed out. Please try again.");
+    }
 
-  if (!response.ok || "error" in payload) {
+    throw new Error("Unable to reach the Procurely API.");
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  const payload = contentType.includes("application/json")
+    ? ((await response.json()) as ApiEnvelope<T> | ApiErrorEnvelope)
+    : null;
+
+  if (!response.ok || !payload || "error" in payload) {
     const message =
-      "error" in payload
+      payload && "error" in payload
         ? payload.error.message
         : "Unable to complete the request.";
     throw new Error(message);

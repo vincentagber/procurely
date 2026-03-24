@@ -8,7 +8,7 @@
     "accentColor": "#ff6f4d",
     "testimonialBackground": "#fde8df",
     "logoDark": "/assets/design/logo-dark.png",
-    "logoLight": "/assets/design/logo-dark.png"
+    "logoLight": "/assets/design/logo-light.png"
   },
   "navigation": {
     "socialLinks": [
@@ -34,7 +34,7 @@
     }
   },
   "hero": {
-    "title": "Procurement For Developers. Done Right",
+    "title": "PROCUREMENT FOR DEVELOPERS. DONE RIGHT",
     "description": "BOQ-based procurement, online ordering, structured credit, and reliable delivery.",
     "ctaLabel": "Buy Now",
     "ctaHref": "#explore-products",
@@ -351,12 +351,12 @@
   "authScreens": {
     "login": {
       "title": "Welcome back, continue managing your orders and requests",
-      "image": "/assets/design/auth-man.png",
+      "image": "/assets/auth/man.png",
       "submitLabel": "Sign In"
     },
     "signup": {
       "title": "Get started with smarter procurement",
-      "image": "/assets/design/auth-woman.png",
+      "image": "/assets/auth/woman.png",
       "submitLabel": "Get started"
     },
     "forgot": {

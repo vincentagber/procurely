@@ -115,6 +115,12 @@ final class Database
               email TEXT NOT NULL UNIQUE,
               created_at TEXT NOT NULL
             );
+
+            CREATE INDEX IF NOT EXISTS idx_user_tokens_user_id ON user_tokens (user_id);
+            CREATE INDEX IF NOT EXISTS idx_password_reset_email_created_at ON password_reset_requests (email, created_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_cart_items_cart_token ON cart_items (cart_token);
+            CREATE INDEX IF NOT EXISTS idx_orders_order_number ON orders (order_number);
+            CREATE INDEX IF NOT EXISTS idx_quote_requests_email ON quote_requests (email);
             SQL
         );
     }

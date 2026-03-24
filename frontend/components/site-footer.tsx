@@ -21,23 +21,23 @@ export function SiteFooter({ footer, site }: SiteFooterProps) {
 
   return (
     <footer className="bg-[var(--color-brand-navy)] text-white">
-      <div className="container-shell py-16">
+      <div className="container-shell py-14 sm:py-16">
         <div className="grid gap-10 lg:grid-cols-[1.15fr_1fr_1fr_1fr_1fr]">
           <div>
             <Image
               alt={site.name}
-              className="h-auto w-[150px] brightness-0 invert"
-              height={41}
-              src={site.logoDark}
-              width={182}
+              className="h-auto w-[133px]"
+              height={29}
+              src={site.logoLight}
+              width={133}
             />
             <p className="mt-6 text-lg font-semibold">{footer.subscribeTitle}</p>
-            <p className="mt-4 text-[1.75rem] font-semibold leading-tight">
+            <p className="mt-4 text-[1.5rem] font-semibold leading-tight sm:text-[1.75rem]">
               {footer.subscribePromo}
             </p>
 
             <form
-              className="mt-6 flex h-12 max-w-[260px] items-center rounded-[12px] border border-white/45 px-4"
+              className="mt-6 flex h-12 w-full max-w-[260px] items-center rounded-[12px] border border-white/45 px-4"
               onSubmit={async (event) => {
                 event.preventDefault();
                 try {
@@ -137,7 +137,7 @@ export function SiteFooter({ footer, site }: SiteFooterProps) {
           </div>
           <Image
             alt="Accepted payment methods"
-            className="h-auto w-[330px]"
+            className="h-auto w-full max-w-[330px]"
             height={53}
             src={footer.paymentsImage}
             width={332}

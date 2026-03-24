@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use PDO;
 use Procurely\Api\Support\ApiException;
 use Procurely\Api\Support\Database;
+use Procurely\Api\Support\Input;
 use Ramsey\Uuid\Uuid;
 
 final class AuthService
@@ -20,20 +21,20 @@ final class AuthService
 
     public function register(array $payload): array
     {
-        $fullName = trim((string) ($payload['fullName'] ?? ''));
-        $email = mb_strtolower(trim((string) ($payload['email'] ?? '')));
+        $fullName = Input::requiredString($payload, 'fullName', 'Full name', 120);
+        $email = Input::email($payload, 'email', 'email address');
         $password = (string) ($payload['password'] ?? '');
 
-        if ($fullName === '') {
-            throw new ApiException('Full name is required.', 422);
-        }
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new ApiException('A valid email address is required.', 422);
+        if (trim($password) === '') {
+            throw new ApiException('Password is required.', 422, ['field' => 'password']);
         }
 
         if (mb_strlen($password) < 8) {
-            throw new ApiException('Password must be at least 8 characters.', 422);
+            throw new ApiException('Password must be at least 8 characters.', 422, ['field' => 'password']);
+        }
+
+        if (mb_strlen($password) > 72) {
+            throw new ApiException('Password must be 72 characters or fewer.', 422, ['field' => 'password']);
         }
 
         $pdo = $this->database->connection();
@@ -72,15 +73,11 @@ final class AuthService
 
     public function login(array $payload): array
     {
-        $email = mb_strtolower(trim((string) ($payload['email'] ?? '')));
+        $email = Input::email($payload, 'email', 'email address');
         $password = (string) ($payload['password'] ?? '');
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new ApiException('A valid email address is required.', 422);
-        }
-
         if ($password === '') {
-            throw new ApiException('Password is required.', 422);
+            throw new ApiException('Password is required.', 422, ['field' => 'password']);
         }
 
         $pdo = $this->database->connection();
@@ -106,15 +103,22 @@ final class AuthService
 
     public function forgotPassword(array $payload): array
     {
-        $email = mb_strtolower(trim((string) ($payload['email'] ?? '')));
+        $email = Input::email($payload, 'email', 'email address');
+        $pdo = $this->database->connection();
+        $lookup = $pdo->prepare('SELECT id FROM users WHERE email = :email LIMIT 1');
+        $lookup->execute(['email' => $email]);
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new ApiException('A valid email address is required.', 422);
+        if ($lookup->fetch() === false) {
+            return [
+                'message' => 'Reset instructions have been prepared for this email address.',
+            ];
         }
 
         $token = bin2hex(random_bytes(16));
         $createdAt = (new DateTimeImmutable())->format(DateTimeImmutable::ATOM);
-        $statement = $this->database->connection()->prepare(
+        $cleanup = $pdo->prepare('DELETE FROM password_reset_requests WHERE email = :email');
+        $cleanup->execute(['email' => $email]);
+        $statement = $pdo->prepare(
             'INSERT INTO password_reset_requests (email, token, created_at) VALUES (:email, :token, :created_at)'
         );
         $statement->execute([

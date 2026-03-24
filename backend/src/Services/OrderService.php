@@ -7,6 +7,7 @@ namespace Procurely\Api\Services;
 use DateTimeImmutable;
 use Procurely\Api\Support\ApiException;
 use Procurely\Api\Support\Database;
+use Procurely\Api\Support\Input;
 
 final class OrderService
 {
@@ -18,19 +19,11 @@ final class OrderService
 
     public function checkout(array $payload): array
     {
-        $cartToken = trim((string) ($payload['cartToken'] ?? ''));
-        $customerName = trim((string) ($payload['customerName'] ?? ''));
-        $customerEmail = mb_strtolower(trim((string) ($payload['customerEmail'] ?? '')));
-        $phone = trim((string) ($payload['phone'] ?? ''));
-        $address = trim((string) ($payload['address'] ?? ''));
-
-        if ($cartToken === '' || $customerName === '' || $phone === '' || $address === '') {
-            throw new ApiException('Cart token, customer name, phone, and address are required.', 422);
-        }
-
-        if (!filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
-            throw new ApiException('A valid customer email is required.', 422);
-        }
+        $cartToken = Input::cartToken($payload);
+        $customerName = Input::requiredString($payload, 'customerName', 'Customer name', 120);
+        $customerEmail = Input::email($payload, 'customerEmail', 'customer email');
+        $phone = Input::phone($payload, 'phone', 'phone number');
+        $address = Input::requiredString($payload, 'address', 'Address', 400, false);
 
         $cart = $this->cartService->getCart($cartToken);
 

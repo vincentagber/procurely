@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Procurely\Api\Support\ApiException;
 use Procurely\Api\Support\ContentStore;
 use Procurely\Api\Support\Database;
+use Procurely\Api\Support\Input;
 
 final class CartService
 {
@@ -19,9 +20,7 @@ final class CartService
 
     public function getCart(string $cartToken): array
     {
-        if (trim($cartToken) === '') {
-            throw new ApiException('Cart token is required.', 422);
-        }
+        $cartToken = Input::cartToken(['cartToken' => $cartToken]);
 
         $statement = $this->database->connection()->prepare(
             'SELECT id, cart_token, product_id, quantity FROM cart_items WHERE cart_token = :cart_token ORDER BY id ASC'
@@ -65,13 +64,9 @@ final class CartService
 
     public function addItem(array $payload): array
     {
-        $cartToken = trim((string) ($payload['cartToken'] ?? ''));
-        $productId = trim((string) ($payload['productId'] ?? ''));
-        $quantity = max(1, (int) ($payload['quantity'] ?? 1));
-
-        if ($cartToken === '') {
-            throw new ApiException('Cart token is required.', 422);
-        }
+        $cartToken = Input::cartToken($payload);
+        $productId = Input::productId($payload);
+        $quantity = Input::intRange($payload['quantity'] ?? null, 'Quantity', 1, 100, 1);
 
         $product = $this->contentStore->productById($productId);
 
@@ -113,12 +108,12 @@ final class CartService
 
     public function updateItem(int $itemId, array $payload): array
     {
-        $quantity = max(1, (int) ($payload['quantity'] ?? 1));
-        $cartToken = trim((string) ($payload['cartToken'] ?? ''));
-
-        if ($cartToken === '') {
-            throw new ApiException('Cart token is required.', 422);
+        if ($itemId <= 0) {
+            throw new ApiException('Cart item ID is invalid.', 422);
         }
+
+        $quantity = Input::intRange($payload['quantity'] ?? null, 'Quantity', 1, 100, 1);
+        $cartToken = Input::cartToken($payload);
 
         $statement = $this->database->connection()->prepare('UPDATE cart_items SET quantity = :quantity, updated_at = :updated_at WHERE id = :id AND cart_token = :cart_token');
         $statement->execute([
@@ -137,15 +132,21 @@ final class CartService
 
     public function removeItem(int $itemId, string $cartToken): array
     {
-        if (trim($cartToken) === '') {
-            throw new ApiException('Cart token is required.', 422);
+        if ($itemId <= 0) {
+            throw new ApiException('Cart item ID is invalid.', 422);
         }
+
+        $cartToken = Input::cartToken(['cartToken' => $cartToken]);
 
         $statement = $this->database->connection()->prepare('DELETE FROM cart_items WHERE id = :id AND cart_token = :cart_token');
         $statement->execute([
             'id' => $itemId,
             'cart_token' => $cartToken,
         ]);
+
+        if ($statement->rowCount() === 0) {
+            throw new ApiException('Cart item not found.', 404);
+        }
 
         return $this->getCart($cartToken);
     }

@@ -3,17 +3,30 @@
 import type { ReactNode } from "react";
 
 import { CartDrawer } from "@/components/cart/cart-drawer";
-import { CartProvider } from "@/components/cart/cart-provider";
+import {
+  CartProvider,
+  type CartProviderProps,
+} from "@/components/cart/cart-provider";
 import { QuoteDrawer } from "@/components/quote/quote-drawer";
 import { UiProvider } from "@/components/ui/ui-provider";
 
-export function Providers({ children }: { children: ReactNode }) {
+type ProvidersProps = {
+  children: ReactNode;
+  cartProviderProps?: Omit<CartProviderProps, "children">;
+  withDrawers?: boolean;
+};
+
+export function Providers({
+  children,
+  cartProviderProps,
+  withDrawers = true,
+}: ProvidersProps) {
   return (
     <UiProvider>
-      <CartProvider>
+      <CartProvider {...cartProviderProps}>
         {children}
-        <CartDrawer />
-        <QuoteDrawer />
+        {withDrawers ? <CartDrawer /> : null}
+        {withDrawers ? <QuoteDrawer /> : null}
       </CartProvider>
     </UiProvider>
   );

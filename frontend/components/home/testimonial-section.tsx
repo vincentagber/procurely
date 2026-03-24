@@ -1,4 +1,7 @@
-import { ArrowLeft, ArrowRight } from "lucide-react";
+"use client";
+
+import { motion } from "framer-motion";
+import { Star } from "lucide-react";
 
 import { Reveal } from "@/components/ui/reveal";
 import type { Testimonial } from "@/lib/types";
@@ -14,28 +17,52 @@ export function TestimonialSection({
 }: TestimonialSectionProps) {
   return (
     <section
-      className="bg-[var(--color-brand-peach)]/80 py-16 md:py-20"
+      className="bg-[#fde8df]/80 py-16 md:py-24"
       id="contractors"
     >
-      <div className="container-shell relative">
+      <div className="container-shell relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal>
-          <h2 className="text-center text-[2.4rem] font-semibold tracking-[-0.05em] text-[var(--color-brand-navy)] md:text-[3rem]">
+          <h2 className="mb-12 text-center text-3xl font-bold tracking-tight text-[var(--color-brand-navy)] sm:mb-16 sm:text-4xl md:text-[3rem]">
             {title}
           </h2>
         </Reveal>
 
-        <button className="absolute left-0 top-1/2 hidden size-10 -translate-x-1/2 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-lg md:inline-flex">
-          <ArrowLeft className="size-4" />
-        </button>
-        <button className="absolute right-0 top-1/2 hidden size-10 translate-x-1/2 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-lg md:inline-flex">
-          <ArrowRight className="size-4" />
-        </button>
-
-        <div className="mt-10 grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item, index) => (
-            <Reveal className="overflow-hidden rounded-[28px]" delay={index * 0.05} key={item.id}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img alt={`${item.name} testimonial`} className="w-full object-cover" src={item.cardImage} />
+            <Reveal
+              className="flex"
+              delay={index * 0.1}
+              key={item.id}
+            >
+              <motion.article
+                className="group relative flex w-full flex-col justify-between overflow-hidden rounded-[24px] bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.06)] ring-1 ring-slate-100 transition-shadow hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] sm:rounded-[28px]"
+                transition={{ duration: 0.3 }}
+                whileHover="hover"
+              >
+                <div className="mb-6 flex justify-center gap-1 text-[#f59e0b]">
+                  {Array.from({ length: item.rating || 5 }).map((_, i) => (
+                    <Star key={i} className="size-5 fill-current" />
+                  ))}
+                </div>
+                
+                <blockquote className="mb-8 flex-1 text-center text-[15px] leading-relaxed text-slate-600 sm:text-base">
+                  "{item.quote}"
+                </blockquote>
+                
+                <div className="flex flex-col items-center">
+                  <div className="relative mb-3 size-16 overflow-hidden rounded-full shadow-sm ring-4 ring-slate-50">
+                    <img
+                      alt={`Avatar of ${item.name}`}
+                      className="h-full w-full object-cover"
+                      src={item.cardImage}
+                    />
+                  </div>
+                  <cite className="not-italic text-center">
+                    <div className="text-base font-semibold text-[var(--color-brand-navy)]">{item.name}</div>
+                    <div className="text-sm font-medium text-slate-500">{item.role}</div>
+                  </cite>
+                </div>
+              </motion.article>
             </Reveal>
           ))}
         </div>
