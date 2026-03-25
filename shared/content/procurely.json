@@ -23,7 +23,7 @@
       { "label": "Home", "href": "/" },
       { "label": "How It Works", "href": "/how-it-works" },
       { "label": "Buy Materials", "href": "/materials" },
-      { "label": "Blog", "href": "/blog" }
+      { "label": "Blog", "href": "#" }
     ],
     "accountLinks": [
       { "label": "Login / Register", "href": "/login" }
