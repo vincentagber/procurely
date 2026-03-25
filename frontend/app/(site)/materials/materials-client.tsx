@@ -5,9 +5,12 @@ import { ProductCard } from "@/components/product-card";
 import type { Product } from "@/lib/types";
 import { Filter, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 
 export function MaterialsClient({ products }: { products: Product[] }) {
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("q")?.toLowerCase() || "";
+  
   const [activeCategory, setActiveCategory] = useState("All Materials");
   const [maxPrice, setMaxPrice] = useState(100000000);
   const [limit, setLimit] = useState(12);
@@ -28,8 +31,17 @@ export function MaterialsClient({ products }: { products: Product[] }) {
         filtered = filtered.filter(p => p.category === activeCategory);
      }
      filtered = filtered.filter(p => p.price <= maxPrice);
+
+     if (searchQuery) {
+        filtered = filtered.filter(p => 
+           p.name.toLowerCase().includes(searchQuery) || 
+           p.shortDescription.toLowerCase().includes(searchQuery) ||
+           p.category.toLowerCase().includes(searchQuery)
+        );
+     }
+
      return filtered;
-  }, [catalog, activeCategory, maxPrice]);
+  }, [catalog, activeCategory, maxPrice, searchQuery]);
 
   const displayedProducts = filteredProducts.slice(0, limit);
 

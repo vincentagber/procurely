@@ -86,9 +86,11 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
               event.preventDefault();
               const nextQuery = query.trim();
               const href = nextQuery
-                ? `/?q=${encodeURIComponent(nextQuery)}#explore-products`
-                : "/#explore-products";
-              startTransition(() => router.push(href));
+                ? `/materials?q=${encodeURIComponent(nextQuery)}`
+                : "/materials";
+              startTransition(() => {
+                 router.push(href);
+              });
             }}
           >
             <input

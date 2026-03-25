@@ -185,22 +185,22 @@ export default async function ContactQuotePage() {
       </section>
 
       {/* Banner */}
-      <section className="container-shell mb-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[3rem] bg-gradient-to-br from-[#1900ff] to-[#0b103e] px-8 py-20 text-center text-white shadow-2xl sm:px-16 sm:py-24">
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 size-96 rounded-full bg-white/5 blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 size-96 rounded-full bg-white/5 blur-3xl"></div>
-          
-          <div className="relative z-10 mx-auto max-w-4xl">
-            <h2 className="mb-6 text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">Need help choosing materials?</h2>
-            <p className="mx-auto mb-12 max-w-2xl text-xl text-white/80 leading-relaxed font-medium">Our procurement experts are available Mon-Sat to guide your project start to finish. Stop guessing, start building.</p>
-            <div className="flex flex-col items-center justify-center gap-6 sm:flex-row">
-              <Link href="/materials" className="w-full text-center rounded-full bg-white px-10 py-5 text-lg font-bold text-[#13184f] shadow-lg transition-all hover:scale-[1.03] hover:bg-slate-50 sm:w-auto">
-                Browse Catalog
-              </Link>
-              <a href="tel:+23408016000000" className="w-full text-center rounded-full border border-white/30 bg-white/10 px-10 py-5 text-lg font-bold text-white backdrop-blur-sm transition-all hover:scale-[1.03] hover:bg-white/20 sm:w-auto">
-                Call Expert +8016...
-              </a>
-            </div>
+      {/* Banner */}
+      <section className="container-shell mb-32 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="rounded-[20px] bg-[#1900ff] px-6 py-16 text-center text-white sm:px-12 sm:py-20 flex flex-col items-center">
+          <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-[46px]">
+            Need help choosing materials?
+          </h2>
+          <p className="mb-10 text-[16px] text-white/90 font-medium sm:text-[18px]">
+            Our procurement experts are available Mon–Sat to guide your project.
+          </p>
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+             <Link href="/materials" className="w-full sm:w-auto rounded-xl bg-[#0b103e] px-8 py-4 text-[16px] font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#13184f]">
+               Browse Materials
+             </Link>
+             <Link href="/how-it-works" className="w-full sm:w-auto rounded-xl bg-[#ff2e00] px-8 py-4 text-[16px] font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#e62900]">
+               See How It Works
+             </Link>
           </div>
         </div>
       </section>

@@ -1,3 +1,4 @@
+import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import { getProcurelyContent } from "@/lib/content";
 import { TestimonialSection } from "@/components/home/testimonial-section";
@@ -21,7 +22,9 @@ export default async function MaterialsPage() {
         </p>
       </div>
 
-      <MaterialsClient products={content.products} />
+      <Suspense fallback={<div className="container-shell mx-auto px-4 py-32 text-center text-[#13184f] font-bold text-2xl">Loading catalog...</div>}>
+         <MaterialsClient products={content.products} />
+      </Suspense>
 
       {/* FAQ Section */}
       <section className="container-shell my-32 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
