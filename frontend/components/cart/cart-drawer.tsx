@@ -2,23 +2,14 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import Link from "next/link";
 
-import { TextField, TextAreaField } from "@/components/forms/form-field";
 import { useCart } from "@/components/cart/cart-provider";
 import { useUi } from "@/components/ui/ui-provider";
-import { formatCurrency } from "@/lib/format";
 
 export function CartDrawer() {
   const { cartOpen, closeCart } = useUi();
-  const { cart, loading, error, updateItemQuantity, removeItem, checkout, lastOrder } =
-    useCart();
-  const [checkoutForm, setCheckoutForm] = useState({
-    customerName: "",
-    customerEmail: "",
-    phone: "",
-    address: "",
-  });
+  const { cart, updateItemQuantity, removeItem } = useCart();
 
   return (
     <AnimatePresence>
@@ -26,7 +17,7 @@ export function CartDrawer() {
         <>
           <motion.button
             aria-label="Close cart"
-            className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] bg-slate-950/45 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -34,214 +25,114 @@ export function CartDrawer() {
           />
           <motion.aside
             aria-label="Cart drawer"
-            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[460px] flex-col overflow-y-auto bg-white px-5 pb-6 pt-5 shadow-2xl md:px-6"
+            className="fixed right-0 top-0 z-[110] flex h-full w-full max-w-[420px] flex-col overflow-y-auto bg-white px-6 pb-6 pt-8 shadow-2xl"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.28, ease: "easeOut" }}
           >
             <div className="mb-6 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--color-brand-accent)]">
-                  Procurement cart
-                </p>
-                <h2 className="text-2xl font-semibold text-[var(--color-brand-navy)]">
-                  Review your order
-                </h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold text-[#13184f]">Cart</h2>
+                <span className="text-xl font-semibold text-[#13184f]">{cart?.items.length || 0}</span>
               </div>
               <button
-                className="inline-flex size-11 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-900"
+                className="inline-flex size-10 items-center justify-center text-slate-400 hover:text-slate-600 transition"
                 onClick={closeCart}
                 type="button"
               >
-                <X className="size-5" />
+                <X className="size-6" />
               </button>
             </div>
 
-            {lastOrder ? (
-              <div className="mb-6 rounded-[24px] border border-emerald-100 bg-emerald-50 p-5 text-emerald-950">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
-                  Order placed
-                </p>
-                <h3 className="mt-2 text-xl font-semibold">{lastOrder.orderNumber}</h3>
-                <p className="mt-2 text-sm text-emerald-800">
-                  We have received your procurement request and your order is now
-                  processing.
-                </p>
-              </div>
-            ) : null}
-
-            {error ? (
-              <div className="mb-5 rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                {error}
-              </div>
-            ) : null}
-
-            {cart && cart.items.length > 0 ? (
-              <div className="space-y-4">
-                {cart.items.map((item) => (
-                  <article
-                    className="rounded-[24px] border border-slate-100 bg-[var(--color-surface-soft)] p-4"
-                    key={item.id}
-                  >
-                    <div className="flex gap-4">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        alt={item.product.name}
-                        className="size-24 rounded-[18px] bg-white object-cover p-2"
-                        src={item.product.image}
-                      />
-                      <div className="flex min-w-0 flex-1 flex-col">
-                        <p className="text-xs text-slate-500">{item.product.category}</p>
-                        <h3 className="line-clamp-2 text-base font-semibold text-[var(--color-brand-navy)]">
-                          {item.product.name}
-                        </h3>
-                        <p className="mt-1 text-sm text-slate-500">
-                          {item.product.shortDescription}
-                        </p>
-                        <div className="mt-auto flex items-center justify-between pt-4">
-                          <div className="inline-flex items-center rounded-full border border-slate-200 bg-white">
+            <div className="flex-1 overflow-y-auto">
+              {cart && cart.items.length > 0 ? (
+                <div className="space-y-4">
+                  {cart.items.map((item) => (
+                    <article
+                      className="flex gap-4 rounded-xl border border-slate-200 bg-white p-4"
+                      key={item.id}
+                    >
+                      <div className="flex size-20 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-slate-50 p-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          alt={item.product.name}
+                          className="max-h-full max-w-full object-contain"
+                          src={item.product.image}
+                        />
+                      </div>
+                      <div className="flex flex-1 flex-col">
+                        <div className="flex items-start justify-between">
+                          <h3 className="line-clamp-2 text-sm font-medium text-[#13184f]">
+                            {item.product.name}
+                          </h3>
+                          <button
+                            className="ml-2 text-slate-400 hover:text-rose-500 transition"
+                            onClick={() => void removeItem(item.id)}
+                            type="button"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
+                        <div className="mt-auto flex items-center justify-between">
+                          <div className="flex items-center rounded border border-slate-200">
                             <button
-                              className="inline-flex size-10 items-center justify-center text-slate-500 transition hover:text-slate-900"
-                              onClick={() =>
-                                void updateItemQuantity(
-                                  item.id,
-                                  Math.max(1, item.quantity - 1),
-                                )
-                              }
-                              type="button"
+                              className="px-2 py-1 text-slate-500 hover:text-slate-900"
+                              onClick={() => void updateItemQuantity(item.id, Math.max(1, item.quantity - 1))}
                             >
-                              <Minus className="size-4" />
+                              <Minus className="size-3" />
                             </button>
-                            <span className="min-w-8 text-center text-sm font-semibold text-slate-900">
+                            <span className="w-8 flex justify-center text-sm font-medium text-[#13184f]">
                               {item.quantity}
                             </span>
                             <button
-                              className="inline-flex size-10 items-center justify-center text-slate-500 transition hover:text-slate-900"
-                              onClick={() =>
-                                void updateItemQuantity(item.id, item.quantity + 1)
-                              }
-                              type="button"
+                              className="px-2 py-1 text-slate-500 hover:text-slate-900"
+                              onClick={() => void updateItemQuantity(item.id, item.quantity + 1)}
                             >
-                              <Plus className="size-4" />
+                              <Plus className="size-3" />
                             </button>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <p className="text-sm font-semibold text-[var(--color-brand-navy)]">
-                              {formatCurrency(item.lineTotal, item.product.currency)}
-                            </p>
-                            <button
-                              className="inline-flex size-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-rose-200 hover:text-rose-600"
-                              onClick={() => void removeItem(item.id)}
-                              type="button"
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
-                          </div>
+                          <span className="text-sm font-bold text-[#13184f]">
+                            {item.product.currency === 'NGN' ? 'N ' : ''}{item.lineTotal.toLocaleString()}
+                          </span>
                         </div>
                       </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-1 flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-200 bg-[var(--color-surface-soft)] px-6 py-12 text-center">
-                <ShoppingBag className="size-10 text-[var(--color-brand-blue)]" />
-                <h3 className="mt-4 text-xl font-semibold text-[var(--color-brand-navy)]">
-                  Your cart is empty
-                </h3>
-                <p className="mt-2 max-w-sm text-sm text-slate-500">
-                  Add a few core materials and return here to complete your
-                  procurement checkout.
-                </p>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center text-center">
+                  <ShoppingBag className="mb-4 size-12 text-slate-300" />
+                  <p className="font-semibold text-[#13184f]">Your cart is empty</p>
+                </div>
+              )}
+            </div>
+
+            {cart && cart.items.length > 0 && (
+              <div className="mt-auto pt-6">
+                <div className="mb-6 flex items-center justify-between text-lg font-bold text-[#446d4e]">
+                  <span className="text-[#ff6f4d]">Subtotal</span>
+                  <span>{cart.items[0]?.product.currency === 'NGN' ? 'N' : '$'}{cart.subtotal.toLocaleString()}</span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <Link
+                    href="/cart"
+                    onClick={closeCart}
+                    className="flex items-center justify-center rounded-lg bg-[#0b103e] py-3 text-sm font-semibold text-white transition hover:bg-[#13184f]"
+                  >
+                    View Cart
+                  </Link>
+                  <Link
+                    href="/checkout"
+                    onClick={closeCart}
+                    className="flex items-center justify-center rounded-lg bg-[#ffccbb] py-3 text-sm font-semibold text-[#13184f] transition hover:bg-[#ffbba5]"
+                  >
+                    Checkout
+                  </Link>
+                </div>
               </div>
             )}
-
-            <div className="mt-6 rounded-[28px] border border-slate-100 bg-[var(--color-surface-soft)] p-5">
-              <div className="space-y-3 text-sm text-slate-600">
-                <div className="flex items-center justify-between">
-                  <span>Subtotal</span>
-                  <span className="font-semibold text-slate-900">
-                    {formatCurrency(cart?.subtotal ?? 0)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Service fee</span>
-                  <span className="font-semibold text-slate-900">
-                    {formatCurrency(cart?.serviceFee ?? 0)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between border-t border-slate-200 pt-3 text-base font-semibold text-[var(--color-brand-navy)]">
-                  <span>Total</span>
-                  <span>{formatCurrency(cart?.total ?? 0)}</span>
-                </div>
-              </div>
-
-              <form
-                className="mt-5 space-y-3"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void checkout(checkoutForm);
-                }}
-              >
-                <TextField
-                  onChange={(event) =>
-                    setCheckoutForm((current) => ({
-                      ...current,
-                      customerName: event.target.value,
-                    }))
-                  }
-                  placeholder="Customer name"
-                  required
-                  value={checkoutForm.customerName}
-                />
-                <TextField
-                  onChange={(event) =>
-                    setCheckoutForm((current) => ({
-                      ...current,
-                      customerEmail: event.target.value,
-                    }))
-                  }
-                  placeholder="Customer email"
-                  required
-                  type="email"
-                  value={checkoutForm.customerEmail}
-                />
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <TextField
-                    onChange={(event) =>
-                      setCheckoutForm((current) => ({
-                        ...current,
-                        phone: event.target.value,
-                      }))
-                    }
-                    placeholder="Phone"
-                    required
-                    value={checkoutForm.phone}
-                  />
-                  <TextAreaField
-                    className="sm:col-span-1"
-                    onChange={(event) =>
-                      setCheckoutForm((current) => ({
-                        ...current,
-                        address: event.target.value,
-                      }))
-                    }
-                    placeholder="Delivery address"
-                    required
-                    rows={2}
-                    value={checkoutForm.address}
-                  />
-                </div>
-                <button
-                  className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[var(--color-brand-blue)] text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(25,0,255,0.28)] disabled:opacity-60"
-                  disabled={loading || !cart || cart.items.length === 0}
-                  type="submit"
-                >
-                  {loading ? "Processing..." : "Checkout"}
-                </button>
-              </form>
-            </div>
           </motion.aside>
         </>
       ) : null}

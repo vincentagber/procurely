@@ -21,23 +21,23 @@
     ],
     "primaryLinks": [
       { "label": "Home", "href": "/" },
-      { "label": "How It Works", "href": "#how-it-works" },
-      { "label": "Buy Materials", "href": "#explore-products" },
-      { "label": "Blog", "href": "#contractors" }
+      { "label": "How It Works", "href": "/how-it-works" },
+      { "label": "Buy Materials", "href": "/materials" },
+      { "label": "Blog", "href": "/#contractors" }
     ],
     "accountLinks": [
       { "label": "Login / Register", "href": "/login" }
     ],
     "submitCta": {
       "label": "Submit BOQ / Contact",
-      "href": "#quote"
+      "href": "/contact-quote"
     }
   },
   "hero": {
     "title": "PROCUREMENT FOR DEVELOPERS. DONE RIGHT",
     "description": "BOQ-based procurement, online ordering, structured credit, and reliable delivery.",
     "ctaLabel": "Buy Now",
-    "ctaHref": "#explore-products",
+    "ctaHref": "/materials",
     "backgroundImage": "/assets/design/hero-kitchen.png"
   },
   "features": [
@@ -67,7 +67,7 @@
         "title": "Smart Building Materials Procurement",
         "description": "Upload your BOQ and let us handle complex matching.",
         "ctaLabel": "Start Procuring",
-        "href": "#quote",
+        "href": "/contact-quote",
         "cardImage": "/assets/design/category-warehouse-card.png",
         "variant": "wide"
       },
@@ -76,7 +76,7 @@
         "title": "Rebars",
         "description": "Powered by Procurely",
         "ctaLabel": "Start Procuring",
-        "href": "#explore-products",
+        "href": "/materials",
         "cardImage": "/assets/design/category-rebar-card.png",
         "variant": "tall"
       },
@@ -85,7 +85,7 @@
         "title": "Sharp Sand",
         "description": "Solid foundation in every grain",
         "ctaLabel": "Order Now",
-        "href": "#best-sellers",
+        "href": "/materials",
         "cardImage": "/assets/design/category-sharp-sand-card.png",
         "variant": "wide-small"
       },
@@ -94,7 +94,7 @@
         "title": "Plaster Sand",
         "description": "Smooth finish. Perfect texture.",
         "ctaLabel": "Order Now",
-        "href": "#best-sellers",
+        "href": "/materials",
         "cardImage": "/assets/design/category-plaster-sand-card.png",
         "variant": "small"
       },
@@ -103,7 +103,7 @@
         "title": "Granite (1/2 & 3/4)",
         "description": "Premium aggregates",
         "ctaLabel": "Start Procuring",
-        "href": "#best-sellers",
+        "href": "/materials",
         "cardImage": "/assets/design/category-granite-card.png",
         "variant": "small"
       }
@@ -254,14 +254,14 @@
       "title": "Buy Now, Pay Later",
       "description": "Pay with 4 installment, 0% interest",
       "ctaLabel": "Start Procuring",
-      "href": "#quote",
+      "href": "/contact-quote",
       "bannerImage": "/assets/design/promo-buy-now-banner.png"
     },
     "renovation": {
       "title": "Renovating your home?",
       "description": "Get a free consultation with our material experts and a customized quote for your entire project.",
       "ctaLabel": "Get Free Quote",
-      "href": "#quote",
+      "href": "/contact-quote",
       "bannerImage": "/assets/design/promo-renovation-banner.png"
     }
   },
@@ -336,14 +336,14 @@
     "accountLinks": [
       { "label": "My Account", "href": "/login" },
       { "label": "Login / Register", "href": "/login" },
-      { "label": "About Procurely", "href": "#about" },
-      { "label": "Shop", "href": "#explore-products" }
+      { "label": "About Procurely", "href": "/how-it-works" },
+      { "label": "Shop", "href": "/materials" }
     ],
     "quickLinks": [
-      { "label": "Privacy Policy", "href": "#privacy" },
-      { "label": "Terms Of Use", "href": "#terms" },
-      { "label": "FAQ", "href": "#faq" },
-      { "label": "Contact", "href": "#quote" }
+      { "label": "Privacy Policy", "href": "/privacy-policy" },
+      { "label": "Terms Of Use", "href": "/terms-of-use" },
+      { "label": "FAQ", "href": "/#faq" },
+      { "label": "Contact", "href": "/contact-quote" }
     ],
     "qrImage": "/assets/design/footer-qr.png",
     "paymentsImage": "/assets/design/footer-payments.png"

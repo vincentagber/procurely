@@ -108,16 +108,16 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
           </form>
 
           <div className="ml-auto flex items-center gap-4 text-primary-navy sm:gap-5 lg:gap-7">
-            <button
+            <Link
               aria-label="Wishlist"
               className="relative inline-flex items-center justify-center text-primary-navy transition-interactive hover:text-primary-blue-500"
-              type="button"
+              href="/wishlist"
             >
               <Heart className="size-[30px] stroke-[1.85]" />
               <span className="absolute -right-1.5 top-0 inline-flex size-5 items-center justify-center rounded-full bg-[#ef5350] text-[11px] font-bold leading-none text-white">
-                4
+                0
               </span>
-            </button>
+            </Link>
 
             <Link
               aria-label="Account"
@@ -175,13 +175,12 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
             })}
           </nav>
 
-          <button
+          <Link
             className="hidden min-w-[264px] h-[60px] items-center justify-center rounded-[14px] bg-primary-blue px-8 text-[17px] font-semibold text-text-inverse shadow-button transition-interactive hover:bg-primary-blue-600 lg:inline-flex"
-            onClick={openQuote}
-            type="button"
+            href={navigation.submitCta.href}
           >
             {navigation.submitCta.label}
-          </button>
+          </Link>
         </div>
 
         {menuOpen ? (
@@ -212,16 +211,13 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
               })}
             </nav>
 
-            <button
+            <Link
               className="mt-5 inline-flex h-12 items-center justify-center rounded-[12px] bg-primary-blue px-6 text-sm font-semibold text-text-inverse shadow-button transition-interactive hover:bg-primary-blue-600"
-              onClick={() => {
-                setMenuOpen(false);
-                openQuote();
-              }}
-              type="button"
+              href={navigation.submitCta.href}
+              onClick={() => setMenuOpen(false)}
             >
               {navigation.submitCta.label}
-            </button>
+            </Link>
           </div>
         ) : null}
       </div>
