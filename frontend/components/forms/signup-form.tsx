@@ -4,14 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
 
-import {
-  AuthFeedback,
-  PasswordToggleButton,
-} from "@/components/forms/auth-elements";
 import { TextField } from "@/components/forms/form-field";
 import { api } from "@/lib/api";
-
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function SignupForm() {
   const router = useRouter();
@@ -19,51 +13,21 @@ export function SignupForm() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <form
-      aria-busy={loading}
-      className="w-full space-y-5"
-      noValidate
+      className="w-full max-w-[320px] space-y-4"
       onSubmit={async (event) => {
         event.preventDefault();
-
-        const fullName = form.fullName.trim();
-        const email = form.email.trim().toLowerCase();
-        const password = form.password;
-
-        if (fullName === "") {
-          setError("Full name is required.");
-          setMessage(null);
-          return;
-        }
-
-        if (!emailPattern.test(email)) {
-          setError("A valid email address is required.");
-          setMessage(null);
-          return;
-        }
-
-        if (password.length < 8) {
-          setError("Password must be at least 8 characters.");
-          setMessage(null);
-          return;
-        }
-
         try {
           setLoading(true);
           setError(null);
           setMessage(null);
-          const response = await api.register({ email, fullName, password });
+          const response = await api.register(form);
           window.localStorage.setItem("procurely-auth-token", response.token);
-          window.localStorage.setItem(
-            "procurely-auth-user",
-            JSON.stringify(response.user),
-          );
           setMessage("Account created. Redirecting to the homepage...");
           startTransition(() => {
-            router.replace("/");
+            router.push("/");
           });
         } catch (nextError) {
           setError(
@@ -77,23 +41,25 @@ export function SignupForm() {
       }}
     >
       <div>
-        <h1 className="text-[2rem] font-semibold tracking-[-0.03em] text-text-navy-900">
+        <h1 className="text-[2rem] font-semibold tracking-[-0.03em] text-[var(--color-brand-navy)]">
           Sign up
         </h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Create your Procurely account to submit BOQs and manage project orders.
-        </p>
+        <p className="mt-1 text-sm text-slate-500">Join us now</p>
       </div>
 
-      {message ? <AuthFeedback tone="success">{message}</AuthFeedback> : null}
+      {message ? (
+        <div className="rounded-[16px] border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {message}
+        </div>
+      ) : null}
 
-      {error ? <AuthFeedback tone="error">{error}</AuthFeedback> : null}
+      {error ? (
+        <div className="rounded-[16px] border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
+      ) : null}
 
       <TextField
-        autoComplete="name"
-        id="signup-full-name"
-        label="Full Name"
-        name="fullName"
         onChange={(event) =>
           setForm((current) => ({ ...current, fullName: event.target.value }))
         }
@@ -102,74 +68,47 @@ export function SignupForm() {
         value={form.fullName}
       />
       <TextField
-        autoComplete="email"
-        id="signup-email"
-        inputMode="email"
-        label="Email Address"
-        name="email"
         onChange={(event) =>
           setForm((current) => ({ ...current, email: event.target.value }))
         }
         placeholder="Email Address"
         required
-        spellCheck={false}
         type="email"
         value={form.email}
       />
       <TextField
-        autoComplete="new-password"
-        hint="Minimum 8 characters"
-        id="signup-password"
-        label="Password"
-        name="password"
         onChange={(event) =>
           setForm((current) => ({ ...current, password: event.target.value }))
         }
         placeholder="Password"
         required
-        trailingAdornment={
-          <PasswordToggleButton
-            onToggle={() => setShowPassword((current) => !current)}
-            visible={showPassword}
-          />
-        }
-        type={showPassword ? "text" : "password"}
+        type="password"
         value={form.password}
       />
 
-      <p className="text-xs leading-5 text-neutral-500">
+      <p className="text-xs leading-5 text-slate-500">
         You are agreeing to the{" "}
-        <Link
-          className="font-semibold text-primary-blue-500 transition-interactive hover:text-primary-blue-600"
-          href="#terms"
-        >
+        <span className="font-semibold text-[var(--color-brand-blue)]">
           Terms of Services
-        </Link>{" "}
+        </span>{" "}
         and{" "}
-        <Link
-          className="font-semibold text-primary-blue-500 transition-interactive hover:text-primary-blue-600"
-          href="#privacy"
-        >
+        <span className="font-semibold text-[var(--color-brand-blue)]">
           Privacy Policy
-        </Link>
+        </span>
         .
       </p>
 
       <button
-        className="inline-flex h-12 w-full items-center justify-center rounded-button bg-primary-navy px-5 text-sm font-semibold text-text-inverse shadow-card transition-interactive hover:bg-primary-navy-600 focus-visible:outline-none focus-visible:shadow-focus disabled:state-disabled"
-        data-state={loading ? "loading" : undefined}
+        className="inline-flex h-12 w-full items-center justify-center rounded-[12px] bg-[var(--color-brand-navy)] text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60"
         disabled={loading}
         type="submit"
       >
         {loading ? "Creating account..." : "Get started"}
       </button>
 
-      <p className="text-center text-sm text-neutral-500">
+      <p className="text-center text-sm text-slate-500">
         Already a member?{" "}
-        <Link
-          className="font-semibold text-primary-blue-500 transition-interactive hover:text-primary-blue-600"
-          href="/login"
-        >
+        <Link className="font-semibold text-[var(--color-brand-blue)]" href="/login">
           Sign in
         </Link>
       </p>

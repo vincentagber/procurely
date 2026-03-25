@@ -416,12 +416,12 @@
   "authScreens": {
     "login": {
       "title": "Welcome back, continue managing your orders and requests",
-      "image": "/assets/auth/man.png",
+      "image": "/assets/design/auth-man.png",
       "submitLabel": "Sign In"
     },
     "signup": {
       "title": "Get started with smarter procurement",
-      "image": "/assets/auth/woman.png",
+      "image": "/assets/design/auth-woman.png",
       "submitLabel": "Get started"
     },
     "forgot": {

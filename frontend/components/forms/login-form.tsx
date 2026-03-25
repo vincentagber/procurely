@@ -4,15 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
 
-import {
-  AuthFeedback,
-  PasswordToggleButton,
-  SocialAuthButton,
-} from "@/components/forms/auth-elements";
 import { TextField } from "@/components/forms/form-field";
 import { api } from "@/lib/api";
-
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function LoginForm() {
   const router = useRouter();
@@ -20,44 +13,21 @@ export function LoginForm() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <form
-      aria-busy={loading}
-      className="w-full space-y-5"
-      noValidate
+      className="w-full max-w-[320px] space-y-4"
       onSubmit={async (event) => {
         event.preventDefault();
-
-        const email = form.email.trim().toLowerCase();
-        const password = form.password;
-
-        if (!emailPattern.test(email)) {
-          setError("A valid email address is required.");
-          setMessage(null);
-          return;
-        }
-
-        if (password === "") {
-          setError("Password is required.");
-          setMessage(null);
-          return;
-        }
-
         try {
           setLoading(true);
           setError(null);
           setMessage(null);
-          const response = await api.login({ email, password });
+          const response = await api.login(form);
           window.localStorage.setItem("procurely-auth-token", response.token);
-          window.localStorage.setItem(
-            "procurely-auth-user",
-            JSON.stringify(response.user),
-          );
           setMessage("Signed in successfully. Redirecting to the homepage...");
           startTransition(() => {
-            router.replace("/");
+            router.push("/");
           });
         } catch (nextError) {
           setError(
@@ -69,82 +39,73 @@ export function LoginForm() {
       }}
     >
       <div>
-        <h1 className="text-[2rem] font-semibold tracking-[-0.03em] text-text-navy-900">
+        <h1 className="text-[2rem] font-semibold tracking-[-0.03em] text-[var(--color-brand-navy)]">
           Login
         </h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Sign in to manage procurement requests, orders, and deliveries.
-        </p>
+        <p className="mt-1 text-sm text-slate-500">Login to continue</p>
       </div>
 
-      {message ? <AuthFeedback tone="success">{message}</AuthFeedback> : null}
+      {message ? (
+        <div className="rounded-[16px] border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {message}
+        </div>
+      ) : null}
 
-      {error ? <AuthFeedback tone="error">{error}</AuthFeedback> : null}
+      {error ? (
+        <div className="rounded-[16px] border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
+      ) : null}
 
       <TextField
-        autoComplete="email"
-        id="login-email"
-        inputMode="email"
-        label="Email"
-        name="email"
         onChange={(event) =>
           setForm((current) => ({ ...current, email: event.target.value }))
         }
         placeholder="Enter your email"
         required
-        spellCheck={false}
         type="email"
         value={form.email}
       />
       <TextField
-        autoComplete="current-password"
-        id="login-password"
-        label="Password"
-        name="password"
         onChange={(event) =>
           setForm((current) => ({ ...current, password: event.target.value }))
         }
         placeholder="Enter your password"
         required
-        trailingAdornment={
-          <PasswordToggleButton
-            onToggle={() => setShowPassword((current) => !current)}
-            visible={showPassword}
-          />
-        }
-        type={showPassword ? "text" : "password"}
+        type="password"
         value={form.password}
       />
 
       <div className="flex justify-end text-xs">
-        <Link
-          className="font-semibold text-primary-blue-500 transition-interactive hover:text-primary-blue-600"
-          href="/reset-password"
-        >
+        <Link className="font-semibold text-[var(--color-brand-blue)]" href="/forgot-password">
           Forgot password
         </Link>
       </div>
 
       <button
-        className="inline-flex h-12 w-full items-center justify-center rounded-button bg-primary-navy px-5 text-sm font-semibold text-text-inverse shadow-card transition-interactive hover:bg-primary-navy-600 focus-visible:outline-none focus-visible:shadow-focus disabled:state-disabled"
-        data-state={loading ? "loading" : undefined}
+        className="inline-flex h-12 w-full items-center justify-center rounded-[12px] bg-[var(--color-brand-navy)] text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60"
         disabled={loading}
         type="submit"
       >
         {loading ? "Signing in..." : "Sign in"}
       </button>
 
-      <div className="space-y-3">
-        <SocialAuthButton provider="google" />
-        <SocialAuthButton provider="facebook" />
-      </div>
+      <button
+        className="inline-flex h-12 w-full items-center justify-center rounded-[999px] border border-slate-200 bg-white text-sm font-medium text-slate-700 transition hover:border-slate-300"
+        type="button"
+      >
+        Sign in with Google
+      </button>
+      <button
+        className="inline-flex h-12 w-full items-center justify-center rounded-[999px] border border-slate-200 bg-white text-sm font-medium text-slate-700 transition hover:border-slate-300"
+        type="button"
+      >
+        Sign in with Facebook
+      </button>
 
-      <p className="text-center text-sm text-neutral-500">
+      <p className="text-center text-sm text-slate-500">
         Don&apos;t have an account?{" "}
-        <Link
-          className="font-semibold text-primary-blue-500 transition-interactive hover:text-primary-blue-600"
-          href="/signup"
-        >
+        <Link className="font-semibold text-[var(--color-brand-blue)]" href="/signup">
           Sign up
         </Link>
       </p>
