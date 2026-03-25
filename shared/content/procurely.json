@@ -21,12 +21,14 @@
     ],
     "primaryLinks": [
       { "label": "Home", "href": "/" },
+      { "label": "About Us", "href": "/about" },
       { "label": "How It Works", "href": "/how-it-works" },
       { "label": "Buy Materials", "href": "/materials" },
       { "label": "Blog", "href": "#" }
     ],
     "accountLinks": [
-      { "label": "Login / Register", "href": "/login" }
+      { "label": "Login", "href": "/login" },
+      { "label": "Orders", "href": "/account/orders" }
     ],
     "submitCta": {
       "label": "Submit BOQ / Contact",
@@ -342,6 +344,7 @@
     "quickLinks": [
       { "label": "Privacy Policy", "href": "/privacy-policy" },
       { "label": "Terms Of Use", "href": "/terms-of-use" },
+      { "label": "Suppliers", "href": "/suppliers" },
       { "label": "FAQ", "href": "/#faq" },
       { "label": "Contact", "href": "/contact-quote" }
     ],

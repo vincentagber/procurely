@@ -4,6 +4,7 @@ import { useCart } from "@/components/cart/cart-provider";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { persistOrderRef } from "@/lib/api";
 
 export function CheckoutPageClient() {
   const { cart, checkout, loading } = useCart();
@@ -42,12 +43,19 @@ export function CheckoutPageClient() {
     // Simulate Payment Gateway UI Lag
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    await checkout({
+    const cartTokenSnap = cart.cartToken;
+
+    const order = await checkout({
       customerName: formData.firstName,
       customerEmail: formData.email,
       phone: formData.phone,
       address: `${formData.address}, ${formData.city}`,
     });
+
+    // Persist order ref so /account/orders can display it
+    if (order) {
+      persistOrderRef(order.orderNumber, cartTokenSnap);
+    }
 
     router.push("/order-confirmation");
   };

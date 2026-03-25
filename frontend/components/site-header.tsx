@@ -124,7 +124,12 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
             <Link
               aria-label="Account"
               className="inline-flex items-center justify-center text-primary-navy transition-interactive hover:text-primary-blue-500"
-              href="/login"
+              href={
+                typeof window !== "undefined" &&
+                window.localStorage.getItem("procurely-auth-token")
+                  ? "/account/orders"
+                  : "/login"
+              }
             >
               <UserRound className="size-[30px] stroke-[1.85]" />
             </Link>

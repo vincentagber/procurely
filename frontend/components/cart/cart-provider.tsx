@@ -22,7 +22,7 @@ type CartContextValue = {
   addItem: (productId: string, quantity?: number) => Promise<void>;
   updateItemQuantity: (id: number, quantity: number) => Promise<void>;
   removeItem: (id: number) => Promise<void>;
-  checkout: (payload: CheckoutPayload) => Promise<void>;
+  checkout: (payload: CheckoutPayload) => Promise<Order | undefined>;
   refreshCart: () => Promise<void>;
 };
 
@@ -317,7 +317,7 @@ export function CartProvider({
     }
   }
 
-  async function checkout(payload: CheckoutPayload) {
+  async function checkout(payload: CheckoutPayload): Promise<Order | undefined> {
     if (!cartToken) {
       return;
     }
@@ -355,7 +355,7 @@ export function CartProvider({
         setCart(buildEmptyCart(cartToken));
       });
       setError(null);
-      return;
+      return order;
     }
 
     try {
@@ -372,12 +372,14 @@ export function CartProvider({
           total: 0,
         });
       });
+      return order;
     } catch (nextError) {
       setError(
         nextError instanceof Error
           ? nextError.message
           : "Unable to complete checkout.",
       );
+      return;
     } finally {
       setLoading(false);
     }

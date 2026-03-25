@@ -145,4 +145,28 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
+  getOrder(orderNumber: string, cartToken: string) {
+    const params = cartToken ? `?cartToken=${encodeURIComponent(cartToken)}` : "";
+    return request<Order>(`/api/orders/${encodeURIComponent(orderNumber)}${params}`);
+  },
 };
+
+// ─── Order history helpers ─────────────────────────────────────────────────────
+export const ORDER_HISTORY_KEY = "procurely-order-history";
+
+type StoredOrderRef = { orderNumber: string; cartToken: string; placedAt: string };
+
+export function persistOrderRef(orderNumber: string, cartToken: string): void {
+  try {
+    const raw = window.sessionStorage.getItem(ORDER_HISTORY_KEY);
+    const existing: StoredOrderRef[] = raw ? (JSON.parse(raw) as StoredOrderRef[]) : [];
+    const deduped = existing.filter((r) => r.orderNumber !== orderNumber);
+    window.sessionStorage.setItem(
+      ORDER_HISTORY_KEY,
+      JSON.stringify([{ orderNumber, cartToken, placedAt: new Date().toISOString() }, ...deduped]),
+    );
+  } catch {
+    // sessionStorage unavailable — degrade silently
+  }
+}
+
