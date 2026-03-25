@@ -5,12 +5,12 @@ import { Reveal } from "@/components/ui/reveal";
 import { getProcurelyContent } from "@/lib/content";
 
 export const metadata: Metadata = {
-  title: "Forgot Password | Procurely",
+  title: "Reset Password | Procurely",
   description: "Reset your Procurely account password to regain access to your building materials dashboard and orders.",
-  keywords: "forgot password, reset password, Procurely account recovery",
+  keywords: "reset password, forgot password, Procurely account recovery",
 };
 
-export default async function ForgotPasswordPage() {
+export default async function ResetPasswordPage() {
   const content = await getProcurelyContent();
 
   return (
