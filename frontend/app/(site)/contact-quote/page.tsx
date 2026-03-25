@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { HelpCircle, Mail, MapPin, Phone, Clock, UploadCloud, ChevronDown, CheckCircle2 } from "lucide-react";
 import { getProcurelyContent } from "@/lib/content";
 import { TestimonialSection } from "@/components/home/testimonial-section";
@@ -193,12 +194,12 @@ export default async function ContactQuotePage() {
             <h2 className="mb-6 text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">Need help choosing materials?</h2>
             <p className="mx-auto mb-12 max-w-2xl text-xl text-white/80 leading-relaxed font-medium">Our procurement experts are available Mon-Sat to guide your project start to finish. Stop guessing, start building.</p>
             <div className="flex flex-col items-center justify-center gap-6 sm:flex-row">
-              <button className="w-full rounded-full bg-white px-10 py-5 text-lg font-bold text-[#13184f] shadow-lg transition-all hover:scale-105 hover:bg-slate-50 sm:w-auto">
+              <Link href="/materials" className="w-full text-center rounded-full bg-white px-10 py-5 text-lg font-bold text-[#13184f] shadow-lg transition-all hover:scale-[1.03] hover:bg-slate-50 sm:w-auto">
                 Browse Catalog
-              </button>
-              <button className="w-full rounded-full border border-white/30 bg-white/10 px-10 py-5 text-lg font-bold text-white backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/20 sm:w-auto">
+              </Link>
+              <a href="tel:+23408016000000" className="w-full text-center rounded-full border border-white/30 bg-white/10 px-10 py-5 text-lg font-bold text-white backdrop-blur-sm transition-all hover:scale-[1.03] hover:bg-white/20 sm:w-auto">
                 Call Expert +8016...
-              </button>
+              </a>
             </div>
           </div>
         </div>

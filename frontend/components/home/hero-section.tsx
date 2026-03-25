@@ -49,25 +49,24 @@ export function HeroSection({ hero, features }: HeroSectionProps) {
             "relative flex min-h-[320px] items-center py-12 sm:min-h-[390px] sm:py-14 md:min-h-[500px] md:py-16 lg:min-h-[575px] lg:py-18",
           )}
         >
-          <Reveal className="max-w-[640px] lg:max-w-[710px]" distance={44}>
-            <h1 className="uppercase text-white">
-              <span className="block font-display font-bold text-[2.35rem] leading-[0.9] tracking-[-0.05em] sm:text-[2.85rem] md:text-[4.15rem] lg:text-[5.35rem] xl:text-[6rem]">
+          <Reveal className="max-w-[520px]" distance={44}>
+            <h1 className="flex flex-col gap-[3.5px] uppercase text-white w-[518px] max-w-full">
+              <span className="block font-black text-4xl sm:text-5xl md:text-[50px] leading-none tracking-tight">
                 {firstLine}
               </span>
               {trailingLine ? (
-                <span className="mt-0.5 block leading-[0.9]">
-                  <span className="font-display font-bold text-[2.35rem] tracking-[-0.055em] sm:text-[2.85rem] md:text-[4.15rem] lg:text-[5.35rem] xl:text-[6rem]">
+                <span className="flex flex-wrap items-center gap-x-[6px] gap-y-1 leading-none mt-1">
+                  <span className="font-black text-[38px] sm:text-5xl md:text-[50px] tracking-tight">
                     DEVELOPERS.
-                  </span>{" "}
-                  <span className="font-display text-[2.05rem] font-normal tracking-[-0.035em] text-white/96 sm:text-[2.45rem] md:text-[3.7rem] lg:text-[4.8rem] xl:text-[5.45rem]">
+                  </span>
+                  <span className="font-black text-[38px] sm:text-5xl md:text-[50px] tracking-tight text-transparent [-webkit-text-stroke:1px_white] sm:[-webkit-text-stroke:1.5px_white] opacity-95">
                     {trailingLine}
                   </span>
                 </span>
               ) : null}
             </h1>
-            <p className="mt-4 max-w-[540px] text-[0.95rem] leading-[1.55] text-white/82 sm:text-[1rem] md:mt-5 md:text-[1.04rem] lg:text-[1.08rem]">
-              <span>{descriptionLead}</span>{" "}
-              <span className="sm:block">{descriptionTail}</span>
+            <p className="mt-6 max-w-[480px] text-base sm:text-lg md:text-[17px] leading-relaxed text-white/90 font-medium hidden sm:block">
+              {hero.description}
             </p>
             <motion.div
               className="mt-7 inline-flex sm:mt-8 lg:mt-9"
