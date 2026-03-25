@@ -137,11 +137,19 @@ export function MaterialsClient({ products }: { products: Product[] }) {
                </div>
             </div>
 
-            <div className="mt-2 flex flex-col justify-between overflow-hidden relative rounded-2xl bg-gradient-to-br from-[#ff6f4d] to-[#e65432] p-8 text-white shadow-[0_12px_30px_rgb(255,111,77,0.2)] group transition-all">
-               <h4 className="mb-4 text-[22px] font-bold leading-tight text-white tracking-tight">Bulk Pricing?</h4>
-               <p className="mb-8 text-[13px] font-medium leading-relaxed text-white/90 underline cursor-pointer">Submit your BOQ for direct supplier quotes.</p>
-               <Link href="/contact-quote" onClick={() => setShowFilters(false)} className="relative z-10 w-full rounded-lg bg-[#0b103e] px-4 py-4 text-center text-[15px] font-bold text-white shadow-md transition hover:bg-[#13184f] inline-block">
-                 Submit BOQ
+            <div className="flex flex-col overflow-hidden rounded-[24px] bg-[#ff6f4d] p-8 text-white shadow-xl shadow-orange-500/10">
+               <div className="mb-6 flex items-center gap-2 opacity-90">
+                  <div className="size-5 rounded-sm bg-white/20" />
+                  <span className="text-xs font-black uppercase tracking-widest">Procurely™</span>
+               </div>
+               <h4 className="mb-3 text-[24px] font-black leading-tight tracking-tight text-white group-hover:scale-[1.02] transition-transform">Need Bulk Pricing?</h4>
+               <p className="mb-8 text-[14px] font-medium leading-relaxed text-white/90">Submit your BOQ for custom quotes from verified suppliers.</p>
+               <Link 
+                 href="/contact-quote" 
+                 onClick={() => setShowFilters(false)} 
+                 className="flex h-12 w-full items-center justify-center rounded-xl bg-[#0b103e] text-[15px] font-bold text-white shadow-lg transition-all hover:bg-[#13184f] active:scale-[0.98] active:shadow-inner"
+                >
+                  Submit BOQ
                </Link>
             </div>
           </div>
