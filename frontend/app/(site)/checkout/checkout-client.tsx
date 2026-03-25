@@ -3,9 +3,12 @@
 import { useCart } from "@/components/cart/cart-provider";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function CheckoutPageClient() {
   const { cart, checkout, loading } = useCart();
+  const router = useRouter();
+  const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     companyName: "",
@@ -32,14 +35,21 @@ export function CheckoutPageClient() {
   const isNgn = cart.items[0]?.product.currency === 'NGN';
   const total = isNgn ? cart.subtotal + vat + shipping : cart.subtotal;
 
-  const handleCheckout = (e: React.FormEvent) => {
+  const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
-    void checkout({
+    setIsProcessing(true);
+
+    // Simulate Payment Gateway UI Lag
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    await checkout({
       customerName: formData.firstName,
       customerEmail: formData.email,
       phone: formData.phone,
       address: `${formData.address}, ${formData.city}`,
     });
+
+    router.push("/order-confirmation");
   };
 
   return (
@@ -141,8 +151,8 @@ export function CheckoutPageClient() {
                  </button>
               </div>
 
-              <button disabled={loading} type="submit" className="mt-6 w-[200px] disabled:opacity-75 disabled:cursor-not-allowed rounded bg-[#0b103e] px-10 py-4 font-semibold text-white shadow-md hover:shadow-lg transition hover:bg-[#13184f]">
-                 {loading ? "Processing..." : "Place Order"}
+              <button disabled={loading || isProcessing} type="submit" className="mt-6 w-[200px] disabled:opacity-75 disabled:cursor-not-allowed rounded bg-[#0b103e] px-10 py-4 font-semibold text-white shadow-md hover:shadow-lg transition hover:bg-[#13184f]">
+                 {(loading || isProcessing) ? "Processing..." : "Place Order"}
               </button>
            </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
+import Link from "next/link";
 
 import { Reveal } from "@/components/ui/reveal";
 import { useCart } from "@/components/cart/cart-provider";
@@ -29,20 +30,24 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               {product.badge}
             </span>
           ) : null}
-          <motion.img
-            alt={product.name}
-            className="mx-auto h-[150px] w-full rounded-[16px] object-contain sm:h-[180px] sm:rounded-[18px]"
-            src={product.image}
-            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            whileHover={{ scale: 1.04, rotate: -1 }}
-          />
+          <Link href={`/products/${product.id}`} className="block relative z-10 w-full">
+            <motion.img
+              alt={product.name}
+              className="mx-auto h-[150px] w-full rounded-[16px] object-contain sm:h-[180px] sm:rounded-[18px]"
+              src={product.image}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ scale: 1.04, rotate: -1 }}
+            />
+          </Link>
         </div>
 
         <div className="mt-5 flex flex-1 flex-col">
           <p className="text-xs text-slate-400">{product.category}</p>
-          <h3 className="mt-1 text-[1.02rem] font-semibold leading-tight text-[var(--color-brand-navy)] sm:text-[1.15rem]">
-            {product.name}
-          </h3>
+          <Link href={`/products/${product.id}`} className="block mt-1">
+            <h3 className="text-[1.02rem] font-semibold leading-tight text-[var(--color-brand-navy)] hover:text-[#1900ff] transition sm:text-[1.15rem]">
+              {product.name}
+            </h3>
+          </Link>
           <p className="mt-1 text-sm text-slate-500">{product.shortDescription}</p>
 
           <div className="mt-auto flex items-center justify-between pt-5 sm:pt-6">
