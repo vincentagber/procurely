@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Clock, Tag } from "lucide-react";
+import type { ReactNode } from "react";
 import type { BlogPost } from "@/components/blog/blog-data";
 import { getRelatedPosts } from "@/components/blog/blog-data";
 
@@ -10,103 +11,52 @@ type Props = { post: BlogPost };
 export function BlogPostPage({ post }: Props) {
   const related = getRelatedPosts(post, 3);
 
-  // Simple markdown-ish renderer for the body
-  const renderBody = (body: string) => {
-    return body.split("\n").map((line, i) => {
-      if (line.startsWith("## ")) {
-        return (
-          <h2 key={i} className="text-2xl sm:text-3xl font-black text-[#13184f] tracking-tight mt-12 mb-4">
-            {line.replace("## ", "")}
-          </h2>
-        );
-      }
-      if (line.startsWith("### ")) {
-        return (
-          <h3 key={i} className="text-xl font-black text-[#13184f] tracking-tight mt-8 mb-3">
-            {line.replace("### ", "")}
-          </h3>
-        );
-      }
-      if (line.startsWith("- **")) {
-        const match = line.match(/- \*\*(.*?)\*\*(.*)/);
-        if (match) {
-          return (
-            <li key={i} className="flex items-start gap-2 text-[15.5px] text-slate-600 font-medium mb-2 leading-relaxed">
-              <span className="mt-1.5 size-1.5 rounded-full bg-[#1900ff] shrink-0" />
-              <span><strong className="text-[#13184f]">{match[1]}</strong>{match[2]}</span>
-            </li>
-          );
-        }
-      }
-      if (line.startsWith("- ")) {
-        return (
-          <li key={i} className="flex items-start gap-2 text-[15.5px] text-slate-600 font-medium mb-2 leading-relaxed">
-            <span className="mt-1.5 size-1.5 rounded-full bg-[#1900ff] shrink-0" />
-            <span>{line.replace("- ", "")}</span>
-          </li>
-        );
-      }
-      if (line.startsWith("| ")) {
-        // skip table delimiter row
-        if (line.startsWith("|---") || line.includes("|---|")) return null;
-        const cells = line.split("|").filter((c) => c.trim() !== "");
-        const isHeader = i > 0;
-        return (
-          <tr key={i} className="border-b border-slate-100">
-            {cells.map((cell, j) => (
-              <td
-                key={j}
-                className={`py-3 px-4 text-[14px] ${j === 0 ? "font-bold text-[#13184f]" : "text-slate-600"}`}
-              >
-                {cell.trim().replace(/\*\*(.*?)\*\*/g, "$1")}
-              </td>
-            ))}
-          </tr>
-        );
-      }
-      if (line.startsWith("1. ") || line.match(/^\d+\. /)) {
-        const text = line.replace(/^\d+\. /, "");
-        return (
-          <li key={i} className="flex items-start gap-2 text-[15.5px] text-slate-600 font-medium mb-2 leading-relaxed list-decimal list-inside">
-            <span>{text}</span>
-          </li>
-        );
-      }
-      if (line === "") return <div key={i} className="h-4" />;
-
-      // Inline bold
-      const inlineBold = line.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-      return (
-        <p
-          key={i}
-          className="text-[16px] text-slate-600 font-medium leading-[1.85] mb-1"
-          dangerouslySetInnerHTML={{ __html: inlineBold }}
-        />
-      );
-    });
-  };
-
-  // Group table rows
-  const processBody = (body: string) => {
+  const processBody = (body: string): ReactNode[] => {
     const lines = body.split("\n");
-    const result: JSX.Element[] = [];
-    let tableRows: JSX.Element[] = [];
+    const result: ReactNode[] = [];
+    let tableRows: ReactNode[] = [];
     let inTable = false;
-    let listItems: JSX.Element[] = [];
+    let listItems: ReactNode[] = [];
     let inList = false;
+    let isOrderedList = false;
+
+    const flushTable = (key: string) => {
+      result.push(
+        <div key={key} className="my-8 overflow-auto rounded-2xl border border-slate-100 shadow-sm">
+          <table className="w-full min-w-[400px]">{tableRows}</table>
+        </div>
+      );
+      tableRows = [];
+      inTable = false;
+    };
+
+    const flushList = (key: string) => {
+      result.push(
+        <ul key={key} className="my-4 space-y-1">
+          {listItems}
+        </ul>
+      );
+      listItems = [];
+      inList = false;
+      isOrderedList = false;
+    };
 
     lines.forEach((line, i) => {
+      // --- Table handling ---
       if (line.startsWith("| ")) {
-        if (line.startsWith("|---") || line.includes("|---|")) return;
+        if (line.match(/^\|[\s-|]+\|$/)) return; // separator row
         inTable = true;
         const cells = line.split("|").filter((c) => c.trim() !== "");
         const isFirstRow = tableRows.length === 0;
         tableRows.push(
-          <tr key={i} className={isFirstRow ? "bg-[#f3f4fa]" : "border-b border-slate-100 hover:bg-slate-50/50"}>
+          <tr
+            key={i}
+            className={isFirstRow ? "bg-[#f3f4fa]" : "border-b border-slate-100 hover:bg-slate-50/50"}
+          >
             {cells.map((cell, j) => {
-              const Tag = isFirstRow ? "th" : "td";
+              const CellTag = isFirstRow ? "th" : "td";
               return (
-                <Tag
+                <CellTag
                   key={j}
                   className={`py-3 px-5 text-[13.5px] ${
                     isFirstRow
@@ -117,25 +67,22 @@ export function BlogPostPage({ post }: Props) {
                   }`}
                 >
                   {cell.trim().replace(/\*\*(.*?)\*\*/g, "$1")}
-                </Tag>
+                </CellTag>
               );
             })}
           </tr>
         );
         return;
       } else if (inTable) {
-        result.push(
-          <div key={`table-${i}`} className="my-8 overflow-auto rounded-2xl border border-slate-100 shadow-sm">
-            <table className="w-full min-w-[400px]">{tableRows}</table>
-          </div>
-        );
-        tableRows = [];
-        inTable = false;
+        flushTable(`table-${i}`);
       }
 
+      // --- Bullet list handling ---
       if (line.startsWith("- ") || line.startsWith("* ")) {
+        if (inList && isOrderedList) flushList(`list-${i}`);
         inList = true;
-        const text = line.replace(/^[-*] /, "").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+        isOrderedList = false;
+        const text = line.replace(/^[-*] /, "").replace(/\*\*(.*?)\*\*/g, "<strong class='text-[#13184f]'>$1</strong>");
         listItems.push(
           <li key={i} className="flex items-start gap-2.5 text-[15.5px] text-slate-600 font-medium mb-2.5 leading-relaxed">
             <span className="mt-2 size-1.5 rounded-full bg-[#1900ff] shrink-0" />
@@ -143,24 +90,27 @@ export function BlogPostPage({ post }: Props) {
           </li>
         );
         return;
-      } else if (inList) {
-        result.push(<ul key={`list-${i}`} className="my-4 space-y-1">{listItems}</ul>);
-        listItems = [];
-        inList = false;
       }
 
+      // --- Ordered list handling ---
       if (line.match(/^\d+\. /)) {
-        const text = line.replace(/^\d+\. /, "").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+        if (inList && !isOrderedList) flushList(`list-${i}`);
+        inList = true;
+        isOrderedList = true;
+        const num = line.match(/^(\d+)\./)?.[1] ?? "";
+        const text = line.replace(/^\d+\. /, "").replace(/\*\*(.*?)\*\*/g, "<strong class='text-[#13184f]'>$1</strong>");
         listItems.push(
           <li key={i} className="flex items-start gap-2.5 text-[15.5px] text-slate-600 font-medium mb-2.5 leading-relaxed">
-            <span className="text-[#1900ff] font-black text-[13px] mt-1 shrink-0">{line.match(/^(\d+)\./)?.[1]}.</span>
+            <span className="text-[#1900ff] font-black text-[13px] mt-1 shrink-0 w-4">{num}.</span>
             <span dangerouslySetInnerHTML={{ __html: text }} />
           </li>
         );
-        inList = true;
         return;
+      } else if (inList) {
+        flushList(`list-${i}`);
       }
 
+      // --- Headings ---
       if (line.startsWith("## ")) {
         result.push(
           <h2 key={i} className="text-2xl sm:text-[28px] font-black text-[#13184f] tracking-tight mt-14 mb-5 border-l-4 border-[#1900ff] pl-5">
@@ -177,28 +127,27 @@ export function BlogPostPage({ post }: Props) {
         );
         return;
       }
+
+      // --- Blank line ---
       if (line === "") {
         result.push(<div key={i} className="h-3" />);
         return;
       }
 
+      // --- Paragraph ---
       const inlineBold = line.replace(/\*\*(.*?)\*\*/g, "<strong class='text-[#13184f]'>$1</strong>");
       result.push(
-        <p key={i} className="text-[16.5px] text-slate-600 leading-[1.9] mb-2 font-[450]"
-          dangerouslySetInnerHTML={{ __html: inlineBold }} />
+        <p
+          key={i}
+          className="text-[16.5px] text-slate-600 leading-[1.9] mb-2 font-[450]"
+          dangerouslySetInnerHTML={{ __html: inlineBold }}
+        />
       );
     });
 
-    if (inTable && tableRows.length) {
-      result.push(
-        <div key="table-end" className="my-8 overflow-auto rounded-2xl border border-slate-100 shadow-sm">
-          <table className="w-full min-w-[400px]">{tableRows}</table>
-        </div>
-      );
-    }
-    if (inList && listItems.length) {
-      result.push(<ul key="list-end" className="my-4 space-y-1">{listItems}</ul>);
-    }
+    // Flush any remaining
+    if (inTable && tableRows.length) flushTable("table-end");
+    if (inList && listItems.length) flushList("list-end");
 
     return result;
   };
@@ -210,8 +159,12 @@ export function BlogPostPage({ post }: Props) {
         className="relative py-20 sm:py-28 overflow-hidden"
         style={{ backgroundColor: post.coverColor }}
       >
-        <div className="absolute inset-0 opacity-10"
-          style={{ backgroundImage: `radial-gradient(circle at 10% 60%, white 0%, transparent 50%), radial-gradient(circle at 85% 20%, white 0%, transparent 40%)` }}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `radial-gradient(circle at 10% 60%, white 0%, transparent 50%),
+                              radial-gradient(circle at 85% 20%, white 0%, transparent 40%)`,
+          }}
         />
         <div className="container-shell relative z-10 max-w-3xl">
           <Link
@@ -268,13 +221,12 @@ export function BlogPostPage({ post }: Props) {
           ))}
         </div>
 
-        <article className="prose-custom">
-          {processBody(post.body)}
-        </article>
+        <article>{processBody(post.body)}</article>
 
         {/* CTA Box */}
         <div className="mt-16 rounded-3xl bg-[#13184f] p-10 text-center relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10"
+          <div
+            className="absolute inset-0 opacity-10"
             style={{ backgroundImage: `radial-gradient(circle at 20% 50%, #1900ff 0%, transparent 60%)` }}
           />
           <div className="relative z-10">
@@ -304,7 +256,7 @@ export function BlogPostPage({ post }: Props) {
               {related.map((rp) => (
                 <Link href={`/blog/${rp.slug}`} key={rp.slug} className="group flex flex-col gap-4">
                   <div
-                    className="rounded-2xl flex items-center justify-center h-40 relative overflow-hidden transition-transform group-hover:scale-[1.02]"
+                    className="rounded-2xl flex items-center justify-center h-40 overflow-hidden transition-transform group-hover:scale-[1.02]"
                     style={{ backgroundColor: rp.coverColor }}
                   >
                     <span className="text-[56px] select-none drop-shadow">{rp.coverEmoji}</span>

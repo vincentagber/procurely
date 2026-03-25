@@ -160,18 +160,24 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
           <nav className="hidden items-center gap-8 lg:flex xl:gap-12">
             {navigation.primaryLinks.map((link) => {
               const href = link.href.startsWith("#") ? `/${link.href}` : link.href;
-              const isActive = pathname === "/" && link.href === "/";
+              const isActive =
+                href === "/"
+                  ? pathname === "/"
+                  : pathname.startsWith(href);
 
               return (
                 <Link
                   className={cn(
-                    "text-[15px] font-semibold leading-none text-primary-navy transition-interactive hover:text-primary-blue-500 xl:text-[17px]",
+                    "text-[15px] font-semibold leading-none text-primary-navy transition-interactive hover:text-primary-blue-500 xl:text-[17px] relative",
                     isActive && "text-primary-blue-500",
                   )}
                   href={href}
                   key={link.label}
                 >
                   {link.label}
+                  {isActive && (
+                    <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] rounded-full bg-primary-blue-500" />
+                  )}
                 </Link>
               );
             })}
@@ -195,7 +201,10 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
             <nav className="flex flex-col gap-4">
               {navigation.primaryLinks.map((link) => {
                 const href = link.href.startsWith("#") ? `/${link.href}` : link.href;
-                const isActive = pathname === "/" && link.href === "/";
+                const isActive =
+                  href === "/"
+                    ? pathname === "/"
+                    : pathname.startsWith(href);
 
                 return (
                   <Link
