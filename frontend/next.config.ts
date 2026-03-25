@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "ui-avatars.com",
+        pathname: "/api/**",
+      },
+    ],
+  },
   async headers() {
     return [
       {
@@ -34,11 +43,11 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline'", // unsafe-inline needed for Next.js inline scripts; tighten with nonces in a future pass
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval needed for Next.js turbopack/hmr development
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: blob:",
-              "connect-src 'self' http://127.0.0.1:8000 http://localhost:8000",
+              "img-src 'self' data: blob: https://*",
+              "connect-src 'self' http://127.0.0.1:8000 http://localhost:8000 api.procurely.com https://*",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

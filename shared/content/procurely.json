@@ -1,7 +1,7 @@
 {
   "site": {
     "name": "Procurely",
-    "tagline": "Building Material",
+    "tagline": "Building Materials",
     "primaryColor": "#1900ff",
     "surfaceColor": "#f6f7fd",
     "footerColor": "#13184f",
@@ -12,23 +12,54 @@
   },
   "navigation": {
     "socialLinks": [
-      { "label": "Instagram", "href": "#" },
-      { "label": "Facebook", "href": "#" },
-      { "label": "YouTube", "href": "#" },
-      { "label": "LinkedIn", "href": "#" },
-      { "label": "Pinterest", "href": "#" },
-      { "label": "TikTok", "href": "#" }
+      {
+        "label": "Instagram",
+        "href": "#"
+      },
+      {
+        "label": "Facebook",
+        "href": "#"
+      },
+      {
+        "label": "YouTube",
+        "href": "#"
+      },
+      {
+        "label": "LinkedIn",
+        "href": "#"
+      },
+      {
+        "label": "Pinterest",
+        "href": "#"
+      },
+      {
+        "label": "TikTok",
+        "href": "#"
+      }
     ],
     "primaryLinks": [
-      { "label": "Home", "href": "/" },
-      { "label": "About Us", "href": "/about" },
-      { "label": "How It Works", "href": "/how-it-works" },
-      { "label": "Buy Materials", "href": "/materials" },
-      { "label": "Blog", "href": "#" }
+      {
+        "label": "Home",
+        "href": "/"
+      },
+      {
+        "label": "How It Works",
+        "href": "/how-it-works"
+      },
+      {
+        "label": "Buy Materials",
+        "href": "/materials"
+      },
+      {
+        "label": "Blog",
+        "href": "#"
+      }
     ],
     "accountLinks": [
-      { "label": "Login", "href": "/login" },
-      { "label": "Orders", "href": "/account/orders" }
+      {
+        "label": "Login / Register",
+        "href": "/login"
+      }
     ],
     "submitCta": {
       "label": "Submit BOQ / Contact",
@@ -336,17 +367,48 @@
     "email": "sales@procurely.com",
     "phone": "+88015-88888-9999",
     "accountLinks": [
-      { "label": "My Account", "href": "/login" },
-      { "label": "Login / Register", "href": "/login" },
-      { "label": "About Procurely", "href": "/how-it-works" },
-      { "label": "Shop", "href": "/materials" }
+      {
+        "label": "My Account",
+        "href": "/account"
+      },
+      {
+        "label": "Login / Register",
+        "href": "/login"
+      },
+      {
+        "label": "About Procurely",
+        "href": "/about"
+      },
+      {
+        "label": "Shop",
+        "href": "/materials"
+      },
+      {
+        "label": "Suppliers",
+        "href": "/suppliers"
+      }
     ],
     "quickLinks": [
-      { "label": "Privacy Policy", "href": "/privacy-policy" },
-      { "label": "Terms Of Use", "href": "/terms-of-use" },
-      { "label": "Suppliers", "href": "/suppliers" },
-      { "label": "FAQ", "href": "/#faq" },
-      { "label": "Contact", "href": "/contact-quote" }
+      {
+        "label": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "label": "Terms Of Use",
+        "href": "/terms-of-use"
+      },
+      {
+        "label": "Become a Supplier",
+        "href": "/suppliers"
+      },
+      {
+        "label": "FAQ",
+        "href": "/#faq"
+      },
+      {
+        "label": "Contact",
+        "href": "/contact-quote"
+      }
     ],
     "qrImage": "/assets/design/footer-qr.png",
     "paymentsImage": "/assets/design/footer-payments.png"

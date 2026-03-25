@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+// Force refresh of shared content from procurely.json
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";

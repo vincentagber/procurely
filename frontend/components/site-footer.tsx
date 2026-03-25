@@ -103,7 +103,7 @@ export function SiteFooter({ footer, site }: SiteFooterProps) {
           </div>
 
           <div>
-            <p className="text-lg font-semibold">Quick Link</p>
+            <p className="text-lg font-semibold">Quick Links</p>
             <div className="mt-6 space-y-3 text-white/80">
               {footer.quickLinks.map((link) => (
                 <Link className="block transition hover:text-white" href={link.href} key={link.label}>
@@ -132,8 +132,8 @@ export function SiteFooter({ footer, site }: SiteFooterProps) {
         <div className="mt-14 flex flex-col gap-6 border-t border-white/10 pt-6 text-sm text-white/45 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-4">
             <span>Copyright © 2026 {site.name}. All rights reserved</span>
-            <Link href="#privacy">Privacy Policy</Link>
-            <Link href="#terms">Terms &amp; Conditions</Link>
+            <Link href="/privacy-policy">Privacy Policy</Link>
+            <Link href="/terms-of-use">Terms &amp; Conditions</Link>
           </div>
           <Image
             alt="Accepted payment methods"

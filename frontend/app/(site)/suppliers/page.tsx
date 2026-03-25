@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { Truck, Handshake, Users, ShieldCheck, Globe, Zap, BarChart3, TrendingUp, ArrowRight } from "lucide-react";
+import { Truck, Users, ShieldCheck, Globe, Zap, BarChart3, TrendingUp, Wallet, LayoutDashboard } from "lucide-react";
+import { SupplierOnboardingForm } from "./onboarding-form";
+import { SupplierHeroClient } from "./hero-client";
 
 export const metadata: Metadata = {
   title: "Sell on Procurely | Become a Verified Supplier",
@@ -9,108 +11,76 @@ export const metadata: Metadata = {
 export default function SuppliersPage() {
   return (
     <main className="bg-white">
-      {/* Hero */}
-      <section className="relative py-24 sm:py-32 bg-[#13184f] text-white">
-         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 70% 30%, #1900ff 0%, transparent 50%)" }} />
-         <div className="container-shell relative z-10 text-center max-w-4xl">
-            <h1 className="text-5xl sm:text-6xl font-black mb-8 leading-tight tracking-tight">Scale your <span className="text-[#ff6f4d]">distribution</span> across Africa.</h1>
-            <p className="text-xl text-white/50 font-medium mb-12 max-w-2xl mx-auto">Digitize your inventory and reach thousands of verified contractors and developers through Africa's most trusted procurement engine.</p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-               <a href="#onboard" className="w-full sm:w-auto px-10 py-5 bg-[#1900ff] hover:bg-[#1310cc] text-white font-bold rounded-2xl shadow-xl transition hover:-translate-y-1">Apply to Join</a>
-               <a href="/materials" className="w-full sm:w-auto px-10 py-5 bg-white/10 hover:bg-white/15 backdrop-blur-sm text-white font-bold rounded-2xl transition hover:-translate-y-1 border border-white/20">Check Current Catalog</a>
-            </div>
-         </div>
-      </section>
+      {/* Hero Section - Professional Split Layout (Client Component) */}
+      <SupplierHeroClient avatars={[1, 2, 3, 4]} />
 
-      {/* Why Sell */}
-      <section className="py-24 sm:py-32">
-         <div className="container-shell text-center mb-20">
-            <h2 className="text-4xl font-black text-[#13184f] mb-4">Why partner with Procurely?</h2>
-            <p className="text-slate-500 font-medium text-lg">We handle the tech and logistics, you focus on your supply chain.</p>
+      {/* Global Impact Grid */}
+      <section className="py-32">
+         <div className="container-shell mb-24 text-center">
+            <h2 className="text-4xl sm:text-5xl font-black text-[#13184f] tracking-tight mb-6">Built for Enterprise Scale</h2>
+            <p className="text-slate-500 font-medium text-lg max-w-2xl mx-auto">We connect localized inventory centers with cross-regional demand hubs.</p>
          </div>
-         <div className="container-shell grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 sm:gap-16">
+         <div className="container-shell grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16">
             {[
-               { Icon: Handshake, title: "Verified Demand", description: "Get direct access to purchase orders from thousands of construction firms and real estate developers." },
-               { Icon: Zap, title: "Instant Settlements", description: "Get paid on confirmation of orders. No more 60-day credit cycles for your business." },
-               { Icon: BarChart3, title: "Insight Dashboard", description: "Real-time visibility into market demand, trending materials, and price performance across regions." },
-               { Icon: Truck, title: "Integrated Logistics", description: "Our fulfillment network takes care of the transport. You simply fulfill the pick-up request." },
-               { Icon: ShieldCheck, title: "Reduced Fraud", description: "Verified buyers only. Our structured credit model ensures you're selling into a secure ecosystem." },
-               { Icon: Globe, title: "Regional Expansion", description: "Reach customers beyond your physical store footprint without opening new warehouses." }
-            ].map((feature, i) => (
-               <div key={i} className="bg-[#f0f1fa]/40 p-8 rounded-[2rem] border border-slate-50 transition hover:border-[#1900ff]/30">
-                  <div className="size-14 rounded-2xl bg-white text-[#1900ff] flex items-center justify-center mb-8 shadow-sm">
-                     <feature.Icon className="size-7" />
+               { Icon: Users, title: "Verified Demand", description: "Direct access to real BOM-based Purchase Orders from top-tier construction firms." },
+               { Icon: Wallet, title: "Instant Payments", description: "Receive settlements immediately upon fulfillment. Zero 60-day credit lag for suppliers." },
+               { Icon: BarChart3, title: "Real-time Insights", description: "Deep visibility into trending materials and regional price performance through our Dashboard." },
+               { Icon: Truck, title: "Integrated Logistics", description: "Our fulfillment fleet handles the last mile. You simply prep the inventory for pick-up." },
+               { Icon: ShieldCheck, title: "Enterprise Security", description: "Automated fraud detection and secure settlements ensure 100% transaction safety." },
+               { Icon: Globe, title: "Regional Expansion", description: "Scale your footprint beyond physical storefronts to reach projects nationwide." }
+            ].map((item, i) => (
+               <div key={i} className="relative group hover:-translate-y-2 transition-transform duration-500">
+                  <div className="size-16 rounded-3xl bg-[#f0f1fa] text-[#1900ff] flex items-center justify-center mb-8 shadow-sm group-hover:bg-[#1900ff] group-hover:text-white transition-colors duration-500">
+                     <item.Icon className="size-8" />
                   </div>
-                  <h3 className="text-xl font-bold text-[#13184f] mb-4">{feature.title}</h3>
-                  <p className="text-slate-500 font-medium leading-relaxed">{feature.description}</p>
+                  <h3 className="text-2xl font-black text-[#13184f] mb-4 tracking-tight">{item.title}</h3>
+                  <p className="text-slate-500 font-medium leading-relaxed">{item.description}</p>
                </div>
             ))}
          </div>
       </section>
 
-      {/* Steps Section */}
-      <section className="py-24 sm:py-32 bg-[#f6f7fd]">
-         <div className="container-shell flex flex-col lg:flex-row gap-16 items-center">
+      {/* Process Flow */}
+      <section className="py-32 bg-[#f6f7fd]">
+         <div className="container-shell flex flex-col lg:flex-row gap-24 items-center">
             <div className="w-full lg:w-1/2">
-               <h2 className="text-4xl sm:text-5xl font-black text-[#13184f] mb-8 tracking-tight">Simple onboarding process.</h2>
-               <div className="space-y-10">
+               <h2 className="text-4xl sm:text-6xl font-black text-[#13184f] mb-12 tracking-tight">Streamlined <br/>Onboarding.</h2>
+               <div className="space-y-12 relative">
+                  <div className="absolute left-[31px] top-6 bottom-6 w-[2px] bg-[#1900ff]/10" />
                   {[
-                     { step: "01", title: "Submit Application", description: "Send your company details, brand list, and catalog for verification." },
-                     { step: "02", title: "Verification Check", description: "Our team verifies your stock capacity and warehouse locations." },
-                     { step: "03", title: "Go Live", description: "Your products are listed on our marketplace and available to buyers immediately." }
-                  ].map((item, i) => (
-                     <div key={i} className="flex gap-6">
-                        <div className="text-3xl font-black text-[#1900ff] leading-none">{item.step}</div>
+                     { Icon: LayoutDashboard, title: "1. Digital Catalog", text: "Submit your verified inventory and current price list through our secure portal." },
+                     { Icon: ShieldCheck, title: "2. Site Verification", text: "Our field team confirms stock availability and warehouse logistics capacity." },
+                     { Icon: TrendingUp, title: "3. Market Active", text: "Go live on our marketplace to start receiving structured POs immediately." }
+                  ].map((step, i) => (
+                     <div key={i} className="flex gap-8 relative z-10">
+                        <div className="size-16 shrink-0 rounded-2xl bg-white text-[#1900ff] border border-slate-100 shadow-sm flex items-center justify-center">
+                           <step.Icon className="size-7" />
+                        </div>
                         <div>
-                           <h4 className="text-xl font-bold text-[#13184f] mb-2">{item.title}</h4>
-                           <p className="text-slate-500 font-medium leading-relaxed">{item.description}</p>
+                           <h4 className="text-xl font-bold text-[#13184f] mb-2">{step.title}</h4>
+                           <p className="text-slate-500 font-medium leading-relaxed">{step.text}</p>
                         </div>
                      </div>
                   ))}
                </div>
             </div>
-            <div className="w-full lg:w-1/2 p-1 rounded-[3rem] bg-gradient-to-tr from-[#13184f] to-[#1900ff]">
-               <div id="onboard" className="bg-white rounded-[2.9rem] p-10 sm:p-14">
-                  <h3 className="text-2xl font-black text-[#13184f] mb-8">Start Application</h3>
-                  <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                           <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Company Name</label>
-                           <input type="text" className="w-full bg-[#f6f7fd] border border-slate-100 rounded-xl px-4 py-4 outline-none focus:border-[#1900ff] transition" placeholder="e.g. Aliko Supplies Ltd" />
-                        </div>
-                        <div className="space-y-2">
-                           <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Inventory Focus</label>
-                           <select className="w-full bg-[#f6f7fd] border border-slate-100 rounded-xl px-4 py-4 outline-none focus:border-[#1900ff] transition">
-                              <option>Cement & Aggregates</option>
-                              <option>Iron & Rebar</option>
-                              <option>Finishing & Sanitary</option>
-                              <option>Paints & Chemicals</option>
-                              <option>General Hardware</option>
-                           </select>
-                        </div>
-                     </div>
-                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Official Email</label>
-                        <input type="email" className="w-full bg-[#f6f7fd] border border-slate-100 rounded-xl px-4 py-4 outline-none focus:border-[#1900ff] transition" placeholder="partners@company.com" />
-                     </div>
-                     <button type="button" className="w-full h-16 bg-[#13184f] hover:bg-[#1900ff] text-white font-bold rounded-2xl shadow-lg transition flex items-center justify-center gap-3">
-                        Submit Application <ArrowRight className="size-5" />
-                     </button>
-                     <p className="text-[11px] text-center text-slate-400 font-medium">By submitting, you agree to our <a href="/terms-of-use" className="underline">Partnership Agreement</a>.</p>
-                  </form>
-               </div>
+            
+            <div className="w-full lg:w-1/2 p-1.5 rounded-[3.5rem] bg-gradient-to-tr from-[#13184f] to-[#1900ff] shadow-3xl">
+               <SupplierOnboardingForm />
             </div>
          </div>
       </section>
 
-      {/* Quote Banner */}
-      <section className="py-24 sm:py-32">
-         <div className="container-shell bg-[#fde8df] rounded-[3rem] p-12 sm:p-20 flex flex-col lg:flex-row items-center justify-between gap-12 text-center lg:text-left">
-            <div className="max-w-xl">
-               <h2 className="text-4xl sm:text-5xl font-black text-[#13184f] mb-6 tracking-tight">Need help with mass onboarding?</h2>
-               <p className="text-lg text-slate-600 font-medium leading-relaxed">If you manage multiple regional warehouses or have a complex ERP system, our Enterprise Integration team is here to help.</p>
+      {/* Final Banner */}
+      <section className="py-32">
+         <div className="container-shell bg-[#13184f] rounded-[4rem] p-16 sm:p-24 text-center group overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-tr from-[#1900ff]/40 to-transparent pointer-events-none" />
+            <h3 className="text-4xl sm:text-6xl font-black text-white tracking-tight mb-10 relative z-10">Ready to lead the future of building?</h3>
+            <div className="flex justify-center relative z-10">
+               <a href="#onboard" className="h-16 px-12 bg-white text-[#13184f] font-bold rounded-2xl shadow-xl transition hover:-translate-y-1 flex items-center gap-3">
+                  Talk to a Partnership Manager <TrendingUp className="size-5" />
+               </a>
             </div>
-            <a href="/contact-quote" className="inline-flex h-14 items-center gap-2 rounded-[14px] bg-[#13184f] px-10 text-[16px] font-bold text-white transition hover:bg-[#1900ff]">Talk to Sales</a>
          </div>
       </section>
     </main>

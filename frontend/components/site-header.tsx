@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Heart, Menu, Search, ShoppingBag, UserRound } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag, CircleUser } from "lucide-react";
 import { startTransition, useState } from "react";
 
 import { useUi } from "@/components/ui/ui-provider";
@@ -48,7 +48,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
           </div>
 
           <div className="hidden items-center gap-2 text-sm font-semibold text-text-inverse md:flex">
-            <UserRound className="size-4 stroke-[1.9]" />
+            <CircleUser className="size-4 stroke-[1.9]" />
             {navigation.accountLinks.map((link) => (
               <Link
                 className="transition-interactive hover:text-white/80"
@@ -127,11 +127,11 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
               href={
                 typeof window !== "undefined" &&
                 window.localStorage.getItem("procurely-auth-token")
-                  ? "/account/orders"
+                  ? "/account"
                   : "/login"
               }
             >
-              <UserRound className="size-[30px] stroke-[1.85]" />
+              <CircleUser className="size-[30px] stroke-[1.85]" />
             </Link>
 
             <button
