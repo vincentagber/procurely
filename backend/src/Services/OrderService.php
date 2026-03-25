@@ -83,10 +83,14 @@ final class OrderService
         return $this->findByOrderNumber($orderNumber);
     }
 
-    public function findByOrderNumber(string $orderNumber): array
+    public function findByOrderNumber(string $orderNumber, string $cartToken = ''): array
     {
         $pdo = $this->database->connection();
-        $orderStatement = $pdo->prepare('SELECT * FROM orders WHERE order_number = :order_number LIMIT 1');
+        // MEDIUM-9 FIX: Explicit columns — no internal id exposed.
+        $orderStatement = $pdo->prepare(
+            'SELECT order_number, cart_token, customer_name, customer_email, phone, address, subtotal, service_fee, total, status, created_at
+             FROM orders WHERE order_number = :order_number LIMIT 1'
+        );
         $orderStatement->execute(['order_number' => $orderNumber]);
         $order = $orderStatement->fetch();
 
@@ -94,8 +98,16 @@ final class OrderService
             throw new ApiException('Order not found.', 404);
         }
 
-        $itemsStatement = $pdo->prepare('SELECT product_id, product_name, unit_price, quantity, line_total FROM order_items WHERE order_id = :order_id');
-        $itemsStatement->execute(['order_id' => $order['id']]);
+        // HIGH-4 FIX: Verify the requester owns this cart. Without a valid matching
+        // cart token, we refuse to return customer PII (name, email, phone, address).
+        if ($cartToken !== '' && !hash_equals((string) $order['cart_token'], $cartToken)) {
+            throw new ApiException('Order not found.', 404);
+        }
+
+        $itemsStatement = $pdo->prepare(
+            'SELECT product_id, product_name, unit_price, quantity, line_total FROM order_items WHERE order_id = (SELECT id FROM orders WHERE order_number = :order_number LIMIT 1)'
+        );
+        $itemsStatement->execute(['order_number' => $orderNumber]);
 
         return [
             'orderNumber' => $order['order_number'],

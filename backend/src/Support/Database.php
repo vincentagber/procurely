@@ -23,13 +23,15 @@ final class Database
 
         $directory = dirname($this->databasePath);
         if (!is_dir($directory)) {
-            mkdir($directory, 0777, true);
+            // FIX HIGH-5: 0777 was world-writable. 0750 = owner rwx, group rx, others none.
+            mkdir($directory, 0750, true);
         }
 
         $this->connection = new PDO(sprintf('sqlite:%s', $this->databasePath));
         $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         $this->connection->exec('PRAGMA foreign_keys = ON');
+        $this->connection->exec('PRAGMA journal_mode = WAL');
 
         $this->migrate($this->connection);
 
@@ -60,7 +62,8 @@ final class Database
             CREATE TABLE IF NOT EXISTS password_reset_requests (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               email TEXT NOT NULL,
-              token TEXT NOT NULL,
+              token_hash TEXT NOT NULL,
+              expires_at TEXT NOT NULL,
               created_at TEXT NOT NULL
             );
 
@@ -117,9 +120,11 @@ final class Database
             );
 
             CREATE INDEX IF NOT EXISTS idx_user_tokens_user_id ON user_tokens (user_id);
-            CREATE INDEX IF NOT EXISTS idx_password_reset_email_created_at ON password_reset_requests (email, created_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_user_tokens_token ON user_tokens (token);
+            CREATE INDEX IF NOT EXISTS idx_password_reset_email ON password_reset_requests (email, expires_at DESC);
             CREATE INDEX IF NOT EXISTS idx_cart_items_cart_token ON cart_items (cart_token);
             CREATE INDEX IF NOT EXISTS idx_orders_order_number ON orders (order_number);
+            CREATE INDEX IF NOT EXISTS idx_orders_cart_token ON orders (cart_token);
             CREATE INDEX IF NOT EXISTS idx_quote_requests_email ON quote_requests (email);
             SQL
         );
