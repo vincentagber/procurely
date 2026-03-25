@@ -9,6 +9,19 @@ import type {
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
+// MEDIUM-7 FIX: In production, reject any API base URL that isn't HTTPS.
+// This fails loudly during build/startup rather than silently sending
+// customer credentials over plaintext HTTP in production.
+if (
+  typeof process !== "undefined" &&
+  process.env.NODE_ENV === "production" &&
+  apiBaseUrl.startsWith("http://")
+) {
+  throw new Error(
+    `[Procurely] NEXT_PUBLIC_API_BASE_URL must use HTTPS in production. Got: ${apiBaseUrl}`,
+  );
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
 

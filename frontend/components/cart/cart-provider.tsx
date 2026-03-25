@@ -27,7 +27,29 @@ type CartContextValue = {
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
+
+// MEDIUM-11 FIX: Cart token moved from localStorage → sessionStorage.
+// Rationale: localStorage tokens persist indefinitely and are accessible to
+// any same-origin script (e.g. via XSS). sessionStorage tokens expire when
+// the browser tab closes, significantly reducing the XSS exposure window.
+// Cross-tab sync is handled via BroadcastChannel below.
 const cartStorageKey = "procurely-cart-token";
+
+function readCartToken(): string | null {
+  try {
+    return window.sessionStorage.getItem(cartStorageKey);
+  } catch {
+    return null;
+  }
+}
+
+function writeCartToken(token: string): void {
+  try {
+    window.sessionStorage.setItem(cartStorageKey, token);
+  } catch {
+    // Storage quota exceeded or private browsing restriction — degrade silently.
+  }
+}
 
 export type CartProviderProps = {
   children: ReactNode;
@@ -116,11 +138,35 @@ export function CartProvider({
       return;
     }
 
-    const storedToken = window.localStorage.getItem(cartStorageKey);
+    // MEDIUM-11: Use sessionStorage (see above). Generate a new UUID if none exists.
+    const storedToken = readCartToken();
     const nextToken = storedToken || window.crypto.randomUUID();
-    window.localStorage.setItem(cartStorageKey, nextToken);
+    writeCartToken(nextToken);
     setCartToken(nextToken);
     void hydrateCart(nextToken);
+
+    // Cross-tab sync: when another tab writes a new cart token (e.g. after a
+    // page refresh that generates a fresh session), pick it up here.
+    const channel = typeof BroadcastChannel !== "undefined"
+      ? new BroadcastChannel("procurely-cart")
+      : null;
+
+    if (channel) {
+      channel.onmessage = (event: MessageEvent<{ cartToken: string }>) => {
+        if (typeof event.data?.cartToken === "string" && event.data.cartToken !== nextToken) {
+          writeCartToken(event.data.cartToken);
+          setCartToken(event.data.cartToken);
+          void hydrateCart(event.data.cartToken);
+        }
+      };
+      // Announce this tab's token so other tabs can sync.
+      channel.postMessage({ cartToken: nextToken });
+    }
+
+    return () => {
+      channel?.close();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrateFromApi, initialCart, initialCartToken]);
 
   async function addItem(productId: string, quantity = 1) {
