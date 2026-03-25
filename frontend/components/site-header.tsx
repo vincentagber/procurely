@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Heart, Menu, Search, ShoppingBag, CircleUser } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag, CircleUser, X } from "lucide-react";
 import { startTransition, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { useUi } from "@/components/ui/ui-provider";
 import { cn } from "@/lib/format";
@@ -66,7 +67,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
         <div
           className={cn(
             headerShellClassName,
-            "grid min-h-[88px] items-center gap-4 py-4 sm:gap-5 lg:min-h-[92px] lg:grid-cols-[auto_minmax(420px,680px)_auto]",
+            "grid grid-cols-2 lg:grid-cols-[auto_minmax(420px,680px)_auto] min-h-[80px] items-center gap-y-4 gap-x-2 py-4 sm:gap-5 lg:min-h-[92px]",
           )}
         >
           <Link className="shrink-0" href="/">
@@ -81,7 +82,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
           </Link>
 
           <form
-            className="order-3 flex h-[46px] w-full overflow-hidden rounded-full bg-surface-raised shadow-field lg:order-none"
+            className="order-3 col-span-2 lg:col-span-1 lg:order-none flex h-[46px] w-full overflow-hidden rounded-full bg-surface-raised shadow-field lg:order-none"
             onSubmit={(event) => {
               event.preventDefault();
               const nextQuery = query.trim();
@@ -196,46 +197,96 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
           </Link>
         </div>
 
-        {menuOpen ? (
-          <div
-            className={cn(
-              headerShellClassName,
-              "border-t border-neutral-200/70 py-5 lg:hidden",
-            )}
-          >
-            <nav className="flex flex-col gap-4">
-              {navigation.primaryLinks.map((link) => {
-                const href = link.href.startsWith("#") ? `/${link.href}` : link.href;
-                const isActive =
-                  href === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(href);
+        <AnimatePresence>
+          {menuOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMenuOpen(false)}
+                className="fixed inset-0 z-[100] bg-slate-950/45 backdrop-blur-sm lg:hidden"
+              />
+              
+              {/* Slide-out Drawer */}
+              <motion.aside
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="fixed right-0 top-0 bottom-0 z-[110] w-[85%] max-w-[320px] bg-white shadow-2xl lg:hidden flex flex-col"
+              >
+                <div className="flex items-center justify-between p-6 border-b border-slate-50">
+                   <div className="flex flex-col">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#1900ff] mb-0.5">Menu</span>
+                      <p className="text-xl font-black text-[#13184f] tracking-tight">Procurely™</p>
+                   </div>
+                   <button 
+                    onClick={() => setMenuOpen(false)}
+                    className="size-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-[#13184f] transition"
+                   >
+                     <X className="size-6" />
+                   </button>
+                </div>
 
-                return (
+                <nav className="flex-1 overflow-y-auto px-6 py-8">
+                  <div className="space-y-6">
+                    {navigation.primaryLinks.map((link) => {
+                      const href = link.href.startsWith("#") ? `/${link.href}` : link.href;
+                      const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+                      return (
+                        <Link
+                          key={link.label}
+                          href={href}
+                          onClick={() => setMenuOpen(false)}
+                          className={cn(
+                            "flex items-center justify-between group py-2",
+                            isActive ? "text-[#1900ff]" : "text-[#13184f]"
+                          )}
+                        >
+                          <span className="text-lg font-bold tracking-tight">{link.label}</span>
+                          <div className={cn(
+                            "size-2 rounded-full transition-all duration-300",
+                            isActive ? "bg-[#1900ff] scale-100" : "bg-slate-200 scale-50 group-hover:scale-100"
+                          )} />
+                        </Link>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-12 pt-10 border-t border-slate-50 space-y-6">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Account & Identity</p>
+                    <div className="grid grid-cols-1 gap-4">
+                       {navigation.accountLinks.map((link) => (
+                         <Link
+                           key={link.label}
+                           href={link.href}
+                           onClick={() => setMenuOpen(false)}
+                           className="flex items-center gap-4 p-4 rounded-2xl bg-[#f6f7fd] border border-[#f0f1fa] text-[#13184f] hover:bg-[#1900ff] hover:text-white transition group"
+                         >
+                           <CircleUser className="size-5" />
+                           <span className="font-bold text-sm">{link.label}</span>
+                         </Link>
+                       ))}
+                    </div>
+                  </div>
+                </nav>
+
+                <div className="p-6 border-t border-slate-50">
                   <Link
-                    className={cn(
-                      "text-base font-semibold text-primary-navy transition-interactive hover:text-primary-blue-500",
-                      isActive && "text-primary-blue-500",
-                    )}
-                    href={href}
-                    key={link.label}
+                    className="flex h-[60px] w-full items-center justify-center rounded-[18px] bg-[#13184f] text-[15px] font-bold text-white shadow-lg shadow-indigo-500/10 transition active:scale-[0.98]"
+                    href={navigation.submitCta.href}
                     onClick={() => setMenuOpen(false)}
                   >
-                    {link.label}
+                    {navigation.submitCta.label}
                   </Link>
-                );
-              })}
-            </nav>
-
-            <Link
-              className="mt-5 inline-flex h-12 items-center justify-center rounded-[12px] bg-primary-blue px-6 text-sm font-semibold text-text-inverse shadow-button transition-interactive hover:bg-primary-blue-600"
-              href={navigation.submitCta.href}
-              onClick={() => setMenuOpen(false)}
-            >
-              {navigation.submitCta.label}
-            </Link>
-          </div>
-        ) : null}
+                </div>
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </header>
   );

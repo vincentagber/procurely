@@ -22,7 +22,7 @@ export function SiteFooter({ footer, site }: SiteFooterProps) {
   return (
     <footer className="bg-[var(--color-brand-navy)] text-white">
       <div className="container-shell py-14 sm:py-16">
-        <div className="grid gap-10 lg:grid-cols-[1.15fr_1fr_1fr_1fr_1fr]">
+        <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[1.15fr_1fr_1fr_1fr_1fr]">
           <div>
             <Image
               alt={site.name}

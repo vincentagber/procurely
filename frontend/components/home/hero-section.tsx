@@ -50,16 +50,16 @@ export function HeroSection({ hero, features }: HeroSectionProps) {
           )}
         >
           <Reveal className="max-w-[520px]" distance={44}>
-            <h1 className="flex flex-col gap-[3.5px] uppercase text-white w-[518px] max-w-full">
-              <span className="block font-black text-4xl sm:text-5xl md:text-[50px] leading-none tracking-tight">
+            <h1 className="flex flex-col gap-[1.5px] uppercase text-white w-full max-w-[550px]">
+              <span className="block font-black text-[10vw] sm:text-5xl md:text-[52px] leading-[1.05] tracking-tight">
                 {firstLine}
               </span>
               {trailingLine ? (
-                <span className="flex flex-wrap items-center gap-x-[6px] gap-y-1 leading-none mt-1">
-                  <span className="font-black text-[38px] sm:text-5xl md:text-[50px] tracking-tight">
+                <span className="flex flex-wrap items-center gap-x-[6px] gap-y-1 leading-[1.05] mt-0.5">
+                  <span className="font-black text-[10vw] sm:text-5xl md:text-[52px] tracking-tight">
                     DEVELOPERS.
                   </span>
-                  <span className="font-black text-[38px] sm:text-5xl md:text-[50px] tracking-tight text-transparent [-webkit-text-stroke:1px_white] sm:[-webkit-text-stroke:1.5px_white] opacity-95">
+                  <span className="font-black text-[10vw] sm:text-5xl md:text-[52px] tracking-tight text-transparent [-webkit-text-stroke:1px_white] sm:[-webkit-text-stroke:1.5px_white] opacity-95">
                     {trailingLine}
                   </span>
                 </span>
