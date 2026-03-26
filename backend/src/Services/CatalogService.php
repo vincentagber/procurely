@@ -11,6 +11,7 @@ use Procurely\Api\Support\Input;
 final class CatalogService
 {
     public function __construct(
+        private readonly \Procurely\Api\Support\Database $database,
         private readonly ContentStore $contentStore,
     ) {
     }
@@ -124,6 +125,12 @@ final class CatalogService
         if ($product === null) {
             throw new ApiException('Product not found.', 404);
         }
+
+        $stmt = $this->database->connection()->prepare('SELECT stock_level FROM inventory WHERE product_id = :id LIMIT 1');
+        $stmt->execute(['id' => $product['id']]);
+        $row = $stmt->fetch();
+
+        $product['stockLevel'] = $row !== false ? (int) $row['stock_level'] : 0;
 
         return $product;
     }

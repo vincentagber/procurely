@@ -194,3 +194,13 @@ export type Order = {
     lineTotal: number;
   }>;
 };
+
+export type Wishlist = {
+  wishlistToken: string;
+  items: Product[];
+};
+
+export type WishlistItemPayload = {
+  wishlistToken: string;
+  productId: string;
+};

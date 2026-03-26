@@ -7,6 +7,8 @@ namespace Procurely\Api\Support;
 final class ContentStore
 {
     private ?array $content = null;
+    private ?array $productsById = null;
+    private ?array $productsBySlug = null;
 
     public function __construct(
         private readonly string $contentPath,
@@ -41,24 +43,35 @@ final class ContentStore
 
     public function productById(string $id): ?array
     {
-        foreach ($this->products() as $product) {
-            if (($product['id'] ?? null) === $id) {
-                return $product;
-            }
+        if ($this->productsById === null) {
+            $this->buildIndexes();
         }
 
-        return null;
+        return $this->productsById[$id] ?? null;
     }
 
     public function productBySlug(string $slug): ?array
     {
-        foreach ($this->products() as $product) {
-            if (($product['slug'] ?? null) === $slug) {
-                return $product;
-            }
+        if ($this->productsBySlug === null) {
+            $this->buildIndexes();
         }
 
-        return null;
+        return $this->productsBySlug[$slug] ?? null;
+    }
+
+    private function buildIndexes(): void
+    {
+        $this->productsById = [];
+        $this->productsBySlug = [];
+
+        foreach ($this->products() as $product) {
+            if (isset($product['id'])) {
+                $this->productsById[(string) $product['id']] = $product;
+            }
+            if (isset($product['slug'])) {
+                $this->productsBySlug[(string) $product['slug']] = $product;
+            }
+        }
     }
 
     public function productsByIds(array $ids): array

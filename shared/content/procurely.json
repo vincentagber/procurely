@@ -372,6 +372,10 @@
         "href": "/account"
       },
       {
+        "label": "Track Your Order",
+        "href": "/track-order"
+      },
+      {
         "label": "Login / Register",
         "href": "/login"
       },
@@ -403,7 +407,7 @@
       },
       {
         "label": "FAQ",
-        "href": "/#faq"
+        "href": "/faq"
       },
       {
         "label": "Contact",

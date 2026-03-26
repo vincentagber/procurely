@@ -28,11 +28,7 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-// MEDIUM-11 FIX: Cart token moved from localStorage → sessionStorage.
-// Rationale: localStorage tokens persist indefinitely and are accessible to
-// any same-origin script (e.g. via XSS). sessionStorage tokens expire when
-// the browser tab closes, significantly reducing the XSS exposure window.
-// Cross-tab sync is handled via BroadcastChannel below.
+// Cart tokens are stored in sessionStorage to limit XSS exposure cross-session.
 const cartStorageKey = "procurely-cart-token";
 
 function readCartToken(): string | null {

@@ -6,15 +6,19 @@ import type { Product } from "@/lib/types";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "@/components/cart/cart-provider";
+import { useWishlist } from "@/components/wishlist-provider";
 
 export function WishlistClient({ suggestedProducts }: { suggestedProducts: Product[] }) {
-  // Empty state by default as requested.
-  const [wishlist, setWishlist] = useState<Product[]>([]);
-  const { addItem, loading } = useCart();
+  const { wishlist, addItem: addToCart, loading: cartLoading, removeItem: removeFromWishlist } = useWishlist();
+  const { addItem: addCartItem } = useCart();
 
-  const handleMoveAllToBag = () => {
-    wishlist.forEach(product => void addItem(product.id));
-    setWishlist([]); 
+  const items = wishlist?.items ?? [];
+
+  const handleMoveAllToBag = async () => {
+    for (const product of items) {
+      await addCartItem(product.id);
+      await removeFromWishlist(product.id);
+    }
   };
 
   return (
@@ -22,11 +26,11 @@ export function WishlistClient({ suggestedProducts }: { suggestedProducts: Produ
       {/* Wishlist Section */}
       <div className="mb-24">
         <div className="mb-12 flex items-center justify-between">
-          <h2 className="text-3xl font-extrabold tracking-tight text-[#13184f]">Wishlist ({wishlist.length})</h2>
-          {wishlist.length > 0 && (
+          <h2 className="text-3xl font-extrabold tracking-tight text-[#13184f]">Wishlist ({items.length})</h2>
+          {items.length > 0 && (
             <button 
               onClick={handleMoveAllToBag}
-              disabled={loading}
+              disabled={cartLoading}
               className="rounded-xl border border-slate-300 bg-white px-8 py-4 font-bold text-[#13184f] shadow-sm transition hover:bg-slate-50 hover:shadow-md disabled:opacity-50"
             >
               Move All To Bag
@@ -34,9 +38,9 @@ export function WishlistClient({ suggestedProducts }: { suggestedProducts: Produ
           )}
         </div>
 
-        {wishlist.length > 0 ? (
+        {items.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {wishlist.map((product, idx) => (
+            {items.map((product, idx) => (
               <div key={product.id} className="relative group">
                 <ProductCard product={product} index={idx} />
               </div>

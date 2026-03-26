@@ -7,7 +7,7 @@ import type {
 } from "@/lib/types";
 
 const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
 // MEDIUM-7 FIX: In production, reject any API base URL that isn't HTTPS.
 // This fails loudly during build/startup rather than silently sending
@@ -23,15 +23,18 @@ if (
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+
+  if (init?.body) {
+    headers.set("Content-Type", "application/json");
+  }
+
   let response: Response;
 
   try {
     response = await fetch(`${apiBaseUrl}${path}`, {
       ...init,
-      headers: {
-        "Content-Type": "application/json",
-        ...init?.headers,
-      },
+      headers,
       signal: init?.signal ?? AbortSignal.timeout(8000),
     });
   } catch (error) {
@@ -39,7 +42,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       throw new Error("The request timed out. Please try again.");
     }
 
-    throw new Error("Unable to reach the Procurely API.");
+    console.error(`[Procurely API] Fetch failed to ${path}:`, error);
+    throw new Error("Unable to reach the Procurely API. Ensure the backend is running and CORS is allowed.");
   }
 
   const contentType = response.headers.get("content-type") ?? "";
@@ -145,9 +149,30 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
-  getOrder(orderNumber: string, cartToken: string) {
-    const params = cartToken ? `?cartToken=${encodeURIComponent(cartToken)}` : "";
-    return request<Order>(`/api/orders/${encodeURIComponent(orderNumber)}${params}`);
+  getOrder(orderNumber: string, cartToken: string = "", email: string = "") {
+    const params = new URLSearchParams();
+    if (cartToken) params.set("cartToken", cartToken);
+    if (email) params.set("email", email);
+    
+    const queryString = params.toString() ? `?${params.toString()}` : "";
+    return request<Order>(`/api/orders/${encodeURIComponent(orderNumber)}${queryString}`);
+  },
+  getWishlist(wishlistToken: string) {
+    return request<{ wishlistToken: string; items: any[] }>(`/api/wishlist/${wishlistToken}`);
+  },
+  addWishlistItem(payload: { wishlistToken: string; productId: string }) {
+    return request<{ wishlistToken: string; items: any[] }>("/api/wishlist/items", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  removeWishlistItem(payload: { wishlistToken: string; productId: string }) {
+    return request<{ wishlistToken: string; items: any[] }>(
+      `/api/wishlist/items/${payload.productId}?token=${encodeURIComponent(payload.wishlistToken)}`,
+      {
+        method: "DELETE",
+      },
+    );
   },
 };
 

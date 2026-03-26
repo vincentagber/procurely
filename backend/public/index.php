@@ -37,40 +37,54 @@ if (!str_starts_with($databasePath, DIRECTORY_SEPARATOR)) {
 
 $contentStore = new ContentStore(dirname($rootPath) . '/shared/content/procurely.json');
 $database = new Database($databasePath);
-$catalogService = new CatalogService($contentStore);
+$catalogService = new CatalogService($database, $contentStore);
 $authService = new AuthService($database, $debug);
 $cartService = new CartService($database, $contentStore);
-$orderService = new OrderService($database, $cartService);
+$paymentProcessor = new \Procurely\Api\Support\PaymentProcessor($database);
+$orderService = new OrderService($database, $cartService, $paymentProcessor);
 $engagementService = new EngagementService($database);
+$wishlistService = new \Procurely\Api\Services\WishlistService($database, $contentStore);
 
 $app = AppFactory::create();
 $app->addBodyParsingMiddleware();
 $app->options('/{routes:.+}', static fn (ServerRequestInterface $request, ResponseInterface $response): ResponseInterface => $response);
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
-// MEDIUM-10 FIX: Validate origin against allowlist instead of blindly echoing.
-$app->add(function (ServerRequestInterface $request, $handler) use ($frontendUrl): ResponseInterface {
-    $response = $request->getMethod() === 'OPTIONS' ? new Response() : $handler->handle($request);
+$app->add(function (ServerRequestInterface $request, $handler) use ($frontendUrl, $debug): ResponseInterface {
+    $origin = $request->getHeaderLine('Origin');
+    $isLocal = str_contains($origin, 'localhost') || str_contains($origin, '127.0.0.1');
+    $allowedOrigins = [$frontendUrl, 'http://localhost:3000', 'http://127.0.0.1:3000'];
+    
+    // In debug mode, be liberal with local origins to avoid port-collissions/mismatch errors.
+    $responseOrigin = ($isLocal && $debug) ? $origin : (in_array($origin, $allowedOrigins, true) ? $origin : $frontendUrl);
+
+    if ($request->getMethod() === 'OPTIONS') {
+        $response = new Response();
+        return $response
+            ->withStatus(204)
+            ->withHeader('Access-Control-Allow-Origin', $responseOrigin)
+            ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
+            ->withHeader('Access-Control-Allow-Credentials', 'true')
+            ->withHeader('Vary', 'Origin');
+    }
+
+    $response = $handler->handle($request);
 
     return $response
-        ->withHeader('Access-Control-Allow-Origin', $frontendUrl)
-        ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        ->withHeader('Access-Control-Allow-Origin', $responseOrigin)
+        ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
         ->withHeader('Access-Control-Allow-Credentials', 'true')
         ->withHeader('Vary', 'Origin');
 });
 
-// ─── Rate limiter helper closure ───────────────────────────────────────────────
-/**
- * Apply a tight rate limit to a single route group.
- * CRITICAL-2 FIX: Auth endpoints limited to 10 req/min per IP.
- */
-$authRateLimit = (new RateLimiter(10, 60, 'auth'))->middleware();
+// ─── Rate limits ───────────────────────────────────────────────────────────────
+$authRateLimit = (new RateLimiter($database, 10, 60, 'auth'))->middleware();
 
-// ─── Health ────────────────────────────────────────────────────────────────────
-$app->get('/api/health', static function (ServerRequestInterface $request, ResponseInterface $response): ResponseInterface {
-    return JsonResponder::success($response, ['status' => 'ok']);
-});
+// ─── Direct limits for intensive operations ──────────────────────────────────
+$orderRateLimit = (new RateLimiter($database, 5, 60, 'order'))->middleware();
+$searchRateLimit = (new RateLimiter($database, 30, 60, 'search'))->middleware();
 
 // ─── Catalog ───────────────────────────────────────────────────────────────────
 $app->get('/api/homepage', static function (ServerRequestInterface $request, ResponseInterface $response) use ($catalogService): ResponseInterface {
@@ -79,13 +93,13 @@ $app->get('/api/homepage', static function (ServerRequestInterface $request, Res
 
 $app->get('/api/products', static function (ServerRequestInterface $request, ResponseInterface $response) use ($catalogService): ResponseInterface {
     return JsonResponder::success($response, $catalogService->listProducts(RequestData::query($request)));
-});
+})->add($searchRateLimit);
 
 $app->get('/api/products/{slug}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($catalogService): ResponseInterface {
     return JsonResponder::success($response, $catalogService->productBySlug((string) ($args['slug'] ?? '')));
 });
 
-// ─── Auth (rate-limited) ───────────────────────────────────────────────────────
+// ─── Auth ──────────────────────────────────────────────────────────────────────
 $app->post('/api/auth/register', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
     return JsonResponder::success($response, $authService->register(RequestData::body($request)), 201);
 })->add($authRateLimit);
@@ -98,7 +112,6 @@ $app->post('/api/auth/forgot-password', static function (ServerRequestInterface 
     return JsonResponder::success($response, $authService->forgotPassword(RequestData::body($request)));
 })->add($authRateLimit);
 
-// MEDIUM-8 FIX: Logout endpoint to invalidate token.
 $app->post('/api/auth/logout', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService, $database): ResponseInterface {
     $authHeader = $request->getHeaderLine('Authorization');
     $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
@@ -129,18 +142,46 @@ $app->delete('/api/cart/items/{id}', static function (ServerRequestInterface $re
     return JsonResponder::success($response, $cartService->removeItem((int) ($args['id'] ?? 0), $token));
 });
 
+// ─── Wishlist ──────────────────────────────────────────────────────────────────
+$app->get('/api/wishlist/{token}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($wishlistService): ResponseInterface {
+    return JsonResponder::success($response, $wishlistService->getWishlist((string) ($args['token'] ?? '')));
+});
+
+$app->post('/api/wishlist/items', static function (ServerRequestInterface $request, ResponseInterface $response) use ($wishlistService): ResponseInterface {
+    return JsonResponder::success($response, $wishlistService->addItem(RequestData::body($request)), 201);
+});
+
+$app->delete('/api/wishlist/items/{productId}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($wishlistService): ResponseInterface {
+    $token = (string) (RequestData::query($request)['token'] ?? '');
+    return JsonResponder::success($response, $wishlistService->removeItem((string) ($args['productId'] ?? ''), $token));
+});
+
 // ─── Orders ────────────────────────────────────────────────────────────────────
 $app->post('/api/checkout', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService): ResponseInterface {
     return JsonResponder::success($response, $orderService->checkout(RequestData::body($request)), 201);
+})->add($orderRateLimit);
+
+$app->post('/api/webhooks/paystack', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService): ResponseInterface {
+    $payload = (string) $request->getBody();
+    $signature = $request->getHeaderLine('x-paystack-signature');
+    $paystack = new \Procurely\Api\Support\Paystack();
+
+    if (!$paystack->isValidSignature($payload, $signature)) {
+        return JsonResponder::error($response, 'Invalid signature', 401);
+    }
+
+    $data = json_decode($payload, true);
+    return JsonResponder::success($response, $orderService->handleWebhook($data));
 });
 
-// HIGH-4 FIX: cartToken query param now required to match the order before returning PII.
 $app->get('/api/orders/{orderNumber}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($orderService): ResponseInterface {
     $cartToken = (string) (RequestData::query($request)['cartToken'] ?? '');
+    $email = (string) (RequestData::query($request)['email'] ?? '');
 
     return JsonResponder::success($response, $orderService->findByOrderNumber(
         (string) ($args['orderNumber'] ?? ''),
         $cartToken,
+        $email,
     ));
 });
 
@@ -167,7 +208,6 @@ $errorMiddleware->setDefaultErrorHandler(
             return JsonResponder::error($response, $exception->getMessage(), $exception->statusCode(), $exception->details());
         }
 
-        // CRITICAL-1 related: Never leak exception class or stack traces in production.
         $details = $displayErrorDetails ? ['type' => $exception::class] : [];
 
         return JsonResponder::error($response, 'Unexpected server error.', 500, $details);

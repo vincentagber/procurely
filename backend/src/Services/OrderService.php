@@ -14,6 +14,7 @@ final class OrderService
     public function __construct(
         private readonly Database $database,
         private readonly CartService $cartService,
+        private readonly \Procurely\Api\Support\PaymentProcessor $paymentProcessor,
     ) {
     }
 
@@ -32,9 +33,46 @@ final class OrderService
         }
 
         $pdo = $this->database->connection();
-        $pdo->beginTransaction();
+
+        $checkExisting = $pdo->prepare('SELECT order_number FROM orders WHERE cart_token = :cart_token LIMIT 1');
+        $checkExisting->execute(['cart_token' => $cartToken]);
+        $existing = $checkExisting->fetch();
+
+        if ($existing !== false) {
+            return $this->findByOrderNumber((string) $existing['order_number']);
+        }
+
+        // Use BEGIN IMMEDIATE to prevent write-lock contention during stock validation.
+        $pdo->exec('BEGIN IMMEDIATE TRANSACTION');
 
         try {
+            // Verify and deduct stock for each item
+            $checkStock = $pdo->prepare('SELECT stock_level FROM inventory WHERE product_id = :product_id LIMIT 1');
+            $deductStock = $pdo->prepare('UPDATE inventory SET stock_level = stock_level - :qty, updated_at = :now WHERE product_id = :product_id AND stock_level >= :qty');
+            $now = (new DateTimeImmutable())->format(DateTimeImmutable::ATOM);
+
+            foreach ($cart['items'] as $item) {
+                $productId = (string) $item['product']['id'];
+                $quantity = (int) $item['quantity'];
+
+                $checkStock->execute(['product_id' => $productId]);
+                $stock = $checkStock->fetch();
+
+                if ($stock === false || (int) $stock['stock_level'] < $quantity) {
+                    throw new ApiException(sprintf('Insufficient stock for %s.', $item['product']['name']), 422);
+                }
+
+                $deductStock->execute([
+                    'qty' => $quantity,
+                    'now' => $now,
+                    'product_id' => $productId,
+                ]);
+
+                if ($deductStock->rowCount() === 0) {
+                    throw new ApiException(sprintf('Stock for %s was depleted by another order.', $item['product']['name']), 422);
+                }
+            }
+
             $orderNumber = sprintf('PR-%s', strtoupper(substr(bin2hex(random_bytes(6)), 0, 10)));
             $createdAt = (new DateTimeImmutable())->format(DateTimeImmutable::ATOM);
             $insertOrder = $pdo->prepare(
@@ -72,9 +110,13 @@ final class OrderService
                 ]);
             }
 
+            $this->paymentProcessor->capture($orderNumber, (int) $cart['total']);
+
             $pdo->commit();
         } catch (\Throwable $exception) {
-            $pdo->rollBack();
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             throw $exception;
         }
 
@@ -83,10 +125,9 @@ final class OrderService
         return $this->findByOrderNumber($orderNumber);
     }
 
-    public function findByOrderNumber(string $orderNumber, string $cartToken = ''): array
+    public function findByOrderNumber(string $orderNumber, string $cartToken = '', string $email = ''): array
     {
         $pdo = $this->database->connection();
-        // MEDIUM-9 FIX: Explicit columns — no internal id exposed.
         $orderStatement = $pdo->prepare(
             'SELECT order_number, cart_token, customer_name, customer_email, phone, address, subtotal, service_fee, total, status, created_at
              FROM orders WHERE order_number = :order_number LIMIT 1'
@@ -98,9 +139,11 @@ final class OrderService
             throw new ApiException('Order not found.', 404);
         }
 
-        // HIGH-4 FIX: Verify the requester owns this cart. Without a valid matching
-        // cart token, we refuse to return customer PII (name, email, phone, address).
-        if ($cartToken !== '' && !hash_equals((string) $order['cart_token'], $cartToken)) {
+        // Verify requester owns the order. Support both session-based (cartToken) and guest-based (email) verification.
+        $matchesToken = $cartToken !== '' && hash_equals((string) $order['cart_token'], $cartToken);
+        $matchesEmail = $email !== '' && hash_equals(mb_strtolower((string) $order['customer_email']), mb_strtolower($email));
+
+        if (!$matchesToken && !$matchesEmail) {
             throw new ApiException('Order not found.', 404);
         }
 
@@ -131,5 +174,50 @@ final class OrderService
                 $itemsStatement->fetchAll(),
             ),
         ];
+    }
+
+    public function handleWebhook(array $event): array
+    {
+        $status = (string) ($event['event'] ?? '');
+        $reference = (string) ($event['data']['reference'] ?? '');
+
+        if ($status !== 'charge.success') {
+            return ['status' => 'ignored'];
+        }
+
+        $pdo = $this->database->connection();
+        $pdo->exec('BEGIN IMMEDIATE TRANSACTION');
+
+        try {
+            $stmt = $pdo->prepare('SELECT status, paid_at FROM orders WHERE order_number = :reference');
+            $stmt->execute(['reference' => $reference]);
+            $order = $stmt->fetch();
+
+            if ($order === false) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                return ['status' => 'order_not_found'];
+            }
+
+            if ($order['status'] === 'paid' || $order['paid_at'] !== null) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                return ['status' => 'already_processed'];
+            }
+
+            $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+            $update = $pdo->prepare('UPDATE orders SET status = "paid", paid_at = :paid_at WHERE order_number = :reference');
+            $update->execute(['paid_at' => $now, 'reference' => $reference]);
+
+            $pdo->commit();
+            return ['status' => 'success'];
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
     }
 }

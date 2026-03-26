@@ -87,7 +87,6 @@ final class AuthService
         $statement->execute(['email' => $email]);
         $user = $statement->fetch();
 
-        // FIX: Use consistent timing even on missing account to prevent user enumeration via timing attack.
         $dummyHash = '$2y$12$invalidhashusedtomaintaintimingXXXXXXXXXXXXXXXXXXXXXX';
         $hashToVerify = $user !== false ? (string) $user['password_hash'] : $dummyHash;
 
@@ -121,14 +120,12 @@ final class AuthService
             ];
         }
 
-        // CRITICAL-3 FIX: Store hash of token, not the token itself.
-        // Attacker with DB read access cannot recover actual reset tokens.
+        // Store a hash of the token to prevent recovery via database access.
         $rawToken = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $rawToken);
         $now = new DateTimeImmutable();
         $expiresAt = $now->modify(sprintf('+%d minutes', self::RESET_TOKEN_TTL_MINUTES))->format(DateTimeImmutable::ATOM);
 
-        // LOW-13 FIX: Delete only unexpired old tokens for idempotency.
         $cleanup = $pdo->prepare('DELETE FROM password_reset_requests WHERE email = :email');
         $cleanup->execute(['email' => $email]);
 
@@ -146,7 +143,6 @@ final class AuthService
             'message' => 'If this email is registered, reset instructions have been sent.',
         ];
 
-        // CRITICAL-1 FIX: Only expose raw token in debug mode (env default now false).
         if ($this->debugMode) {
             $response['_debugResetToken'] = $rawToken;
         }
@@ -156,7 +152,6 @@ final class AuthService
 
     public function logout(PDO $pdo, string $token): array
     {
-        // MEDIUM-8 FIX: Token invalidation on logout.
         $statement = $pdo->prepare('DELETE FROM user_tokens WHERE token = :token');
         $statement->execute(['token' => $token]);
 
@@ -181,7 +176,6 @@ final class AuthService
 
     private function issueToken(PDO $pdo, int $userId): string
     {
-        // MEDIUM-8 FIX: Use 32 bytes (64 hex chars) for sufficient entropy.
         $token = bin2hex(random_bytes(32));
         $createdAt = (new DateTimeImmutable())->format(DateTimeImmutable::ATOM);
         $statement = $pdo->prepare('INSERT INTO user_tokens (user_id, token, created_at) VALUES (:user_id, :token, :created_at)');

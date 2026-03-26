@@ -23,7 +23,6 @@ final class Database
 
         $directory = dirname($this->databasePath);
         if (!is_dir($directory)) {
-            // FIX HIGH-5: 0777 was world-writable. 0750 = owner rwx, group rx, others none.
             mkdir($directory, 0750, true);
         }
 
@@ -34,6 +33,7 @@ final class Database
         $this->connection->exec('PRAGMA journal_mode = WAL');
 
         $this->migrate($this->connection);
+        $this->seedInventory($this->connection);
 
         return $this->connection;
     }
@@ -79,7 +79,7 @@ final class Database
             CREATE TABLE IF NOT EXISTS orders (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               order_number TEXT NOT NULL UNIQUE,
-              cart_token TEXT NOT NULL,
+              cart_token TEXT NOT NULL UNIQUE,
               customer_name TEXT NOT NULL,
               customer_email TEXT NOT NULL,
               phone TEXT NOT NULL,
@@ -88,6 +88,7 @@ final class Database
               service_fee INTEGER NOT NULL,
               total INTEGER NOT NULL,
               status TEXT NOT NULL,
+              paid_at TEXT,
               created_at TEXT NOT NULL
             );
 
@@ -119,6 +120,27 @@ final class Database
               created_at TEXT NOT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS inventory (
+              product_id TEXT PRIMARY KEY,
+              stock_level INTEGER NOT NULL DEFAULT 0,
+              updated_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS rate_limits (
+                key TEXT NOT NULL,
+                hits INTEGER NOT NULL DEFAULT 1,
+                reset_at INTEGER NOT NULL,
+                PRIMARY KEY (key)
+            );
+
+            CREATE TABLE IF NOT EXISTS wishlist_items (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              wishlist_token TEXT NOT NULL,
+              product_id TEXT NOT NULL,
+              created_at TEXT NOT NULL,
+              UNIQUE(wishlist_token, product_id)
+            );
+
             CREATE INDEX IF NOT EXISTS idx_user_tokens_user_id ON user_tokens (user_id);
             CREATE INDEX IF NOT EXISTS idx_user_tokens_token ON user_tokens (token);
             CREATE INDEX IF NOT EXISTS idx_password_reset_email ON password_reset_requests (email, expires_at DESC);
@@ -126,7 +148,27 @@ final class Database
             CREATE INDEX IF NOT EXISTS idx_orders_order_number ON orders (order_number);
             CREATE INDEX IF NOT EXISTS idx_orders_cart_token ON orders (cart_token);
             CREATE INDEX IF NOT EXISTS idx_quote_requests_email ON quote_requests (email);
+            CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items (order_id);
+            CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits (reset_at);
+            CREATE INDEX IF NOT EXISTS idx_wishlist_items_token ON wishlist_items (wishlist_token);
+            CREATE INDEX IF NOT EXISTS idx_wishlist_items_product ON wishlist_items (product_id);
+            CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
+            CREATE INDEX IF NOT EXISTS idx_inventory_updated ON inventory (updated_at);
             SQL
         );
+    }
+
+    private function seedInventory(PDO $pdo): void
+    {
+        $products = [
+            'p_1', 'p_2', 'p_3', 'p_4', 'p_5', 'p_6', 'p_7', 'p_8', 'p_9', 'p_10',
+            'p_11', 'p_12'
+        ];
+        
+        $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+        $stmt = $pdo->prepare('INSERT OR IGNORE INTO inventory (product_id, stock_level, updated_at) VALUES (?, 100, ?)');
+        foreach ($products as $id) {
+            $stmt->execute([$id, $now]);
+        }
     }
 }

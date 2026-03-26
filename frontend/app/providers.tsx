@@ -10,6 +10,8 @@ import {
 import { QuoteDrawer } from "@/components/quote/quote-drawer";
 import { UiProvider } from "@/components/ui/ui-provider";
 
+import { WishlistProvider } from "@/components/wishlist-provider";
+
 type ProvidersProps = {
   children: ReactNode;
   cartProviderProps?: Omit<CartProviderProps, "children">;
@@ -24,9 +26,11 @@ export function Providers({
   return (
     <UiProvider>
       <CartProvider {...cartProviderProps}>
-        {children}
-        {withDrawers ? <CartDrawer /> : null}
-        {withDrawers ? <QuoteDrawer /> : null}
+        <WishlistProvider>
+          {children}
+          {withDrawers ? <CartDrawer /> : null}
+          {withDrawers ? <QuoteDrawer /> : null}
+        </WishlistProvider>
       </CartProvider>
     </UiProvider>
   );

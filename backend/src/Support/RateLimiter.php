@@ -10,16 +10,14 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Slim\Psr7\Response;
 
 /**
- * In-memory sliding-window rate limiter backed by APCu.
- * Falls back to a no-op if APCu is not available (development without apcu extension).
- *
- * CRITICAL-2 FIX: Protects auth endpoints from brute-force and credential-stuffing.
+ * Sliding-window rate limiter using the database to persist hits.
  */
 final class RateLimiter
 {
     private string $prefix;
 
     public function __construct(
+        private readonly Database $database,
         private readonly int $maxRequests,
         private readonly int $windowSeconds,
         string $prefix = 'rl',
@@ -30,34 +28,46 @@ final class RateLimiter
     public function middleware(): \Closure
     {
         return function (ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface {
-            if (!extension_loaded('apcu') || !apcu_enabled()) {
-                return $handler->handle($request);
-            }
-
             $ip = $this->resolveIp($request);
             $key = sprintf('%s:%s', $this->prefix, $ip);
             $now = time();
-            $windowStart = $now - $this->windowSeconds;
+            $resetAt = $now + $this->windowSeconds;
 
-            // Retrieve existing request timestamps
-            $timestamps = apcu_fetch($key);
-            if (!is_array($timestamps)) {
-                $timestamps = [];
+            $pdo = $this->database->connection();
+            $pdo->beginTransaction();
+            try {
+                $pdo->exec('DELETE FROM rate_limits WHERE reset_at < ' . $now);
+
+                $stmt = $pdo->prepare('SELECT hits, reset_at FROM rate_limits WHERE key = :key LIMIT 1');
+                $stmt->execute(['key' => $key]);
+                $row = $stmt->fetch();
+
+                if ($row === false) {
+                    $insert = $pdo->prepare('INSERT INTO rate_limits (key, hits, reset_at) VALUES (:key, 1, :reset_at)');
+                    $insert->execute(['key' => $key, 'reset_at' => $resetAt]);
+                    $hits = 1;
+                    $currentResetAt = $resetAt;
+                } else {
+                    $hits = (int) $row['hits'] + 1;
+                    $currentResetAt = (int) $row['reset_at'];
+                    $update = $pdo->prepare('UPDATE rate_limits SET hits = :hits WHERE key = :key');
+                    $update->execute(['hits' => $hits, 'key' => $key]);
+                }
+
+                $pdo->commit();
+            } catch (\Throwable $e) {
+                $pdo->rollBack();
+                // Fail open to avoid blocking users if DB is struggling, but log in real app
+                return $handler->handle($request);
             }
 
-            // Slide the window: remove timestamps outside the window
-            $timestamps = array_filter($timestamps, static fn(int $ts): bool => $ts > $windowStart);
-            $timestamps[] = $now;
-
-            apcu_store($key, array_values($timestamps), $this->windowSeconds + 1);
-
-            if (count($timestamps) > $this->maxRequests) {
+            if ($hits > $this->maxRequests) {
                 $response = new Response();
-                $retryAfter = $this->windowSeconds - ($now - min($timestamps));
+                $retryAfter = max(1, $currentResetAt - $now);
                 $body = json_encode([
                     'error' => [
                         'message' => 'Too many requests. Please slow down.',
-                        'details' => [],
+                        'details' => ['retryAfter' => $retryAfter],
                     ],
                 ], JSON_THROW_ON_ERROR);
 
@@ -65,7 +75,7 @@ final class RateLimiter
 
                 return $response
                     ->withHeader('Content-Type', 'application/json')
-                    ->withHeader('Retry-After', (string) max(1, $retryAfter))
+                    ->withHeader('Retry-After', (string) $retryAfter)
                     ->withHeader('X-RateLimit-Limit', (string) $this->maxRequests)
                     ->withHeader('X-RateLimit-Remaining', '0')
                     ->withStatus(429);
@@ -75,16 +85,13 @@ final class RateLimiter
 
             return $response
                 ->withHeader('X-RateLimit-Limit', (string) $this->maxRequests)
-                ->withHeader('X-RateLimit-Remaining', (string) max(0, $this->maxRequests - count($timestamps)));
+                ->withHeader('X-RateLimit-Remaining', (string) max(0, $this->maxRequests - $hits));
         };
     }
 
     private function resolveIp(ServerRequestInterface $request): string
     {
         $serverParams = $request->getServerParams();
-
-        // Trust X-Forwarded-For only if explicitly configured (behind a trusted proxy)
-        // For safety, default to REMOTE_ADDR which cannot be spoofed at the TCP level
         return (string) ($serverParams['REMOTE_ADDR'] ?? '0.0.0.0');
     }
 }

@@ -28,11 +28,15 @@ final class CartService
         $statement->execute(['cart_token' => $cartToken]);
         $rows = $statement->fetchAll();
 
+        $productIds = array_map(fn($row) => (string)$row['product_id'], $rows);
+        $products = $this->contentStore->productsByIds($productIds);
+        $productsLookup = array_column($products, null, 'id');
+
         $items = [];
         $subtotal = 0;
 
         foreach ($rows as $row) {
-            $product = $this->contentStore->productById((string) $row['product_id']);
+            $product = $productsLookup[(string)$row['product_id']] ?? null;
 
             if ($product === null) {
                 continue;

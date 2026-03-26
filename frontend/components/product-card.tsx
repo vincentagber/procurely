@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { Reveal } from "@/components/ui/reveal";
 import { useCart } from "@/components/cart/cart-provider";
+import { useWishlist } from "@/components/wishlist-provider";
 import { formatCurrency } from "@/lib/format";
 import type { Product } from "@/lib/types";
 
@@ -15,7 +16,20 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
-  const { addItem, loading } = useCart();
+  const { addItem, loading: cartLoading } = useCart();
+  const { isInWishlist, addItem: addToWishlist, removeItem: removeFromWishlist, loading: wishlistLoading } = useWishlist();
+
+  const isFavorited = isInWishlist(product.id);
+
+  const toggleWishlist = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isFavorited) {
+      await removeFromWishlist(product.id);
+    } else {
+      await addToWishlist(product.id);
+    }
+  };
 
   return (
       <motion.article
@@ -30,11 +44,20 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             </span>
           ) : null}
           
-          <div className="absolute right-3 top-3 z-20 flex size-[30px] cursor-pointer items-center justify-center rounded-full border border-[#ff6f4d]/20 bg-[#fff5f2] text-[#ff6f4d] shadow-sm transition hover:scale-110 hover:bg-[#ff6f4d] hover:text-white">
-            <svg className="size-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <button 
+            type="button"
+            onClick={toggleWishlist}
+            disabled={wishlistLoading}
+            className={`absolute right-3 top-3 z-20 flex size-[30px] cursor-pointer items-center justify-center rounded-full border shadow-sm transition hover:scale-110 disabled:opacity-50 ${
+              isFavorited 
+                ? "border-[#ff6f4d] bg-[#ff6f4d] text-white" 
+                : "border-[#ff6f4d]/20 bg-[#fff5f2] text-[#ff6f4d] hover:bg-[#ff6f4d] hover:text-white"
+            }`}
+          >
+            <svg className="size-[14px]" fill={isFavorited ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
-          </div>
+          </button>
 
           <Link href={`/products/${product.id}`} className="block relative z-10 w-full h-full flex items-center justify-center">
             <motion.img
@@ -62,7 +85,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             </div>
             <motion.button
               className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#0b103e] text-white shadow-md transition disabled:opacity-50"
-              disabled={loading}
+              disabled={cartLoading}
               onClick={() => void addItem(product.id)}
               transition={{ duration: 0.18 }}
               type="button"

@@ -15,6 +15,7 @@ import { startTransition, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { useCart } from "@/components/cart/cart-provider";
+import { useWishlist } from "@/components/wishlist-provider";
 import { useUi } from "@/components/ui/ui-provider";
 import { cn } from "@/lib/format";
 import type { SiteContent } from "@/lib/types";
@@ -28,12 +29,15 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { cart } = useCart();
+  const { wishlist } = useWishlist();
   const { openCart } = useUi();
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
 
   const cartCount =
     cart?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;
+  
+  const wishlistCount = wishlist?.items.length ?? 0;
 
   return (
     <header className="w-full">
@@ -96,10 +100,14 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
           </form>
 
           <div className="flex items-center gap-6">
-            <button className="relative p-1 text-[#13184f] transition hover:scale-105">
+            <Link href="/wishlist" className="relative p-1 text-[#13184f] transition hover:scale-105">
               <Heart className="size-7" strokeWidth={1.5} />
-              <span className="absolute -right-1.5 -top-1 flex size-5 items-center justify-center rounded-full bg-[#ef5350] text-[10px] font-black text-white">4</span>
-            </button>
+              {wishlistCount > 0 && (
+                <span className="absolute -right-1.5 -top-1 flex size-5 items-center justify-center rounded-full bg-[#ef5350] text-[10px] font-black text-white">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
             <Link href="/account" className="p-1 text-[#13184f] transition hover:scale-105">
                <UserRound className="size-7" strokeWidth={1.5} />
             </Link>
