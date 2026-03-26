@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import { ProductCard } from "@/components/product-card";
 import type { Product } from "@/lib/types";
 import { Filter, ChevronDown } from "lucide-react";
@@ -138,9 +139,14 @@ export function MaterialsClient({ products }: { products: Product[] }) {
             </div>
 
             <div className="flex flex-col overflow-hidden rounded-[24px] bg-[#ff6f4d] p-8 text-white shadow-xl shadow-orange-500/10">
-               <div className="mb-6 flex items-center gap-2 opacity-90">
-                  <div className="size-5 rounded-sm bg-white/20" />
-                  <span className="text-xs font-black uppercase tracking-widest">Procurely™</span>
+               <div className="mb-6 opacity-95">
+                  <Image
+                    alt="Procurely"
+                    className="h-6 w-auto object-contain"
+                    height={24}
+                    src="/assets/design/logo-light.png"
+                    width={100}
+                  />
                </div>
                <h4 className="mb-3 text-[24px] font-black leading-tight tracking-tight text-white group-hover:scale-[1.02] transition-transform">Need Bulk Pricing?</h4>
                <p className="mb-8 text-[14px] font-medium leading-relaxed text-white/90">Submit your BOQ for custom quotes from verified suppliers.</p>
