@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
 
 type AuthUser = { id: string; fullName: string; email: string };
 
