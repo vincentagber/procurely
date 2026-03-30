@@ -40,6 +40,7 @@ $database = new Database($databasePath);
 $catalogService = new CatalogService($database, $contentStore);
 $authService = new AuthService($database, $debug);
 $cartService = new CartService($database, $contentStore);
+$paymentProcessor = new \Procurely\Api\Support\PaymentProcessor($database);
 $emailService = new \Procurely\Api\Support\EmailService($rootPath);
 $orderService = new OrderService($database, $cartService, $paymentProcessor, $emailService);
 $engagementService = new EngagementService($database);
