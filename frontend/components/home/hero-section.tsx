@@ -87,27 +87,23 @@ export function HeroSection({ hero, features }: HeroSectionProps) {
       </div>
 
       <div className="container-shell">
-        <div className="grid gap-6 py-8 sm:py-9 md:grid-cols-3">
+        <div className="grid gap-8 py-10 sm:py-16 md:grid-cols-3">
           {features.map((feature, index) => {
             const Icon = iconMap[feature.icon];
 
             return (
               <Reveal className="text-center" delay={index * 0.08} key={feature.title}>
-                <motion.div
-                  className="group rounded-[24px] border border-border-subtle/80 bg-white px-5 py-6 shadow-card-soft sm:px-6"
-                  transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-                  whileHover={{ y: -8, scale: 1.015 }}
-                >
-                  <div className="inline-flex size-14 items-center justify-center rounded-full bg-[var(--color-brand-accent)]/12 text-[var(--color-brand-accent)] transition-card-hover group-hover:scale-105 group-hover:bg-[var(--color-brand-accent)]/16">
-                    <Icon className="size-7" />
+                <div className="flex flex-col items-center group">
+                  <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-white text-[#ff6f4d] shadow-[0_8px_30px_rgba(255,111,77,0.12)] transition-transform group-hover:scale-110">
+                    <Icon className="size-8" />
                   </div>
-                  <h2 className="mt-4 text-[1.45rem] font-semibold tracking-[-0.04em] text-[var(--color-brand-navy)] sm:text-[1.6rem] lg:text-[1.8rem]">
+                  <h2 className="text-xl font-black tracking-tight text-[#13184f] mb-2 uppercase">
                     {feature.title}
                   </h2>
-                  <p className="text-sm text-slate-500 sm:text-base">
+                  <p className="text-[15px] font-medium text-slate-500 max-w-[200px]">
                     {feature.description}
                   </p>
-                </motion.div>
+                </div>
               </Reveal>
             );
           })}

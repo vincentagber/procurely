@@ -36,7 +36,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
 
   const cartCount =
     cart?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;
-  
+
   const wishlistCount = wishlist?.items.length ?? 0;
 
   return (
@@ -45,12 +45,12 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
       <div className="bg-[#00008b] text-white">
         <div className="container-shell mx-auto flex h-[42px] items-center justify-between px-4">
           <div className="flex items-center gap-5">
-             <InstagramIcon className="size-[15px] opacity-90 transition hover:opacity-100" />
-             <FacebookIcon className="size-[15px] opacity-90 transition hover:opacity-100" />
-             <LinkedinIcon className="size-[15px] opacity-90 transition hover:opacity-100" />
-             <YoutubeIcon />
-             <PinterestIcon />
-             <TikTokIcon />
+            <InstagramIcon className="size-[15px] opacity-90 transition hover:opacity-100" />
+            <FacebookIcon className="size-[15px] opacity-90 transition hover:opacity-100" />
+            <LinkedinIcon className="size-[15px] opacity-90 transition hover:opacity-100" />
+            <YoutubeIcon />
+            <PinterestIcon />
+            <TikTokIcon />
           </div>
           <div className="flex items-center gap-2.5 text-[11px] font-black uppercase tracking-wider">
             <UserRound className="size-4" strokeWidth={2.5} />
@@ -109,7 +109,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
               )}
             </Link>
             <Link href="/account" className="p-1 text-[#13184f] transition hover:scale-105">
-               <UserRound className="size-7" strokeWidth={1.5} />
+              <UserRound className="size-7" strokeWidth={1.5} />
             </Link>
             <button onClick={openCart} className="relative p-1 text-[#13184f] transition hover:scale-105">
               <ShoppingBag className="size-7" strokeWidth={1.5} />
@@ -120,7 +120,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
               )}
             </button>
             <button className="lg:hidden" onClick={() => setMenuOpen(!menuOpen)}>
-               <Menu className="size-7 text-[#13184f]" />
+              <Menu className="size-7 text-[#13184f]" />
             </button>
           </div>
         </div>
@@ -130,22 +130,22 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
       <div className="bg-white py-4 shadow-sm">
         <div className="container-shell mx-auto flex items-center justify-between px-4">
           <nav className="hidden items-center gap-10 text-[15.5px] font-bold text-[#13184f] lg:flex">
-             {navigation.primaryLinks.map((link) => {
-                const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
-                return (
-                  <Link 
-                    key={link.label} 
-                    href={link.href} 
-                    className={cn("transition hover:text-[#1900ff]", isActive && "text-[#1900ff]")}
-                  >
-                    {link.label}
-                  </Link>
-                );
-             })}
+            {navigation.primaryLinks.map((link) => {
+              const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className={cn("transition hover:text-[#1900ff]", isActive && "text-[#1900ff]")}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </nav>
 
-          <Link 
-            href="/contact-quote" 
+          <Link
+            href="/contact-quote"
             className="flex h-[56px] min-w-[200px] items-center justify-center rounded-[12px] bg-[#1900ff] px-10 text-[15.5px] font-black text-white shadow-lg shadow-indigo-500/10 transition active:scale-[0.98]"
           >
             Submit BOQ / Contact
@@ -172,24 +172,24 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
               className="fixed bottom-0 right-0 top-0 z-drawer w-[280px] bg-white p-8 shadow-2xl lg:hidden"
             >
               <div className="flex items-center justify-between mb-10">
-                 <p className="text-xl font-black text-[#13184f]">Menu</p>
-                 <button onClick={() => setMenuOpen(false)}>
-                    <X className="size-6 text-slate-400" />
-                 </button>
+                <p className="text-xl font-black text-[#13184f]">Menu</p>
+                <button onClick={() => setMenuOpen(false)}>
+                  <X className="size-6 text-slate-400" />
+                </button>
               </div>
               <nav className="flex flex-col gap-6 font-bold text-[#13184f]">
-                 {navigation.primaryLinks.map((link) => (
+                {navigation.primaryLinks.map((link) => (
+                  <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)}>
+                    {link.label}
+                  </Link>
+                ))}
+                <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col gap-6">
+                  {navigation.accountLinks.map((link) => (
                     <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)}>
-                       {link.label}
+                      {link.label}
                     </Link>
-                 ))}
-                 <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col gap-6">
-                    {navigation.accountLinks.map((link) => (
-                      <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)}>
-                        {link.label}
-                      </Link>
-                    ))}
-                 </div>
+                  ))}
+                </div>
               </nav>
             </motion.aside>
           </>
@@ -226,9 +226,9 @@ function YoutubeIcon() {
 function InstagramIcon({ className }: { className?: string }) {
   return (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
     </svg>
   );
 }
@@ -236,7 +236,7 @@ function InstagramIcon({ className }: { className?: string }) {
 function FacebookIcon({ className }: { className?: string }) {
   return (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
     </svg>
   );
 }
@@ -244,9 +244,9 @@ function FacebookIcon({ className }: { className?: string }) {
 function LinkedinIcon({ className }: { className?: string }) {
   return (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
-      <rect width="4" height="12" x="2" y="9"/>
-      <circle cx="4" cy="4" r="2"/>
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+      <rect width="4" height="12" x="2" y="9" />
+      <circle cx="4" cy="4" r="2" />
     </svg>
   );
 }

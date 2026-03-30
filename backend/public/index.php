@@ -88,6 +88,11 @@ $authRateLimit = (new RateLimiter($database, 10, 60, 'auth'))->middleware();
 $orderRateLimit = (new RateLimiter($database, 5, 60, 'order'))->middleware();
 $searchRateLimit = (new RateLimiter($database, 30, 60, 'search'))->middleware();
 
+// ─── Health check ─────────────────────────────────────────────────────────────
+$app->get('/', static function (ServerRequestInterface $request, ResponseInterface $response): ResponseInterface {
+    return JsonResponder::success($response, ['message' => 'Procurely API is running.']);
+});
+
 // ─── Catalog ───────────────────────────────────────────────────────────────────
 $app->get('/api/homepage', static function (ServerRequestInterface $request, ResponseInterface $response) use ($catalogService): ResponseInterface {
     return JsonResponder::success($response, $catalogService->homepage());
@@ -322,7 +327,7 @@ $errorMiddleware = $app->addErrorMiddleware($debug, true, true);
 $errorMiddleware->setDefaultErrorHandler(
     static function (
         ServerRequestInterface $request,
-        Throwable $exception,
+        \Throwable $exception,
         bool $displayErrorDetails,
     ): ResponseInterface {
         $response = new Response();
@@ -331,7 +336,19 @@ $errorMiddleware->setDefaultErrorHandler(
             return JsonResponder::error($response, $exception->getMessage(), $exception->statusCode(), $exception->details());
         }
 
-        $details = $displayErrorDetails ? ['type' => $exception::class] : [];
+        if ($exception instanceof \Slim\Exception\HttpException) {
+            return JsonResponder::error($response, $exception->getMessage(), $exception->getCode(), [
+                'type' => $exception::class,
+            ]);
+        }
+
+        $details = $displayErrorDetails ? [
+            'type' => $exception::class,
+            'message' => $exception->getMessage(),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+            'trace' => $exception->getTraceAsString(),
+        ] : [];
 
         return JsonResponder::error($response, 'Unexpected server error.', 500, $details);
     }

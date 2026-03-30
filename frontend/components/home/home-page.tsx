@@ -28,10 +28,10 @@ export function HomePage({
   const exploreProducts = resolveProducts(content.exploreSection.productIds);
   const filteredExploreProducts = searchResults ?? (query
     ? exploreProducts.filter((product) =>
-        `${product.name} ${product.shortDescription} ${product.category}`
-          .toLowerCase()
-          .includes(query),
-      )
+      `${product.name} ${product.shortDescription} ${product.category}`
+        .toLowerCase()
+        .includes(query),
+    )
     : exploreProducts);
 
   return (
