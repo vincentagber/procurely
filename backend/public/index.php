@@ -45,46 +45,13 @@ $emailService = new \Procurely\Api\Support\EmailService($rootPath);
 $orderService = new OrderService($database, $cartService, $paymentProcessor, $emailService);
 $engagementService = new EngagementService($database);
 $wishlistService = new \Procurely\Api\Services\WishlistService($database, $contentStore);
-$adminService = new \Procurely\Api\Services\AdminService($database);
+$adminService = new \Procurely\Api\Services\AdminService($database, $contentStore);
 
 $app = AppFactory::create();
 $app->addBodyParsingMiddleware();
-$app->options('/{routes:.+}', static fn (ServerRequestInterface $request, ResponseInterface $response): ResponseInterface => $response);
-
-// ─── CORS ─────────────────────────────────────────────────────────────────────
-$app->add(function (ServerRequestInterface $request, $handler) use ($frontendUrl, $debug): ResponseInterface {
-    $origin = $request->getHeaderLine('Origin');
-    $isLocal = str_contains($origin, 'localhost') || str_contains($origin, '127.0.0.1');
-    $allowedOrigins = [$frontendUrl, 'http://localhost:3000', 'http://127.0.0.1:3000'];
-    
-    // In debug mode, be liberal with local origins to avoid port-collissions/mismatch errors.
-    $responseOrigin = ($isLocal && $debug) ? $origin : (in_array($origin, $allowedOrigins, true) ? $origin : $frontendUrl);
-
-    if ($request->getMethod() === 'OPTIONS') {
-        $response = new Response();
-        return $response
-            ->withStatus(204)
-            ->withHeader('Access-Control-Allow-Origin', $responseOrigin)
-            ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
-            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
-            ->withHeader('Access-Control-Allow-Credentials', 'true')
-            ->withHeader('Vary', 'Origin');
-    }
-
-    $response = $handler->handle($request);
-
-    return $response
-        ->withHeader('Access-Control-Allow-Origin', $responseOrigin)
-        ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
-        ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
-        ->withHeader('Access-Control-Allow-Credentials', 'true')
-        ->withHeader('Vary', 'Origin');
-});
-
-// ─── Rate limits ───────────────────────────────────────────────────────────────
-$authRateLimit = (new RateLimiter($database, 10, 60, 'auth'))->middleware();
 
 // ─── Direct limits for intensive operations ──────────────────────────────────
+$authRateLimit = (new RateLimiter($database, 10, 60, 'auth'))->middleware();
 $orderRateLimit = (new RateLimiter($database, 5, 60, 'order'))->middleware();
 $searchRateLimit = (new RateLimiter($database, 30, 60, 'search'))->middleware();
 
@@ -230,7 +197,7 @@ $app->post('/api/webhooks/paystack', static function (ServerRequestInterface $re
     $paystack = new \Procurely\Api\Support\Paystack();
 
     if (!$paystack->isValidSignature($payload, $signature)) {
-        return JsonResponder::error($response, 'Invalid signature', 401);
+        throw new ApiException('Invalid signature', 401);
     }
 
     $data = json_decode($payload, true);
@@ -313,6 +280,25 @@ $app->patch('/api/admin/orders/{orderNumber}', static function (ServerRequestInt
     return JsonResponder::success($response, $adminService->updateOrderStatus((string) ($args['orderNumber'] ?? ''), $status));
 })->add($adminMiddleware);
 
+// ─── Admin Products ──────────────────────────────────────────────────────────
+$app->get('/api/admin/products', static function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService): ResponseInterface {
+    return JsonResponder::success($response, $adminService->listProducts());
+})->add($adminMiddleware);
+
+$app->post('/api/admin/products', static function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService): ResponseInterface {
+    return JsonResponder::success($response, $adminService->saveProduct(RequestData::body($request)), 201);
+})->add($adminMiddleware);
+
+$app->put('/api/admin/products/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService): ResponseInterface {
+    $body = RequestData::body($request);
+    $body['id'] = (string) ($args['id'] ?? '');
+    return JsonResponder::success($response, $adminService->saveProduct($body));
+})->add($adminMiddleware);
+
+$app->delete('/api/admin/products/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService): ResponseInterface {
+    return JsonResponder::success($response, $adminService->deleteProduct((string) ($args['id'] ?? '')));
+})->add($adminMiddleware);
+
 // ─── Engagement ────────────────────────────────────────────────────────────────
 $app->post('/api/quotes', static function (ServerRequestInterface $request, ResponseInterface $response) use ($engagementService): ResponseInterface {
     return JsonResponder::success($response, $engagementService->requestQuote(RequestData::body($request)), 201);
@@ -337,7 +323,7 @@ $errorMiddleware->setDefaultErrorHandler(
         }
 
         if ($exception instanceof \Slim\Exception\HttpException) {
-            return JsonResponder::error($response, $exception->getMessage(), $exception->getCode(), [
+            return JsonResponder::error($response, $exception->getMessage(), (int) $exception->getCode(), [
                 'type' => $exception::class,
             ]);
         }
@@ -353,5 +339,35 @@ $errorMiddleware->setDefaultErrorHandler(
         return JsonResponder::error($response, 'Unexpected server error.', 500, $details);
     }
 );
+
+// ─── CORS Middleware ──────────────────────────────────────────────────────────
+// This must be added LAST to wrap everything, including the ErrorMiddleware,
+// ensuring CORS headers are present even on error responses.
+$app->add(function (ServerRequestInterface $request, $handler) use ($frontendUrl, $debug): ResponseInterface {
+    $origin = $request->getHeaderLine('Origin');
+    $isLocal = str_contains($origin, 'localhost') || str_contains($origin, '127.0.0.1');
+    $allowedOrigins = [$frontendUrl, 'http://localhost:3000', 'http://127.0.0.1:3000'];
+    $responseOrigin = ($isLocal && $debug) ? $origin : (in_array($origin, $allowedOrigins, true) ? $origin : $frontendUrl);
+
+    if ($request->getMethod() === 'OPTIONS') {
+        $response = new Response();
+        return $response
+            ->withStatus(204)
+            ->withHeader('Access-Control-Allow-Origin', $responseOrigin)
+            ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
+            ->withHeader('Access-Control-Allow-Credentials', 'true')
+            ->withHeader('Vary', 'Origin');
+    }
+
+    $response = $handler->handle($request);
+
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', $responseOrigin)
+        ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+        ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
+        ->withHeader('Access-Control-Allow-Credentials', 'true')
+        ->withHeader('Vary', 'Origin');
+});
 
 $app->run();

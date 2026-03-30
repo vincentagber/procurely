@@ -212,6 +212,26 @@ export const api = {
       body: JSON.stringify({ status }),
     });
   },
+  getAdminProducts() {
+    return request<any[]>("/api/admin/products");
+  },
+  createAdminProduct(payload: any) {
+    return request<any>("/api/admin/products", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  updateAdminProduct(id: string, payload: any) {
+    return request<any>(`/api/admin/products/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+  deleteAdminProduct(id: string) {
+    return request<{ message: string }>(`/api/admin/products/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+  },
 };
 
 // ─── Order history helpers ─────────────────────────────────────────────────────

@@ -85,4 +85,64 @@ final class ContentStore
             ),
         );
     }
+
+    /**
+     * Persist a new or updated product into the content JSON file.
+     */
+    public function saveProduct(array $product): array
+    {
+        $content = $this->all();
+        $products = $content['products'] ?? [];
+
+        $existingIndex = null;
+        foreach ($products as $i => $p) {
+            if (($p['id'] ?? '') === $product['id']) {
+                $existingIndex = $i;
+                break;
+            }
+        }
+
+        if ($existingIndex !== null) {
+            $products[$existingIndex] = $product;
+        } else {
+            $products[] = $product;
+        }
+
+        $content['products'] = array_values($products);
+        $this->content = $content;
+        $this->productsById = null;
+        $this->productsBySlug = null;
+
+        $encoded = json_encode($content, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($encoded === false || file_put_contents($this->contentPath, $encoded) === false) {
+            throw new ApiException('Failed to persist product data.', 500);
+        }
+
+        return $product;
+    }
+
+    /**
+     * Remove a product by its ID from the content JSON file.
+     */
+    public function deleteProduct(string $id): void
+    {
+        $content = $this->all();
+        $products = $content['products'] ?? [];
+
+        $filtered = array_values(array_filter($products, static fn ($p) => ($p['id'] ?? '') !== $id));
+
+        if (count($filtered) === count($products)) {
+            throw new ApiException('Product not found.', 404);
+        }
+
+        $content['products'] = $filtered;
+        $this->content = $content;
+        $this->productsById = null;
+        $this->productsBySlug = null;
+
+        $encoded = json_encode($content, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($encoded === false || file_put_contents($this->contentPath, $encoded) === false) {
+            throw new ApiException('Failed to persist product data.', 500);
+        }
+    }
 }

@@ -20,7 +20,12 @@ import {
   LogOut,
   AppWindow,
   Activity,
-  MoreHorizontal
+  MoreHorizontal,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  ImageIcon
 } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -31,9 +36,17 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"overview" | "orders" | "users">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "orders" | "users" | "products">("overview");
   const [fetching, setFetching] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [products, setProducts] = useState<any[]>([]);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [productForm, setProductForm] = useState({
+    name: "", shortDescription: "", category: "", price: "",
+    image: "", badge: "", featured: false, homepageSlot: "", stockLevel: "100"
+  });
+  const [productSaving, setProductSaving] = useState(false);
 
   useEffect(() => {
     if (!loading) {
@@ -52,14 +65,16 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setFetching(true);
     try {
-      const [s, o, u] = await Promise.all([
+      const [s, o, u, p] = await Promise.all([
         api.getAdminStats(),
         api.getAdminOrders(10),
-        api.getAdminUsers(10)
+        api.getAdminUsers(10),
+        api.getAdminProducts(),
       ]);
       setStats(s);
       setOrders(o);
       setUsers(u);
+      setProducts(p);
     } catch (e) {
       console.error(e);
     } finally {
@@ -73,6 +88,56 @@ export default function AdminDashboard() {
       fetchData();
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const openAddProduct = () => {
+    setEditingProduct(null);
+    setProductForm({ name: "", shortDescription: "", category: "", price: "", image: "", badge: "", featured: false, homepageSlot: "", stockLevel: "100" });
+    setShowProductModal(true);
+  };
+
+  const openEditProduct = (p: any) => {
+    setEditingProduct(p);
+    setProductForm({
+      name: p.name ?? "",
+      shortDescription: p.shortDescription ?? "",
+      category: p.category ?? "",
+      price: String(p.price ?? ""),
+      image: p.image ?? "",
+      badge: p.badge ?? "",
+      featured: !!p.featured,
+      homepageSlot: p.homepageSlot ?? "",
+      stockLevel: "100",
+    });
+    setShowProductModal(true);
+  };
+
+  const handleSaveProduct = async () => {
+    setProductSaving(true);
+    try {
+      const payload = { ...productForm, price: parseInt(productForm.price, 10) || 0 };
+      if (editingProduct) {
+        await api.updateAdminProduct(editingProduct.id, payload);
+      } else {
+        await api.createAdminProduct(payload);
+      }
+      setShowProductModal(false);
+      fetchData();
+    } catch (e: any) {
+      alert(e.message ?? "Failed to save product.");
+    } finally {
+      setProductSaving(false);
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    try {
+      await api.deleteAdminProduct(id);
+      fetchData();
+    } catch (e: any) {
+      alert(e.message ?? "Failed to delete product.");
     }
   };
 
@@ -121,20 +186,18 @@ export default function AdminDashboard() {
                   { id: "overview", label: "Dashboard", icon: LayoutDashboard },
                   { id: "orders", label: "Operations Hub", icon: Activity },
                   { id: "users", label: "Client Directory", icon: Users },
+                  { id: "products", label: "Product Catalog", icon: Package },
                 ].map((item: any) => (
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`group relative flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-[13px] font-bold transition-all duration-300 ${
+                    className={`group relative flex w-full items-center gap-3 rounded-xl px-4 py-4 text-[13px] font-black transition-all duration-300 ${
                       activeTab === item.id 
-                      ? "bg-white/10 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]" 
-                      : "text-white/50 hover:text-white hover:bg-white/5"
+                      ? "bg-[#1900ff] text-white shadow-[0_10px_20px_rgba(25,0,255,0.25)]" 
+                      : "text-white/40 hover:text-white/80 hover:bg-white/5"
                     }`}
                   >
-                    {activeTab === item.id && (
-                      <motion.div layoutId="nav-pill" className="absolute left-0 w-1 h-5 bg-[#1900ff] rounded-r-full" />
-                    )}
-                    <item.icon size={18} className={`transition-colors ${activeTab === item.id ? "text-[#1900ff]" : "text-white/30 group-hover:text-white/60"}`} />
+                    <item.icon size={19} className={`transition-colors ${activeTab === item.id ? "text-white" : "text-white/20 group-hover:text-white/40"}`} />
                     {item.label}
                   </button>
                 ))}
@@ -236,23 +299,19 @@ export default function AdminDashboard() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
                         key={stat.label} 
-                        className="relative bg-white p-7 rounded-[28px] border border-white shadow-[0_10px_40px_rgba(19,24,79,0.03)] group overflow-hidden"
+                        className="relative bg-white p-8 rounded-[32px] border border-white shadow-[0_20px_50px_rgba(19,24,79,0.04)] group transition-all hover:shadow-[0_30px_60px_rgba(19,24,79,0.08)]"
                       >
-                         <div className="absolute top-0 right-0 w-24 h-24 bg-primary-blue-50/20 translate-x-12 -translate-y-12 rounded-full transition-transform group-hover:scale-110" />
-                         
-                         <div className="flex items-center justify-between mb-6">
-                            <div className={`p-3 rounded-2xl bg-primary-blue-50 text-[#1900ff]`}>
-                              <stat.icon size={22} />
+                         <div className="flex items-center justify-between mb-8">
+                            <div className={`size-14 rounded-2xl bg-[#0b103e] flex items-center justify-center text-white shadow-xl shadow-blue-500/5`}>
+                              <stat.icon size={26} strokeWidth={2.5} />
                             </div>
-                            <div className="flex flex-col items-end">
-                               <span className={`text-[11px] font-black ${stat.trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'} bg-white px-2 py-0.5 rounded-full shadow-sm`}>
-                                 {stat.trend}
-                               </span>
-                            </div>
+                            <span className={`text-[11px] font-black ${stat.trend.startsWith('+') ? 'text-emerald-500 bg-emerald-50' : 'text-rose-500 bg-rose-50'} px-3 py-1 rounded-full uppercase tracking-tighter`}>
+                              {stat.trend}
+                            </span>
                          </div>
                          
-                         <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">{stat.label}</p>
-                         <h3 className="text-3xl font-black text-[#13184f] tracking-tighter">{stat.value}</h3>
+                         <p className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2">{stat.label}</p>
+                         <h3 className="text-3xl font-black text-[#0b103e] tracking-tight">{stat.value}</h3>
                       </motion.div>
                     ))}
                   </div>
@@ -277,35 +336,38 @@ export default function AdminDashboard() {
                         <div className="overflow-x-auto">
                            <table className="w-full text-left">
                               <thead>
-                                <tr className="bg-[#F8F9FB]/50 border-b border-[#F8F9FB] text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                                  <th className="px-10 py-5">Ident / Ref</th>
-                                  <th className="px-10 py-5">Legal Entity</th>
-                                  <th className="px-10 py-5">Protocol Status</th>
-                                  <th className="px-10 py-5 text-right">Settlement</th>
+                                <tr className="bg-[#0b103e] text-[10px] font-black uppercase tracking-[0.3em] text-white/40">
+                                  <th className="px-10 py-6">Operational Ident</th>
+                                  <th className="px-10 py-6">Assigned Entity</th>
+                                  <th className="px-10 py-6">Protocol Status</th>
+                                  <th className="px-10 py-6 text-right">Settlement</th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-[#F8F9FB]">
+                              <tbody className="divide-y divide-slate-100">
                                  {(searchQuery ? filteredOrders : orders).slice(0, 8).map((order) => (
-                                    <tr key={order.order_number} className="hover:bg-[#F8F9FB]/50 transition-all group">
-                                       <td className="px-10 py-6">
+                                    <tr key={order.order_number} className="hover:bg-slate-50 transition-all group pointer-events-none">
+                                       <td className="px-10 py-8">
                                           <div className="flex flex-col">
-                                            <span className="text-xs font-black text-[#13184f] group-hover:text-[#1900ff] transition-colors leading-none mb-1">ID-{order.order_number.toUpperCase()}</span>
-                                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Global Order Pool</span>
+                                            <span className="text-xs font-black text-[#0b103e] group-hover:text-[#1900ff] transition-colors leading-none mb-1.5 uppercase tracking-tighter">PR-#{order.order_number}</span>
+                                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Secure Ledger</span>
                                           </div>
                                        </td>
-                                       <td className="px-10 py-6">
-                                          <p className="text-xs font-bold text-[#13184f]">{order.customer_name}</p>
+                                       <td className="px-10 py-8">
+                                          <p className="text-sm font-black text-[#0b103e]">{order.customer_name}</p>
+                                          <p className="text-[10px] font-medium text-slate-400 mt-0.5 uppercase tracking-tight">Verified Client</p>
                                        </td>
-                                       <td className="px-10 py-6">
-                                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                                             order.status === 'paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                                       <td className="px-10 py-8 text-center sm:text-left">
+                                          <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.1em] ${
+                                             order.status === 'paid' 
+                                             ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                                             : 'bg-indigo-50 text-[#1900ff] border border-indigo-100'
                                           }`}>
-                                             <span className={`size-1.5 rounded-full ${order.status === 'paid' ? 'bg-emerald-500' : 'bg-amber-500 animte-pulse'}`} />
+                                             <span className={`size-1.5 rounded-full ${order.status === 'paid' ? 'bg-emerald-500' : 'bg-[#1900ff] animate-pulse'}`} />
                                              {order.status}
                                           </span>
                                        </td>
-                                       <td className="px-10 py-6 text-right">
-                                          <span className="text-sm font-black text-[#13184f] tracking-tight">N{(order.total / 100).toLocaleString()}</span>
+                                       <td className="px-10 py-8 text-right">
+                                          <span className="text-lg font-black text-[#0b103e] tracking-tight">N{(order.total / 100).toLocaleString()}</span>
                                        </td>
                                     </tr>
                                  ))}
@@ -325,21 +387,21 @@ export default function AdminDashboard() {
                                  {(searchQuery ? filteredUsers : users).slice(0, 5).map((u) => (
                                     <div key={u.uuid} className="flex items-center justify-between group cursor-pointer">
                                        <div className="flex items-center gap-4">
-                                          <div className="h-11 w-11 bg-white/10 rounded-2xl flex items-center justify-center text-white text-xs font-black border border-white/10 group-hover:bg-[#1900ff] group-hover:border-[#1900ff] transition-all">
+                                          <div className="h-12 w-12 bg-white/5 rounded-xl flex items-center justify-center text-white text-xs font-black border border-white/5 group-hover:bg-[#1900ff] group-hover:border-[#1900ff] transition-all">
                                              {u.full_name.charAt(0)}
                                           </div>
                                           <div>
-                                             <p className="text-sm font-black text-white group-hover:translate-x-1 transition-transform">{u.full_name}</p>
-                                             <p className="text-[10px] text-white/30 font-bold uppercase tracking-tight">{format(new Date(u.created_at), "MMMM d, yyyy")}</p>
+                                             <p className="text-sm font-black text-white group-hover:translate-x-1 transition-transform tracking-tight">{u.full_name}</p>
+                                             <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">{format(new Date(u.created_at), "MMM d, yyyy")}</p>
                                           </div>
                                        </div>
                                        <div className="p-2 rounded-lg bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                          <ChevronRight size={14} className="text-[#1900ff]" />
+                                          <ChevronRight size={14} className="text-white" />
                                        </div>
                                     </div>
                                  ))}
                               </div>
-                              <button onClick={() => setActiveTab("users")} className="w-full mt-10 p-4 rounded-2xl bg-white text-[11px] font-black uppercase tracking-[0.2em] text-[#13184f] hover:bg-[#1900ff] hover:text-white transition-all shadow-xl shadow-black/20">
+                              <button onClick={() => setActiveTab("users")} className="w-full mt-10 h-14 rounded-2xl bg-[#1900ff] text-[11px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-[#13184f] transition-all shadow-xl shadow-blue-500/20">
                                  Global Identity Hub
                               </button>
                            </div>
@@ -352,22 +414,22 @@ export default function AdminDashboard() {
                              System Integrity
                            </div>
                            <div className="space-y-4">
-                              <div className="flex flex-col gap-2">
+                              <div className="flex flex-col gap-3">
                                  <div className="flex justify-between text-[11px] font-black">
-                                    <span className="uppercase tracking-tight text-[#13184f]">Server Capacity</span>
+                                    <span className="uppercase tracking-widest text-slate-400">Node Latency</span>
                                     <span className="text-[#1900ff]">94.2%</span>
                                  </div>
-                                 <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                    <div className="h-full bg-[#1900ff] w-[94.2%] rounded-full shadow-[0_0_10px_rgba(25,0,255,0.4)]" />
+                                 <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                    <div className="h-full bg-gradient-to-r from-blue-500 to-[#1900ff] w-[94.2%] rounded-full shadow-[0_0_10px_rgba(25,0,255,0.4)]" />
                                  </div>
                               </div>
-                              <div className="flex flex-col gap-2">
+                              <div className="flex flex-col gap-3">
                                  <div className="flex justify-between text-[11px] font-black">
-                                    <span className="uppercase tracking-tight text-[#13184f]">Logistics Fluidity</span>
-                                    <span className="text-emerald-500">OPTIMAL</span>
+                                    <span className="uppercase tracking-widest text-slate-400">Security Mesh</span>
+                                    <span className="text-emerald-500">ACTIVE</span>
                                  </div>
-                                 <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                    <div className="h-full bg-emerald-500 w-[100%] rounded-full shadow-[0_0_10px_rgba(16,185,129,0.4)]" />
+                                 <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                    <div className="h-full bg-emerald-500 w-[100%] rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)]" />
                                  </div>
                               </div>
                            </div>
@@ -474,9 +536,6 @@ export default function AdminDashboard() {
                                  <td className="px-12 py-8">
                                     <div className="flex items-center gap-5">
                                        <div className="h-12 w-12 bg-[#13184f] rounded-2xl flex items-center justify-center text-white text-sm font-black shadow-lg shadow-[#13184f]/20 group-hover:bg-[#1900ff] transition-all">
-                                          {u.full_name.charAt(0)}
-                                       </div>
-                                       <div>
                                           <p className="text-base font-black text-[#13184f] tracking-tight uppercase">{u.full_name}</p>
                                           <div className="flex items-center gap-1.5">
                                              <span className="size-1.5 rounded-full bg-emerald-500" />
@@ -506,10 +565,147 @@ export default function AdminDashboard() {
                    </div>
                 </motion.div>
               )}
+
+              {/* ─── PRODUCTS TAB ─── */}
+              {activeTab === "products" && (
+                <motion.div key="products" initial={{opacity:0, scale: 0.98}} animate={{opacity:1, scale: 1}} className="space-y-8">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-2xl font-black text-[#0b103e] tracking-tight uppercase">Product Catalog</h3>
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">{products.length} items available on Buy Materials</p>
+                    </div>
+                    <button
+                      onClick={openAddProduct}
+                      className="flex items-center gap-2 h-12 px-7 rounded-2xl bg-[#1900ff] text-[12px] font-black text-white uppercase tracking-[0.15em] hover:bg-[#0b103e] transition-all shadow-lg shadow-blue-500/20"
+                    >
+                      <Plus size={16} /> Add Product
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {products.filter(p =>
+                      searchQuery === "" ||
+                      p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      p.category?.toLowerCase().includes(searchQuery.toLowerCase())
+                    ).map((product) => (
+                      <motion.div
+                        key={product.id}
+                        initial={{opacity: 0, y: 12}}
+                        animate={{opacity: 1, y: 0}}
+                        className="bg-white rounded-[28px] border border-white shadow-[0_10px_40px_rgba(19,24,79,0.04)] overflow-hidden group hover:shadow-[0_20px_50px_rgba(19,24,79,0.08)] transition-all"
+                      >
+                        <div className="relative h-44 bg-[#F6F7FD] flex items-center justify-center overflow-hidden">
+                          {product.image ? (
+                            <img src={product.image} alt={product.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          ) : (
+                            <ImageIcon size={40} className="text-slate-200" />
+                          )}
+                          {product.badge && (
+                            <span className="absolute top-3 left-3 px-2 py-0.5 rounded-lg bg-[#1900ff] text-white text-[9px] font-black uppercase tracking-widest">{product.badge}</span>
+                          )}
+                          {product.featured && (
+                            <span className="absolute top-3 right-3 px-2 py-0.5 rounded-lg bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest">Featured</span>
+                          )}
+                        </div>
+                        <div className="p-6">
+                          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">{product.category}</p>
+                          <h4 className="text-sm font-black text-[#0b103e] uppercase tracking-tight mb-1">{product.name}</h4>
+                          <p className="text-[11px] text-slate-400 font-medium mb-4 line-clamp-2">{product.shortDescription}</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl font-black text-[#0b103e] tracking-tight">N{Number(product.price).toLocaleString()}</span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => openEditProduct(product)}
+                                className="size-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-[#1900ff] hover:text-white transition-all"
+                              >
+                                <Pencil size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteProduct(product.id)}
+                                className="size-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-red-500 hover:text-white transition-all"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
         </main>
       </div>
+
+      {/* ─── PRODUCT MODAL ─── */}
+      <AnimatePresence>
+        {showProductModal && (
+          <motion.div
+            initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+            onClick={(e) => e.target === e.currentTarget && setShowProductModal(false)}
+          >
+            <motion.div
+              initial={{opacity: 0, scale: 0.95, y: 20}} animate={{opacity: 1, scale: 1, y: 0}} exit={{opacity: 0, scale: 0.95}}
+              className="bg-white rounded-[32px] w-full max-w-xl shadow-[0_40px_80px_rgba(0,0,0,0.15)] overflow-hidden"
+            >
+              <div className="bg-[#0b103e] px-8 py-6 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-black text-white uppercase tracking-tight">{editingProduct ? "Edit Product" : "New Product"}</h3>
+                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">Will appear on the Buy Materials page</p>
+                </div>
+                <button onClick={() => setShowProductModal(false)} className="size-10 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all">
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="p-8 space-y-5 max-h-[70vh] overflow-y-auto">
+                {[
+                  { label: "Product Name *", key: "name", type: "text", placeholder: "e.g. Portland Cement 42.5R" },
+                  { label: "Short Description", key: "shortDescription", type: "text", placeholder: "Brief product description" },
+                  { label: "Category", key: "category", type: "text", placeholder: "e.g. Structural Materials" },
+                  { label: "Price (NGN, in kobo) *", key: "price", type: "number", placeholder: "e.g. 18500" },
+                  { label: "Image URL", key: "image", type: "text", placeholder: "/assets/design/product-cement.png" },
+                  { label: "Badge Text", key: "badge", type: "text", placeholder: "e.g. new, sale, hot" },
+                  { label: "Homepage Slot", key: "homepageSlot", type: "text", placeholder: "e.g. best-seller, featured" },
+                  { label: "Initial Stock Level", key: "stockLevel", type: "number", placeholder: "100" },
+                ].map(({ label, key, type, placeholder }) => (
+                  <div key={key}>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block">{label}</label>
+                    <input
+                      type={type}
+                      value={(productForm as any)[key]}
+                      onChange={(e) => setProductForm(prev => ({ ...prev, [key]: e.target.value }))}
+                      placeholder={placeholder}
+                      className="w-full h-12 rounded-xl border border-slate-200 bg-[#F8F9FB] px-4 text-sm font-bold text-[#0b103e] focus:ring-4 focus:ring-blue-50 focus:border-[#1900ff] outline-none transition-all placeholder:text-slate-300"
+                    />
+                  </div>
+                ))}
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div
+                    onClick={() => setProductForm(prev => ({ ...prev, featured: !prev.featured }))}
+                    className={`h-6 w-11 rounded-full transition-all relative ${productForm.featured ? 'bg-[#1900ff]' : 'bg-slate-200'}`}
+                  >
+                    <div className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all ${productForm.featured ? 'left-6' : 'left-1'}`} />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 group-hover:text-[#0b103e] transition-colors">Mark as Featured</span>
+                </label>
+              </div>
+              <div className="px-8 py-6 bg-[#F6F7FD] border-t border-slate-100 flex items-center gap-3 justify-end">
+                <button onClick={() => setShowProductModal(false)} className="h-12 px-6 rounded-xl bg-white border border-slate-200 text-[11px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-all">Cancel</button>
+                <button
+                  onClick={handleSaveProduct}
+                  disabled={productSaving}
+                  className="h-12 px-8 rounded-xl bg-[#1900ff] text-[11px] font-black uppercase tracking-widest text-white hover:bg-[#0b103e] transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
+                >
+                  {productSaving ? "Saving…" : editingProduct ? "Update Product" : "Create Product"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
