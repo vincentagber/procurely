@@ -35,6 +35,7 @@ final class Database
         $this->migrate($this->connection);
         $this->seedInventory($this->connection);
         $this->seedAdmin($this->connection);
+        $this->seedCustomer($this->connection);
 
         return $this->connection;
     }
@@ -187,6 +188,18 @@ final class Database
         $passwordHash = password_hash('Apassword123!', PASSWORD_BCRYPT, ['cost' => 12]);
 
         $stmt = $pdo->prepare('INSERT OR IGNORE INTO users (uuid, full_name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, "admin", ?)');
+        $stmt->execute([$uuid, $fullName, $email, $passwordHash, $now]);
+    }
+
+    private function seedCustomer(PDO $pdo): void
+    {
+        $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+        $uuid = 'customer-user-id';
+        $email = 'customer@procurely.com';
+        $fullName = 'Sample Customer';
+        $passwordHash = password_hash('Cpassword123!', PASSWORD_BCRYPT, ['cost' => 12]);
+
+        $stmt = $pdo->prepare('INSERT OR IGNORE INTO users (uuid, full_name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, "user", ?)');
         $stmt->execute([$uuid, $fullName, $email, $passwordHash, $now]);
     }
 }

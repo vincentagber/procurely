@@ -50,35 +50,35 @@ export function HeroSection({ hero, features }: HeroSectionProps) {
           )}
         >
           <Reveal className="max-w-[520px]" distance={44}>
-            <h1 className="flex flex-col gap-[1.5px] uppercase text-white w-full max-w-[550px]">
-              <span className="block font-black text-[10vw] sm:text-5xl md:text-[52px] leading-[1.05] tracking-tight">
+            <h1 className="flex flex-col gap-0 uppercase text-white w-full max-w-[800px]">
+              <span className="block font-medium text-[9vw] sm:text-5xl md:text-[60px] leading-[1.1] tracking-tight">
                 {firstLine}
               </span>
               {trailingLine ? (
-                <span className="flex flex-wrap items-center gap-x-[6px] gap-y-1 leading-[1.05] mt-0.5">
-                  <span className="font-black text-[10vw] sm:text-5xl md:text-[52px] tracking-tight">
+                <span className="flex flex-wrap items-center gap-x-4 leading-[1.1]">
+                  <span className="font-black text-[10vw] sm:text-5xl md:text-[72px] tracking-tight">
                     DEVELOPERS.
                   </span>
-                  <span className="font-black text-[10vw] sm:text-5xl md:text-[52px] tracking-tight text-transparent [-webkit-text-stroke:1px_white] sm:[-webkit-text-stroke:1.5px_white] opacity-95">
+                  <span className="font-light text-[9vw] sm:text-5xl md:text-[60px] tracking-tight opacity-90">
                     {trailingLine}
                   </span>
                 </span>
               ) : null}
             </h1>
-            <p className="mt-6 max-w-[480px] text-base sm:text-lg md:text-[17px] leading-relaxed text-white/90 font-medium hidden sm:block">
+            <p className="mt-8 max-w-[520px] text-base sm:text-lg md:text-[16px] leading-relaxed text-white opacity-80 font-medium hidden sm:block">
               {hero.description}
             </p>
             <motion.div
-              className="mt-7 inline-flex sm:mt-8 lg:mt-9"
+              className="mt-10 inline-flex sm:mt-12 lg:mt-14"
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
               whileHover={{ y: -4, scale: 1.015 }}
               whileTap={{ scale: 0.985 }}
             >
               <Link
-                className="inline-flex h-14 items-center gap-2.5 rounded-[14px] bg-primary-navy px-6 text-[0.98rem] font-semibold text-white shadow-[0_26px_50px_rgba(19,24,79,0.24)] transition-interactive hover:bg-primary-navy-600 sm:h-[60px] sm:px-7 sm:text-[1rem] lg:h-[66px] lg:px-8 lg:text-[1.05rem]"
+                className="inline-flex h-12 items-center gap-3 rounded-[4px] bg-[#0b103e] px-8 text-sm font-black text-white shadow-xl transition-interactive hover:bg-[#1900ff]"
                 href={hero.ctaHref}
               >
-                <ArrowUpRight className="size-5 lg:size-6" />
+                <ArrowUpRight className="size-5" />
                 {hero.ctaLabel}
               </Link>
             </motion.div>
@@ -94,13 +94,13 @@ export function HeroSection({ hero, features }: HeroSectionProps) {
             return (
               <Reveal className="text-center" delay={index * 0.08} key={feature.title}>
                 <div className="flex flex-col items-center group">
-                  <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-white text-[#ff6f4d] shadow-[0_8px_30px_rgba(255,111,77,0.12)] transition-transform group-hover:scale-110">
-                    <Icon className="size-8" />
+                  <div className="mb-4 text-[#ff6f4d] transition-transform group-hover:scale-110">
+                    <Icon className="size-10" />
                   </div>
-                  <h2 className="text-xl font-black tracking-tight text-[#13184f] mb-2 uppercase">
+                  <h2 className="text-xl font-black tracking-tight text-[#13184f] mb-1">
                     {feature.title}
                   </h2>
-                  <p className="text-[15px] font-medium text-slate-500 max-w-[200px]">
+                  <p className="text-[14px] font-medium text-slate-500">
                     {feature.description}
                   </p>
                 </div>
