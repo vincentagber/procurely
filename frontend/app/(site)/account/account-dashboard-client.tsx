@@ -21,6 +21,9 @@ export default function AccountDashboardClient() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [orderRefs, setOrderRefs] = useState<StoredOrderRef[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ fullName: "", email: "" });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     try {
@@ -28,7 +31,9 @@ export default function AccountDashboardClient() {
       const storedRefs = window.sessionStorage.getItem(ORDER_HISTORY_KEY);
       
       if (storedUser) {
-        setUser(JSON.parse(storedUser) as AuthUser);
+        const u = JSON.parse(storedUser) as AuthUser;
+        setUser(u);
+        setEditForm({ fullName: u.fullName, email: u.email });
       }
       
       if (storedRefs) {
@@ -45,6 +50,21 @@ export default function AccountDashboardClient() {
     window.localStorage.removeItem("procurely-auth-token");
     window.localStorage.removeItem("procurely-auth-user");
     router.push("/login");
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const resp = await api.updateProfile(editForm);
+      window.localStorage.setItem("procurely-auth-user", JSON.stringify(resp.user));
+      setUser(resp.user);
+      setIsEditing(false);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -78,17 +98,67 @@ export default function AccountDashboardClient() {
         <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[#1900ff]/20 to-transparent pointer-events-none" />
         <div className="relative z-10">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-            <div>
+            <div className="flex-1">
               <span className="inline-block py-1 px-3 rounded-full bg-white/10 text-white/70 text-[11px] font-bold uppercase tracking-widest mb-6">
                 Developer Dashboard
               </span>
-              <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-none mb-4">
-                Welcome back, <br/>
-                <span className="text-[#1900ff] brightness-150">{user.fullName.split(" ")[0]}</span>
-              </h1>
-              <p className="text-white/50 font-medium flex items-center gap-2">
-                <Mail className="size-3.5" /> {user.email}
-              </p>
+              
+              {isEditing ? (
+                <form onSubmit={handleUpdateProfile} className="max-w-md space-y-4">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-white/40 block mb-1.5 ml-1">Full Name</label>
+                    <input 
+                      type="text" 
+                      value={editForm.fullName}
+                      onChange={e => setEditForm({ ...editForm, fullName: e.target.value })}
+                      className="w-full bg-white/10 border border-white/20 rounded-xl px-4 h-12 text-white font-bold outline-none focus:border-[#1900ff]/60"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-white/40 block mb-1.5 ml-1">Email Address</label>
+                    <input 
+                      type="email" 
+                      value={editForm.email}
+                      onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                      className="w-full bg-white/10 border border-white/20 rounded-xl px-4 h-12 text-white font-bold outline-none focus:border-[#1900ff]/60"
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button 
+                      type="submit" 
+                      disabled={saving}
+                      className="h-11 px-6 bg-[#1900ff] text-white font-bold rounded-xl text-sm disabled:opacity-50"
+                    >
+                      {saving ? "Saving..." : "Save Profile"}
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setIsEditing(false)}
+                      className="h-11 px-6 bg-white/10 text-white font-bold rounded-xl text-sm border border-white/15"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-none mb-4">
+                    Welcome back, <br/>
+                    <span className="text-[#1900ff] brightness-150">{user.fullName.split(" ")[0]}</span>
+                  </h1>
+                  <p className="text-white/50 font-medium flex items-center gap-2">
+                    <Mail className="size-3.5" /> {user.email}
+                  </p>
+                  <button 
+                    onClick={() => setIsEditing(true)}
+                    className="mt-6 text-[11px] font-bold uppercase tracking-wider text-[#1900ff] brightness-150 flex items-center gap-1.5 hover:underline"
+                  >
+                    <Settings className="size-3" /> Edit Profile
+                  </button>
+                </>
+              )}
             </div>
             
             <div className="flex flex-wrap gap-4">

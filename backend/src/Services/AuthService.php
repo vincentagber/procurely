@@ -69,6 +69,7 @@ final class AuthService
                 'id' => $uuid,
                 'fullName' => $fullName,
                 'email' => $email,
+                'role' => 'user',
             ],
         ];
     }
@@ -83,7 +84,7 @@ final class AuthService
         }
 
         $pdo = $this->database->connection();
-        $statement = $pdo->prepare('SELECT id, uuid, full_name, email, password_hash FROM users WHERE email = :email LIMIT 1');
+        $statement = $pdo->prepare('SELECT id, uuid, full_name, email, password_hash, role FROM users WHERE email = :email LIMIT 1');
         $statement->execute(['email' => $email]);
         $user = $statement->fetch();
 
@@ -102,6 +103,7 @@ final class AuthService
                 'id' => $user['uuid'],
                 'fullName' => $user['full_name'],
                 'email' => $user['email'],
+                'role' => $user['role'],
             ],
         ];
     }
@@ -158,11 +160,45 @@ final class AuthService
         return ['message' => 'Logged out successfully.'];
     }
 
+    public function updateProfile(int $userId, array $payload): array
+    {
+        $fullName = Input::requiredString($payload, 'fullName', 'Full name', 120);
+        $email = Input::email($payload, 'email', 'email address');
+
+        $pdo = $this->database->connection();
+
+        // Check if email is already taken by another user
+        $check = $pdo->prepare('SELECT id FROM users WHERE email = :email AND id != :id LIMIT 1');
+        $check->execute(['email' => $email, 'id' => $userId]);
+
+        if ($check->fetch() !== false) {
+            throw new ApiException('This email is already in use by another account.', 409, ['field' => 'email']);
+        }
+
+        $stmt = $pdo->prepare('UPDATE users SET full_name = :full_name, email = :email WHERE id = :id');
+        $stmt->execute([
+            'full_name' => $fullName,
+            'email' => $email,
+            'id' => $userId,
+        ]);
+
+        $user = $pdo->prepare('SELECT uuid, full_name, email, role FROM users WHERE id = :id LIMIT 1');
+        $user->execute(['id' => $userId]);
+        $updated = $user->fetch();
+
+        return [
+            'id' => $updated['uuid'],
+            'fullName' => $updated['full_name'],
+            'email' => $updated['email'],
+            'role' => $updated['role'],
+        ];
+    }
+
     public function resolveToken(string $bearerToken): ?array
     {
         $pdo = $this->database->connection();
         $statement = $pdo->prepare(
-            'SELECT u.id, u.uuid, u.full_name, u.email
+            'SELECT u.id, u.uuid, u.full_name, u.email, u.role
              FROM user_tokens ut
              JOIN users u ON u.id = ut.user_id
              WHERE ut.token = :token

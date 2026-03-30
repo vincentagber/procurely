@@ -34,6 +34,7 @@ final class Database
 
         $this->migrate($this->connection);
         $this->seedInventory($this->connection);
+        $this->seedAdmin($this->connection);
 
         return $this->connection;
     }
@@ -48,6 +49,7 @@ final class Database
               full_name TEXT NOT NULL,
               email TEXT NOT NULL UNIQUE,
               password_hash TEXT NOT NULL,
+              role TEXT NOT NULL DEFAULT "user",
               created_at TEXT NOT NULL
             );
 
@@ -78,6 +80,7 @@ final class Database
 
             CREATE TABLE IF NOT EXISTS orders (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id INTEGER,
               order_number TEXT NOT NULL UNIQUE,
               cart_token TEXT NOT NULL UNIQUE,
               customer_name TEXT NOT NULL,
@@ -89,7 +92,8 @@ final class Database
               total INTEGER NOT NULL,
               status TEXT NOT NULL,
               paid_at TEXT,
-              created_at TEXT NOT NULL
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
             );
 
             CREATE TABLE IF NOT EXISTS order_items (
@@ -143,6 +147,8 @@ final class Database
 
             CREATE INDEX IF NOT EXISTS idx_user_tokens_user_id ON user_tokens (user_id);
             CREATE INDEX IF NOT EXISTS idx_user_tokens_token ON user_tokens (token);
+            CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);
+            CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id);
             CREATE INDEX IF NOT EXISTS idx_password_reset_email ON password_reset_requests (email, expires_at DESC);
             CREATE INDEX IF NOT EXISTS idx_cart_items_cart_token ON cart_items (cart_token);
             CREATE INDEX IF NOT EXISTS idx_orders_order_number ON orders (order_number);
@@ -170,5 +176,17 @@ final class Database
         foreach ($products as $id) {
             $stmt->execute([$id, $now]);
         }
+    }
+
+    private function seedAdmin(PDO $pdo): void
+    {
+        $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+        $uuid = 'admin-user-id'; // Simplified for seed
+        $email = 'admin@procurely.com';
+        $fullName = 'Admin User';
+        $passwordHash = password_hash('Apassword123!', PASSWORD_BCRYPT, ['cost' => 12]);
+
+        $stmt = $pdo->prepare('INSERT OR IGNORE INTO users (uuid, full_name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, "admin", ?)');
+        $stmt->execute([$uuid, $fullName, $email, $passwordHash, $now]);
     }
 }

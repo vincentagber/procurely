@@ -40,10 +40,11 @@ $database = new Database($databasePath);
 $catalogService = new CatalogService($database, $contentStore);
 $authService = new AuthService($database, $debug);
 $cartService = new CartService($database, $contentStore);
-$paymentProcessor = new \Procurely\Api\Support\PaymentProcessor($database);
-$orderService = new OrderService($database, $cartService, $paymentProcessor);
+$emailService = new \Procurely\Api\Support\EmailService($rootPath);
+$orderService = new OrderService($database, $cartService, $paymentProcessor, $emailService);
 $engagementService = new EngagementService($database);
 $wishlistService = new \Procurely\Api\Services\WishlistService($database, $contentStore);
+$adminService = new \Procurely\Api\Services\AdminService($database);
 
 $app = AppFactory::create();
 $app->addBodyParsingMiddleware();
@@ -123,6 +124,51 @@ $app->post('/api/auth/logout', static function (ServerRequestInterface $request,
     return JsonResponder::success($response, $authService->logout($database->connection(), $token));
 });
 
+$app->get('/api/auth/me', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
+    $authHeader = $request->getHeaderLine('Authorization');
+    $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
+
+    if ($token === '') {
+        throw new ApiException('Authorization token required.', 401);
+    }
+
+    $user = $authService->resolveToken($token);
+    if (!$user) {
+        throw new ApiException('Invalid or expired token.', 401);
+    }
+
+    return JsonResponder::success($response, [
+        'user' => [
+            'id' => $user['uuid'],
+            'fullName' => $user['full_name'],
+            'email' => $user['email'],
+            'role' => $user['role'],
+        ]
+    ]);
+});
+
+$app->patch('/api/auth/profile', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
+    $authHeader = $request->getHeaderLine('Authorization');
+    $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
+
+    if ($token === '') {
+        throw new ApiException('Authorization token required.', 401);
+    }
+
+    $user = $authService->resolveToken($token);
+    if (!$user) {
+        throw new ApiException('Invalid or expired token.', 401);
+    }
+
+    $body = RequestData::body($request);
+    $updated = $authService->updateProfile((int) $user['id'], $body);
+
+    return JsonResponder::success($response, [
+        'user' => $updated,
+        'message' => 'Profile updated successfully.'
+    ]);
+});
+
 // ─── Cart ──────────────────────────────────────────────────────────────────────
 $app->get('/api/cart/{token}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($cartService): ResponseInterface {
     return JsonResponder::success($response, $cartService->getCart((string) ($args['token'] ?? '')));
@@ -157,8 +203,19 @@ $app->delete('/api/wishlist/items/{productId}', static function (ServerRequestIn
 });
 
 // ─── Orders ────────────────────────────────────────────────────────────────────
-$app->post('/api/checkout', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService): ResponseInterface {
-    return JsonResponder::success($response, $orderService->checkout(RequestData::body($request)), 201);
+$app->post('/api/checkout', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService, $authService): ResponseInterface {
+    $authHeader = $request->getHeaderLine('Authorization');
+    $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
+    $userId = null;
+
+    if ($token !== '') {
+        $user = $authService->resolveToken($token);
+        if ($user) {
+            $userId = (int) $user['id'];
+        }
+    }
+
+    return JsonResponder::success($response, $orderService->checkout(RequestData::body($request), $userId), 201);
 })->add($orderRateLimit);
 
 $app->post('/api/webhooks/paystack', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService): ResponseInterface {
@@ -174,16 +231,81 @@ $app->post('/api/webhooks/paystack', static function (ServerRequestInterface $re
     return JsonResponder::success($response, $orderService->handleWebhook($data));
 });
 
-$app->get('/api/orders/{orderNumber}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($orderService): ResponseInterface {
+$app->get('/api/orders/{orderNumber}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($orderService, $authService): ResponseInterface {
     $cartToken = (string) (RequestData::query($request)['cartToken'] ?? '');
     $email = (string) (RequestData::query($request)['email'] ?? '');
+    
+    $authHeader = $request->getHeaderLine('Authorization');
+    $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
+    $isAdmin = false;
+    
+    if ($token !== '') {
+        $user = $authService->resolveToken($token);
+        if ($user && $user['role'] === 'admin') {
+            $isAdmin = true;
+        }
+    }
 
     return JsonResponder::success($response, $orderService->findByOrderNumber(
         (string) ($args['orderNumber'] ?? ''),
         $cartToken,
         $email,
+        $isAdmin,
     ));
 });
+
+$app->get('/api/account/orders', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService, $authService): ResponseInterface {
+    $authHeader = $request->getHeaderLine('Authorization');
+    $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
+
+    if ($token === '') {
+        throw new ApiException('Authorization token required.', 401);
+    }
+
+    $user = $authService->resolveToken($token);
+    if (!$user) {
+        throw new ApiException('Invalid or expired token.', 401);
+    }
+
+    return JsonResponder::success($response, $orderService->getUserOrders((int) $user['id']));
+});
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+$adminMiddleware = function (ServerRequestInterface $request, $handler) use ($authService): ResponseInterface {
+    $authHeader = $request->getHeaderLine('Authorization');
+    $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
+
+    if ($token === '') {
+        throw new ApiException('Authorization token required.', 401);
+    }
+
+    $user = $authService->resolveToken($token);
+    if (!$user || $user['role'] !== 'admin') {
+        throw new ApiException('Forbidden: Admin access only.', 403);
+    }
+
+    return $handler->handle($request);
+};
+
+$app->get('/api/admin/stats', static function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService): ResponseInterface {
+    return JsonResponder::success($response, $adminService->getStats());
+})->add($adminMiddleware);
+
+$app->get('/api/admin/orders', static function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService): ResponseInterface {
+    $params = RequestData::query($request);
+    return JsonResponder::success($response, $adminService->listOrders((int) ($params['limit'] ?? 50), (int) ($params['offset'] ?? 0)));
+})->add($adminMiddleware);
+
+$app->get('/api/admin/users', static function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService): ResponseInterface {
+    $params = RequestData::query($request);
+    return JsonResponder::success($response, $adminService->listUsers((int) ($params['limit'] ?? 50), (int) ($params['offset'] ?? 0)));
+})->add($adminMiddleware);
+
+$app->patch('/api/admin/orders/{orderNumber}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService): ResponseInterface {
+    $body = RequestData::body($request);
+    $status = (string) ($body['status'] ?? '');
+    return JsonResponder::success($response, $adminService->updateOrderStatus((string) ($args['orderNumber'] ?? ''), $status));
+})->add($adminMiddleware);
 
 // ─── Engagement ────────────────────────────────────────────────────────────────
 $app->post('/api/quotes', static function (ServerRequestInterface $request, ResponseInterface $response) use ($engagementService): ResponseInterface {

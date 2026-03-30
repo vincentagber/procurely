@@ -15,10 +15,11 @@ final class OrderService
         private readonly Database $database,
         private readonly CartService $cartService,
         private readonly \Procurely\Api\Support\PaymentProcessor $paymentProcessor,
+        private readonly \Procurely\Api\Support\EmailService $emailService,
     ) {
     }
 
-    public function checkout(array $payload): array
+    public function checkout(array $payload, ?int $userId = null): array
     {
         $cartToken = Input::cartToken($payload);
         $customerName = Input::requiredString($payload, 'customerName', 'Customer name', 120);
@@ -76,10 +77,11 @@ final class OrderService
             $orderNumber = sprintf('PR-%s', strtoupper(substr(bin2hex(random_bytes(6)), 0, 10)));
             $createdAt = (new DateTimeImmutable())->format(DateTimeImmutable::ATOM);
             $insertOrder = $pdo->prepare(
-                'INSERT INTO orders (order_number, cart_token, customer_name, customer_email, phone, address, subtotal, service_fee, total, status, created_at)
-                 VALUES (:order_number, :cart_token, :customer_name, :customer_email, :phone, :address, :subtotal, :service_fee, :total, :status, :created_at)'
+                'INSERT INTO orders (user_id, order_number, cart_token, customer_name, customer_email, phone, address, subtotal, service_fee, total, status, created_at)
+                 VALUES (:user_id, :order_number, :cart_token, :customer_name, :customer_email, :phone, :address, :subtotal, :service_fee, :total, :status, :created_at)'
             );
             $insertOrder->execute([
+                'user_id' => $userId,
                 'order_number' => $orderNumber,
                 'cart_token' => $cartToken,
                 'customer_name' => $customerName,
@@ -122,10 +124,13 @@ final class OrderService
 
         $this->cartService->clearCart($cartToken);
 
-        return $this->findByOrderNumber($orderNumber);
+        $orderData = $this->findByOrderNumber($orderNumber);
+        $this->emailService->sendOrderConfirmation($orderData);
+
+        return $orderData;
     }
 
-    public function findByOrderNumber(string $orderNumber, string $cartToken = '', string $email = ''): array
+    public function findByOrderNumber(string $orderNumber, string $cartToken = '', string $email = '', bool $isAdmin = false): array
     {
         $pdo = $this->database->connection();
         $orderStatement = $pdo->prepare(
@@ -139,11 +144,11 @@ final class OrderService
             throw new ApiException('Order not found.', 404);
         }
 
-        // Verify requester owns the order. Support both session-based (cartToken) and guest-based (email) verification.
+        // Verify requester owns the order. Support session-based (cartToken), guest-based (email) and admin verification.
         $matchesToken = $cartToken !== '' && hash_equals((string) $order['cart_token'], $cartToken);
         $matchesEmail = $email !== '' && hash_equals(mb_strtolower((string) $order['customer_email']), mb_strtolower($email));
 
-        if (!$matchesToken && !$matchesEmail) {
+        if (!$isAdmin && !$matchesToken && !$matchesEmail) {
             throw new ApiException('Order not found.', 404);
         }
 
@@ -212,12 +217,28 @@ final class OrderService
             $update->execute(['paid_at' => $now, 'reference' => $reference]);
 
             $pdo->commit();
+
+            // Webhooks get data from Paystack, bypass email check.
+            $orderData = $this->findByOrderNumber($reference, '', '', true);
+            $this->emailService->sendOrderConfirmation($orderData);
+
             return ['status' => 'success'];
         } catch (\Throwable $e) {
-            if ($pdo->inTransaction()) {
+            if ($pdo && $pdo->inTransaction()) {
                 $pdo->rollBack();
             }
             throw $e;
         }
+    }
+
+    public function getUserOrders(int $userId): array
+    {
+        $pdo = $this->database->connection();
+        $stmt = $pdo->prepare(
+            'SELECT order_number, status, total, created_at FROM orders WHERE user_id = :user_id ORDER BY created_at DESC'
+        );
+        $stmt->execute(['user_id' => $userId]);
+
+        return $stmt->fetchAll();
     }
 }

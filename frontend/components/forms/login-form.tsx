@@ -6,9 +6,11 @@ import { startTransition, useState } from "react";
 
 import { TextField } from "@/components/forms/form-field";
 import { api } from "@/lib/api";
+import { useAuth } from "@/components/auth/auth-provider";
 
 export function LoginForm() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,9 +27,14 @@ export function LoginForm() {
           setMessage(null);
           const response = await api.login(form);
           window.localStorage.setItem("procurely-auth-token", response.token);
-          setMessage("Signed in successfully. Redirecting to the homepage...");
+          await refreshUser();
+          setMessage("Signed in successfully. Redirecting...");
           startTransition(() => {
-            router.push("/");
+            if (response.user.role === "admin") {
+              router.push("/admin");
+            } else {
+              router.push("/account");
+            }
           });
         } catch (nextError) {
           setError(
