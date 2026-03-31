@@ -25,7 +25,10 @@ import {
   Pencil,
   Trash2,
   X,
-  ImageIcon
+  ImageIcon,
+  Download,
+  CheckSquare,
+  Square
 } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,14 +50,20 @@ export default function AdminDashboard() {
     image: "", badge: "", featured: false, homepageSlot: "", stockLevel: "100"
   });
   const [productSaving, setProductSaving] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && !loading) {
       if (!user || user.role !== "admin") {
         router.push("/");
       }
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, mounted]);
 
   useEffect(() => {
     if (user?.role === "admin") {
@@ -130,7 +139,7 @@ export default function AdminDashboard() {
       setProductSaving(false);
     }
   };
-
+  
   const handleDeleteProduct = async (id: string) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
     try {
@@ -138,6 +147,73 @@ export default function AdminDashboard() {
       fetchData();
     } catch (e: any) {
       alert(e.message ?? "Failed to delete product.");
+    }
+  };
+  
+  const handleExportUsers = () => {
+    const list = selectedUsers.length > 0 
+      ? users.filter(u => selectedUsers.includes(u.uuid)) 
+      : filteredUsers;
+      
+    if (list.length === 0) return;
+    
+    const headers = ["Full Name", "Email", "Role", "Join Date"];
+    const rows = list.map(u => [
+      u.full_name,
+      u.email,
+      u.role,
+      format(new Date(u.created_at), "yyyy-MM-dd HH:mm:ss")
+    ]);
+    
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.map(field => `"${field}"`).join(","))
+    ].join("\n");
+    
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `procurely_partners_${format(new Date(), "yyyy_MM_dd")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const toggleUserSelection = (uuid: string) => {
+    setSelectedUsers(prev => 
+      prev.includes(uuid) ? prev.filter(id => id !== uuid) : [...prev, uuid]
+    );
+  };
+
+  const toggleAllUsers = () => {
+    if (selectedUsers.length === filteredUsers.length) {
+      setSelectedUsers([]);
+    } else {
+      setSelectedUsers(filteredUsers.map(u => u.uuid));
+    }
+  };
+
+  const handleDeleteUser = async (uuid: string) => {
+    if (!confirm("Are you sure you want to terminate this partner identity? This action is irreversible.")) return;
+    try {
+      await api.deleteAdminUser(uuid);
+      setSelectedUsers(prev => prev.filter(id => id !== uuid));
+      fetchData();
+    } catch (e: any) {
+      alert(e.message ?? "Failed to delete user.");
+    }
+  };
+
+  const handleBulkDeleteUsers = async () => {
+    if (!confirm(`Are you sure you want to terminate ${selectedUsers.length} selected partner identities? This will revoke all active access.`)) return;
+    try {
+      await Promise.all(selectedUsers.map(uuid => api.deleteAdminUser(uuid)));
+      setSelectedUsers([]);
+      fetchData();
+    } catch (e: any) {
+      alert("Some users could not be deleted. They might be administrative accounts.");
+      fetchData();
     }
   };
 
@@ -514,55 +590,163 @@ export default function AdminDashboard() {
               )}
 
               {activeTab === "users" && (
-                <motion.div key="users" initial={{opacity:0, scale: 0.98}} animate={{opacity:1, scale: 1}} className="bg-white rounded-[40px] border border-white shadow-[0_20px_60px_rgba(19,24,79,0.04)] overflow-hidden">
-                   <div className="px-12 py-10 border-b border-[#F8F9FB]">
-                      <h3 className="text-2xl font-black text-[#13184f] tracking-tight uppercase">Registry Command</h3>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Identified {users.length} verified procurement agents</p>
+                <motion.div 
+                  key="users" 
+                  initial={{opacity:0, scale: 0.99, y: 10}} 
+                  animate={{opacity:1, scale: 1, y: 0}} 
+                  className="bg-white rounded-[40px] border border-white shadow-[0_20px_60px_rgba(19,24,79,0.04)] overflow-hidden"
+                >
+                   <div className="px-12 py-10 border-b border-[#F8F9FB] flex items-center justify-between">
+                      <div>
+                        <h3 className="text-2xl font-black text-[#13184f] tracking-tight uppercase">Partner Registry</h3>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                          {selectedUsers.length > 0 
+                            ? `${selectedUsers.length} partners selected for bulk command` 
+                            : `Displaying ${filteredUsers.length} authenticated entities`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {selectedUsers.length > 0 && (
+                          <>
+                            <button 
+                              onClick={handleBulkDeleteUsers}
+                              className="h-11 px-6 rounded-2xl bg-rose-50 text-[11px] font-black text-rose-500 uppercase tracking-tighter hover:bg-rose-500 hover:text-white transition-all border border-rose-100 flex items-center gap-2"
+                            >
+                              <Trash2 size={14} />
+                              Terminate {selectedUsers.length}
+                            </button>
+                            <button 
+                              onClick={() => setSelectedUsers([])}
+                              className="h-11 px-6 rounded-2xl bg-slate-50 text-[11px] font-black text-slate-400 uppercase tracking-tighter hover:bg-slate-100 transition-all"
+                            >
+                              Reset
+                            </button>
+                          </>
+                        )}
+                        <button 
+                          onClick={handleExportUsers}
+                          className={`h-11 px-7 rounded-2xl flex items-center gap-2.5 text-[11px] font-black uppercase tracking-widest transition-all shadow-lg ${
+                            selectedUsers.length > 0
+                            ? "bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-600"
+                            : "bg-[#13184f] text-white shadow-slate-900/10 hover:bg-[#1900ff]"
+                          }`}
+                        >
+                          <Download size={14} strokeWidth={2.5} />
+                          {selectedUsers.length > 0 ? "Export Selection" : "Export Registry"}
+                        </button>
+                      </div>
                    </div>
                    <div className="overflow-x-auto">
                       <table className="w-full text-left">
                          <thead>
                             <tr className="bg-[#F8F9FB]/50 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                               <th className="px-12 py-5">Agent Profile</th>
-                               <th className="px-12 py-5">Communication Endpoint</th>
-                               <th className="px-12 py-5 text-right">Clearance Level</th>
-                               <th className="px-12 py-5 text-right">Registration Epoch</th>
-                               <th className="px-12 py-5"></th>
+                               <th className="px-12 py-6 w-20">
+                                  <button 
+                                    onClick={toggleAllUsers}
+                                    className="p-1 rounded-md transition-colors hover:bg-slate-200/50"
+                                  >
+                                    {selectedUsers.length === filteredUsers.length && filteredUsers.length > 0 ? (
+                                      <CheckSquare size={18} className="text-[#1900ff]" />
+                                    ) : (
+                                      <Square size={18} />
+                                    )}
+                                  </button>
+                               </th>
+                               <th className="px-5 py-6">Partner Identity</th>
+                               <th className="px-12 py-6">Secure Communication</th>
+                               <th className="px-12 py-6 text-center">Clearance</th>
+                               <th className="px-12 py-6 text-right">Registered On</th>
+                               <th className="px-12 py-6"></th>
                             </tr>
                          </thead>
                          <tbody className="divide-y divide-[#F8F9FB]">
-                            {filteredUsers.map((u) => (
-                              <tr key={u.uuid} className="hover:bg-primary-blue-50/20 transition-all group">
-                                 <td className="px-12 py-8">
-                                    <div className="flex items-center gap-5">
-                                       <div className="h-12 w-12 bg-[#13184f] rounded-2xl flex items-center justify-center text-white text-sm font-black shadow-lg shadow-[#13184f]/20 group-hover:bg-[#1900ff] transition-all">
-                                          <p className="text-base font-black text-[#13184f] tracking-tight uppercase">{u.full_name}</p>
-                                          <div className="flex items-center gap-1.5">
-                                             <span className="size-1.5 rounded-full bg-emerald-500" />
-                                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Active Partner</span>
-                                          </div>
-                                       </div>
-                                    </div>
-                                 </td>
-                                 <td className="px-12 py-8 text-sm text-[#13184f] font-medium transition-colors group-hover:text-[#1900ff]">{u.email}</td>
-                                 <td className="px-12 py-8 text-right">
-                                    <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full border ${
-                                       u.role === 'admin' ? 'text-[#1900ff] border-[#1900ff]/20 bg-primary-blue-50' : 'text-slate-500 border-slate-100 bg-slate-50'
-                                    }`}>
-                                       {u.role}
-                                    </span>
-                                 </td>
-                                 <td className="px-12 py-8 text-right text-xs text-slate-400 font-bold uppercase tracking-widest">
-                                    {format(new Date(u.created_at), "MMMM d, yyyy")}
-                                 </td>
-                                 <td className="px-12 py-8 text-right">
-                                    <button className="h-10 px-6 rounded-xl bg-[#F8F9FB] text-[10px] font-black text-[#13184f] uppercase tracking-widest hover:bg-[#13184f] hover:text-white transition-all shadow-sm">Manage</button>
-                                 </td>
-                              </tr>
-                            ))}
+                            {filteredUsers.map((u) => {
+                              const isSelected = selectedUsers.includes(u.uuid);
+                              return (
+                                <tr 
+                                  key={u.uuid} 
+                                  className={`transition-all group border-l-[4px] ${
+                                    isSelected 
+                                    ? "bg-primary-blue-50/30 border-[#1900ff]" 
+                                    : "hover:bg-slate-50/80 border-transparent"
+                                  }`}
+                                >
+                                   <td className="px-12 py-8">
+                                      <button 
+                                        onClick={() => toggleUserSelection(u.uuid)}
+                                        className="p-1 rounded-md transition-colors group-hover:bg-white"
+                                      >
+                                        {isSelected ? (
+                                          <CheckSquare size={18} className="text-[#1900ff]" />
+                                        ) : (
+                                          <Square size={18} className="text-slate-300 group-hover:text-slate-400" />
+                                        )}
+                                      </button>
+                                   </td>
+                                   <td className="px-5 py-8">
+                                      <div className="flex items-center gap-4">
+                                         <div className={`size-11 rounded-xl flex items-center justify-center text-white text-sm font-black shadow-lg transition-all ${
+                                           u.role === 'admin' ? "bg-gradient-to-br from-[#13184f] to-[#1900ff]" : "bg-slate-300"
+                                         }`}>
+                                            {u.full_name.charAt(0)}
+                                         </div>
+                                         <div className="flex flex-col">
+                                            <span className="text-sm font-black text-[#13184f] tracking-tight group-hover:text-[#1900ff] transition-colors">{u.full_name}</span>
+                                            <div className="flex items-center gap-1.5 mt-0.5">
+                                               <span className={`size-1.5 rounded-full ${u.role === 'admin' ? "bg-[#1900ff]" : "bg-emerald-500"}`} />
+                                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Authenticated Partner</span>
+                                            </div>
+                                         </div>
+                                      </div>
+                                   </td>
+                                   <td className="px-12 py-8">
+                                      <div className="flex flex-col">
+                                        <span className="text-xs font-bold text-slate-500 lowercase">{u.email}</span>
+                                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Verified Channel</span>
+                                      </div>
+                                   </td>
+                                   <td className="px-12 py-8 text-center">
+                                      <span className={`inline-flex items-center px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm ${
+                                         u.role === 'admin' 
+                                         ? 'bg-[#13184f] text-white' 
+                                         : 'bg-white border border-slate-100 text-slate-500'
+                                      }`}>
+                                         {u.role}
+                                      </span>
+                                   </td>
+                                   <td className="px-12 py-8 text-right">
+                                      <div className="flex flex-col">
+                                        <span className="text-xs font-black text-[#13184f]">{format(new Date(u.created_at), "MMM d, yyyy")}</span>
+                                        <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1">Registration Epoch</span>
+                                      </div>
+                                   </td>
+                                   <td className="px-12 py-8 text-right flex items-center justify-end gap-3">
+                                      <button 
+                                        onClick={() => handleDeleteUser(u.uuid)}
+                                        className="size-11 rounded-2xl bg-rose-50 text-rose-400 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all border border-rose-100"
+                                      >
+                                        <Trash2 size={16} />
+                                      </button>
+                                      <button className="flex items-center gap-2 h-11 px-6 rounded-2xl bg-[#F8F9FB] border border-[#F0F2F5] text-[10px] font-black text-[#13184f] uppercase tracking-widest hover:bg-[#13184f] hover:text-white hover:border-[#13184f] transition-all shadow-sm group/btn">
+                                        Manage Audit
+                                        <ChevronRight size={14} className="text-slate-300 group-hover/btn:text-white transition-colors" />
+                                      </button>
+                                   </td>
+                                </tr>
+                              );
+                            })}
                          </tbody>
                       </table>
                    </div>
+                   {filteredUsers.length === 0 && (
+                     <div className="py-24 flex flex-col items-center justify-center bg-slate-50/30">
+                        <div className="size-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 mb-6">
+                           <Users size={32} />
+                        </div>
+                        <h4 className="text-lg font-black text-slate-400 uppercase tracking-widest">No matching partners found</h4>
+                        <p className="text-xs font-bold text-slate-300 uppercase tracking-widest mt-2">Adjust your search command to find entities</p>
+                     </div>
+                   )}
                 </motion.div>
               )}
 

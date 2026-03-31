@@ -126,4 +126,36 @@ final class AdminService
         $this->contentStore->deleteProduct($id);
         return ['message' => 'Product deleted.'];
     }
+
+    public function deleteUser(string $uuid, string $adminUuid): array
+    {
+        if ($uuid === $adminUuid) {
+            throw new ApiException('You cannot delete your own administrative account.', 403);
+        }
+
+        $pdo = $this->database->connection();
+        $pdo->beginTransaction();
+
+        try {
+            // Remove active session tokens first
+            $deleteTokens = $pdo->prepare('DELETE FROM user_tokens WHERE user_uuid = :uuid');
+            $deleteTokens->execute(['uuid' => $uuid]);
+
+            // Delete the entity registry entry
+            $deleteUser = $pdo->prepare('DELETE FROM users WHERE uuid = :uuid');
+            $deleteUser->execute(['uuid' => $uuid]);
+
+            if ($deleteUser->rowCount() === 0) {
+                throw new ApiException('User identity not found in registry.', 404);
+            }
+
+            $pdo->commit();
+            return ['message' => 'User identity successfully purged from registry.'];
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
+    }
 }

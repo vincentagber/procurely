@@ -227,6 +227,11 @@ export const api = {
       method: "DELETE",
     });
   },
+  deleteAdminUser(uuid: string) {
+    return request<{ message: string }>(`/api/admin/users/${encodeURIComponent(uuid)}`, {
+      method: "DELETE",
+    });
+  },
 };
 
 // ─── Order history helpers ─────────────────────────────────────────────────────

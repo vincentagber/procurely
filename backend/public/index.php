@@ -274,6 +274,17 @@ $app->get('/api/admin/users', static function (ServerRequestInterface $request, 
     return JsonResponder::success($response, $adminService->listUsers((int) ($params['limit'] ?? 50), (int) ($params['offset'] ?? 0)));
 })->add($adminMiddleware);
 
+$app->delete('/api/admin/users/{uuid}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService, $authService): ResponseInterface {
+    $authHeader = $request->getHeaderLine('Authorization');
+    $token = substr($authHeader, 7);
+    $admin = $authService->resolveToken($token);
+    
+    return JsonResponder::success($response, $adminService->deleteUser(
+        (string) ($args['uuid'] ?? ''), 
+        (string) ($admin['uuid'] ?? '')
+    ));
+})->add($adminMiddleware);
+
 $app->patch('/api/admin/orders/{orderNumber}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService): ResponseInterface {
     $body = RequestData::body($request);
     $status = (string) ($body['status'] ?? '');

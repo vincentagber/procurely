@@ -14,7 +14,7 @@ final class ContentStore
 
     public function __construct(
         private readonly string $contentPath,
-        Database $database = null
+        ?Database $database = null
     ) {
         // Fallback for cases where database is not explicitly passed yet
         $this->database = $database ?? new Database($_ENV['DATABASE_PATH'] ?? 'storage/procurely.sqlite');
