@@ -10,12 +10,21 @@ final class Paystack
 
     public function __construct(string $secretKey = '')
     {
-        $this->secretKey = $_ENV['PAYSTACK_SECRET_KEY'] ?? 'sk_test_procurely_mock_key';
+        $key = $_ENV['PAYSTACK_SECRET_KEY'] ?? '';
+        
+        $isDebug = filter_var($_ENV['APP_DEBUG'] ?? 'false', FILTER_VALIDATE_BOOL);
+        
+        if ($key === '' && !$isDebug) {
+            throw new \RuntimeException('PAYSTACK_SECRET_KEY is required in production.');
+        }
+
+        $this->secretKey = $key ?: 'sk_test_procurely_mock_key';
     }
 
     public function isValidSignature(string $payload, string $signature): bool
     {
-        return $signature === hash_hmac('sha512', $payload, $this->secretKey);
+        $expected = hash_hmac('sha512', $payload, $this->secretKey);
+        return hash_equals($expected, $signature);
     }
 
     /**

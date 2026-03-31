@@ -118,7 +118,7 @@ $app->get('/api/auth/me', static function (ServerRequestInterface $request, Resp
             'role' => $user['role'],
         ]
     ]);
-});
+})->add($authRateLimit);
 
 $app->patch('/api/auth/profile', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
     $authHeader = $request->getHeaderLine('Authorization');
@@ -140,7 +140,7 @@ $app->patch('/api/auth/profile', static function (ServerRequestInterface $reques
         'user' => $updated,
         'message' => 'Profile updated successfully.'
     ]);
-});
+})->add($authRateLimit);
 
 // ─── Cart ──────────────────────────────────────────────────────────────────────
 $app->get('/api/cart/{token}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($cartService): ResponseInterface {
@@ -302,11 +302,11 @@ $app->delete('/api/admin/products/{id}', static function (ServerRequestInterface
 // ─── Engagement ────────────────────────────────────────────────────────────────
 $app->post('/api/quotes', static function (ServerRequestInterface $request, ResponseInterface $response) use ($engagementService): ResponseInterface {
     return JsonResponder::success($response, $engagementService->requestQuote(RequestData::body($request)), 201);
-});
+})->add($orderRateLimit);
 
 $app->post('/api/newsletter', static function (ServerRequestInterface $request, ResponseInterface $response) use ($engagementService): ResponseInterface {
     return JsonResponder::success($response, $engagementService->subscribe(RequestData::body($request)), 201);
-});
+})->add($authRateLimit);
 
 // ─── Error handler ─────────────────────────────────────────────────────────────
 $errorMiddleware = $app->addErrorMiddleware($debug, true, true);

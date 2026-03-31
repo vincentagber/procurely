@@ -407,33 +407,33 @@ export default function AdminDashboard() {
                            </div>
                         </div>
 
-                        {/* SUPPORT BOARD */}
-                        <div className="bg-white rounded-[32px] p-8 border border-white shadow-[0_10px_40px_rgba(19,24,79,0.03)]">
-                           <div className="flex items-center gap-3 mb-6 font-black uppercase tracking-widest text-[10px] text-slate-400">
-                             <BarChart3 size={14} className="text-[#1900ff]" />
-                             System Integrity
-                           </div>
-                           <div className="space-y-4">
-                              <div className="flex flex-col gap-3">
-                                 <div className="flex justify-between text-[11px] font-black">
-                                    <span className="uppercase tracking-widest text-slate-400">Node Latency</span>
-                                    <span className="text-[#1900ff]">94.2%</span>
-                                 </div>
-                                 <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                    <div className="h-full bg-gradient-to-r from-blue-500 to-[#1900ff] w-[94.2%] rounded-full shadow-[0_0_10px_rgba(25,0,255,0.4)]" />
-                                 </div>
-                              </div>
-                              <div className="flex flex-col gap-3">
-                                 <div className="flex justify-between text-[11px] font-black">
-                                    <span className="uppercase tracking-widest text-slate-400">Security Mesh</span>
-                                    <span className="text-emerald-500">ACTIVE</span>
-                                 </div>
-                                 <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                    <div className="h-full bg-emerald-500 w-[100%] rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)]" />
-                                 </div>
-                              </div>
-                           </div>
-                        </div>
+                         {/* SYSTEM STATUS BOARD */}
+                         <div className="bg-white rounded-[32px] p-8 border border-white shadow-[0_10px_40px_rgba(19,24,79,0.03)]">
+                            <div className="flex items-center gap-3 mb-6 font-black uppercase tracking-widest text-[10px] text-slate-400">
+                              <Activity size={14} className="text-[#1900ff]" />
+                              Infrastructure Health
+                            </div>
+                            <div className="space-y-4">
+                               <div className="flex flex-col gap-3">
+                                  <div className="flex justify-between text-[11px] font-black">
+                                     <span className="uppercase tracking-widest text-slate-400">Database Synchronization</span>
+                                     <span className="text-[#1900ff]">Optimized</span>
+                                  </div>
+                                  <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                     <div className="h-full bg-gradient-to-r from-blue-500 to-[#1900ff] w-full rounded-full shadow-[0_0_10px_rgba(25,0,255,0.4)]" />
+                                  </div>
+                               </div>
+                               <div className="flex flex-col gap-3">
+                                  <div className="flex justify-between text-[11px] font-black">
+                                     <span className="uppercase tracking-widest text-slate-400">Encrypted Transactions</span>
+                                     <span className="text-emerald-500">Verified</span>
+                                  </div>
+                                  <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                     <div className="h-full bg-emerald-500 w-full rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)]" />
+                                  </div>
+                               </div>
+                            </div>
+                         </div>
                      </div>
                   </div>
                 </motion.div>

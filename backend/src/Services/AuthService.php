@@ -154,8 +154,9 @@ final class AuthService
 
     public function logout(PDO $pdo, string $token): array
     {
-        $statement = $pdo->prepare('DELETE FROM user_tokens WHERE token = :token');
-        $statement->execute(['token' => $token]);
+        $tokenHash = hash('sha256', $token);
+        $statement = $pdo->prepare('DELETE FROM user_tokens WHERE token_hash = :token_hash');
+        $statement->execute(['token_hash' => $tokenHash]);
 
         return ['message' => 'Logged out successfully.'];
     }
@@ -196,15 +197,18 @@ final class AuthService
 
     public function resolveToken(string $bearerToken): ?array
     {
+        $tokenHash = hash('sha256', $bearerToken);
+        $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+        
         $pdo = $this->database->connection();
         $statement = $pdo->prepare(
             'SELECT u.id, u.uuid, u.full_name, u.email, u.role
              FROM user_tokens ut
              JOIN users u ON u.id = ut.user_id
-             WHERE ut.token = :token
+             WHERE ut.token_hash = :token_hash AND ut.expires_at > :now
              LIMIT 1'
         );
-        $statement->execute(['token' => $bearerToken]);
+        $statement->execute(['token_hash' => $tokenHash, 'now' => $now]);
         $user = $statement->fetch();
 
         return $user !== false ? $user : null;
@@ -213,11 +217,16 @@ final class AuthService
     private function issueToken(PDO $pdo, int $userId): string
     {
         $token = bin2hex(random_bytes(32));
-        $createdAt = (new DateTimeImmutable())->format(DateTimeImmutable::ATOM);
-        $statement = $pdo->prepare('INSERT INTO user_tokens (user_id, token, created_at) VALUES (:user_id, :token, :created_at)');
+        $tokenHash = hash('sha256', $token);
+        $now = new \DateTimeImmutable();
+        $createdAt = $now->format(\DateTimeImmutable::ATOM);
+        $expiresAt = $now->modify('+30 days')->format(\DateTimeImmutable::ATOM);
+
+        $statement = $pdo->prepare('INSERT INTO user_tokens (user_id, token_hash, expires_at, created_at) VALUES (:user_id, :token_hash, :expires_at, :created_at)');
         $statement->execute([
             'user_id' => $userId,
-            'token' => $token,
+            'token_hash' => $tokenHash,
+            'expires_at' => $expiresAt,
             'created_at' => $createdAt,
         ]);
 
