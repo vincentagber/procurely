@@ -1,6 +1,7 @@
 @config "../tailwind.config.js";
 @import "tailwindcss";
 
+
 @layer components {
   .container-shell {
     @apply mx-auto w-full max-w-shell px-gutter md:px-gutter-lg;

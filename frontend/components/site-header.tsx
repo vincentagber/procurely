@@ -17,6 +17,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useCart } from "@/components/cart/cart-provider";
 import { useWishlist } from "@/components/wishlist-provider";
 import { useUi } from "@/components/ui/ui-provider";
+import { useAuth } from "@/components/auth/auth-provider";
 import { cn } from "@/lib/format";
 import type { SiteContent } from "@/lib/types";
 
@@ -31,6 +32,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
   const { cart } = useCart();
   const { wishlist } = useWishlist();
   const { openCart } = useUi();
+  const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -42,7 +44,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
   return (
     <header className="w-full">
       {/* Top Bar - Dark Blue */}
-      <div className="bg-[#00008b] text-white">
+      <div className="bg-[#0A1140] text-white">
         <div className="container-shell mx-auto flex h-[42px] items-center justify-between px-4">
           <div className="flex items-center gap-5">
             <InstagramIcon className="size-[15px] opacity-90 transition hover:opacity-100" />
@@ -52,9 +54,13 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
             <PinterestIcon />
             <TikTokIcon />
           </div>
-          <div className="flex items-center gap-2.5 text-[11px] font-black uppercase tracking-wider">
+          <div className="flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-wider">
             <UserRound className="size-4" strokeWidth={2.5} />
-            <Link href="/login" className="hover:text-white/80">Login / Register</Link>
+            {user ? (
+               <Link href="/account" className="hover:text-white/80">Account: {user.fullName.split(' ')[0]}</Link>
+            ) : (
+               <Link href="/login" className="hover:text-white/80">Login / Register</Link>
+            )}
           </div>
         </div>
       </div>
@@ -92,7 +98,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
             />
             <button
               aria-label="Search"
-              className="absolute right-0 top-0 flex h-full w-[64px] items-center justify-center bg-[#0b103e] text-white transition hover:bg-[#13184f]"
+              className="absolute right-0 top-0 flex h-full w-[64px] items-center justify-center bg-[#0A1140] text-white transition hover:bg-[#1D4ED8]"
               type="submit"
             >
               <Search className="size-5" />
@@ -100,27 +106,27 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
           </form>
 
           <div className="flex items-center gap-6">
-            <Link href="/wishlist" className="relative p-1 text-[#13184f] transition hover:scale-105">
+            <Link href="/wishlist" className="relative p-1 text-[#0A1140] transition hover:scale-105 hover:text-[#1D4ED8]">
               <Heart className="size-7" strokeWidth={1.5} />
               {wishlistCount > 0 && (
-                <span className="absolute -right-1.5 -top-1 flex size-5 items-center justify-center rounded-full bg-[#ef5350] text-[10px] font-black text-white">
+                <span className="absolute -right-1.5 -top-1 flex size-5 items-center justify-center rounded-full bg-[#ef5350] text-[10px] font-bold text-white">
                   {wishlistCount}
                 </span>
               )}
             </Link>
-            <Link href="/account" className="p-1 text-[#13184f] transition hover:scale-105">
+            <Link href="/account" className="p-1 text-[#0A1140] transition hover:scale-105 hover:text-[#1D4ED8]">
               <UserRound className="size-7" strokeWidth={1.5} />
             </Link>
-            <button onClick={openCart} className="relative p-1 text-[#13184f] transition hover:scale-105">
+            <button onClick={openCart} className="relative p-1 text-[#0A1140] transition hover:scale-105 hover:text-[#1D4ED8]">
               <ShoppingBag className="size-7" strokeWidth={1.5} />
               {cartCount > 0 && (
-                <span className="absolute -right-1.5 -top-1 flex size-5 items-center justify-center rounded-full bg-[#1900ff] text-[10px] font-black text-white">
+                <span className="absolute -right-1.5 -top-1 flex size-5 items-center justify-center rounded-full bg-[#1D4ED8] text-[10px] font-bold text-white">
                   {cartCount}
                 </span>
               )}
             </button>
             <button className="lg:hidden" onClick={() => setMenuOpen(!menuOpen)}>
-              <Menu className="size-7 text-[#13184f]" />
+              <Menu className="size-7 text-[#0A1140]" />
             </button>
           </div>
         </div>
@@ -129,14 +135,14 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
       {/* Bottom Bar - White */}
       <div className="bg-white py-4 shadow-sm">
         <div className="container-shell mx-auto flex items-center justify-between px-4">
-          <nav className="hidden items-center gap-10 text-[15.5px] font-bold text-[#13184f] lg:flex">
+          <nav className="hidden items-center gap-10 text-[15.5px] font-bold text-[#0A1140] lg:flex">
             {navigation.primaryLinks.map((link) => {
               const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
               return (
                 <Link
                   key={link.label}
                   href={link.href}
-                  className={cn("transition hover:text-[#1900ff]", isActive && "text-[#1900ff]")}
+                  className={cn("transition hover:text-[#1D4ED8]", isActive && "text-[#1D4ED8]")}
                 >
                   {link.label}
                 </Link>
@@ -146,7 +152,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
 
           <Link
             href="/contact-quote"
-            className="flex h-[56px] min-w-[200px] items-center justify-center rounded-[12px] bg-[#1900ff] px-10 text-[15.5px] font-black text-white shadow-lg shadow-indigo-500/10 transition active:scale-[0.98]"
+            className="flex h-[56px] min-w-[200px] items-center justify-center rounded-[12px] bg-[#1D4ED8] px-10 text-[15.5px] font-bold text-white shadow-lg shadow-blue-500/10 transition active:scale-[0.98] hover:bg-blue-800"
           >
             Submit BOQ / Contact
           </Link>
@@ -172,14 +178,14 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
               className="fixed bottom-0 right-0 top-0 z-drawer w-[280px] bg-white p-8 shadow-2xl lg:hidden"
             >
               <div className="flex items-center justify-between mb-10">
-                <p className="text-xl font-black text-[#13184f]">Menu</p>
+                <p className="text-xl font-bold text-[#0A1140]">Menu</p>
                 <button onClick={() => setMenuOpen(false)}>
-                  <X className="size-6 text-slate-400" />
+                  <X className="size-6 text-slate-400 hover:text-[#1D4ED8]" />
                 </button>
               </div>
-              <nav className="flex flex-col gap-6 font-bold text-[#13184f]">
+              <nav className="flex flex-col gap-6 font-bold text-[#0A1140]">
                 {navigation.primaryLinks.map((link) => (
-                  <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)}>
+                  <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)} className="hover:text-[#1D4ED8]">
                     {link.label}
                   </Link>
                 ))}

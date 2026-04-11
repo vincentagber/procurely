@@ -14,27 +14,27 @@
     "socialLinks": [
       {
         "label": "Instagram",
-        "href": "#"
+        "href": "https://instagram.com/procurely"
       },
       {
         "label": "Facebook",
-        "href": "#"
+        "href": "https://facebook.com/procurely"
       },
       {
         "label": "YouTube",
-        "href": "#"
+        "href": "https://youtube.com/@procurely"
       },
       {
         "label": "LinkedIn",
-        "href": "#"
+        "href": "https://linkedin.com/company/procurely"
       },
       {
         "label": "Pinterest",
-        "href": "#"
+        "href": "https://pinterest.com/procurely"
       },
       {
         "label": "TikTok",
-        "href": "#"
+        "href": "https://tiktok.com/@procurely"
       }
     ],
     "primaryLinks": [
@@ -52,7 +52,7 @@
       },
       {
         "label": "Blog",
-        "href": "#"
+        "href": "/blog"
       }
     ],
     "accountLinks": [

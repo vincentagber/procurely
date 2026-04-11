@@ -11,12 +11,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function OrderDetailPage() {
+export default async function OrderDetailPage({ params }: Props) {
+  const { orderNumber } = await params;
+  
   return (
-    <div className="bg-[#f6f7fd] min-h-screen">
-      <div className="container-shell py-10">
-        <OrderDetailClient />
-      </div>
-    </div>
+    <OrderDetailClient orderNumber={orderNumber} />
   );
 }

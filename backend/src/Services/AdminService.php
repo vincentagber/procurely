@@ -13,7 +13,14 @@ final class AdminService
     public function __construct(
         private readonly Database $database,
         private readonly ContentStore $contentStore,
+        private readonly \Procurely\Api\Support\Storage $storage,
     ) {
+    }
+
+    public function uploadImage(array $file): array
+    {
+        $url = $this->storage->save($file);
+        return ['url' => $url];
     }
 
     public function getStats(): array

@@ -851,7 +851,6 @@ export default function AdminDashboard() {
                   { label: "Category", key: "category", type: "text", placeholder: "e.g. Structural Materials" },
                   { label: "Price (NGN, in kobo) *", key: "price", type: "number", placeholder: "e.g. 18500" },
                   { label: "Image URL", key: "image", type: "text", placeholder: "/assets/design/product-cement.png" },
-                  { label: "Badge Text", key: "badge", type: "text", placeholder: "e.g. new, sale, hot" },
                   { label: "Homepage Slot", key: "homepageSlot", type: "text", placeholder: "e.g. best-seller, featured" },
                   { label: "Initial Stock Level", key: "stockLevel", type: "number", placeholder: "100" },
                 ].map(({ label, key, type, placeholder }) => (
@@ -866,6 +865,61 @@ export default function AdminDashboard() {
                     />
                   </div>
                 ))}
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Inventory Status</label>
+                    <input
+                      type="text"
+                      value={productForm.badge}
+                      onChange={(e) => setProductForm({ ...productForm, badge: e.target.value })}
+                      placeholder="e.g. New Arrival"
+                      className="w-full h-12 bg-[#F8F9FB] border-none rounded-xl px-4 text-xs font-bold text-[#13184f] focus:ring-2 focus:ring-[#1900ff]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Media Asset</label>
+                    <div className="flex gap-2">
+                       <input
+                         type="text"
+                         value={productForm.image}
+                         onChange={(e) => setProductForm({ ...productForm, image: e.target.value })}
+                         placeholder="/assets/image.png"
+                         className="flex-1 h-12 bg-[#F8F9FB] border-none rounded-xl px-4 text-xs font-bold text-[#13184f] focus:ring-2 focus:ring-[#1900ff]"
+                       />
+                       <label className="h-12 w-12 bg-white border border-[#F0F2F5] rounded-xl flex items-center justify-center text-slate-400 hover:text-[#1900ff] cursor-pointer transition-all">
+                          <Plus size={18} />
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              
+                              const formData = new FormData();
+                              formData.append('image', file);
+                              
+                              try {
+                                const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"}/api/admin/images/upload`, {
+                                  method: 'POST',
+                                  headers: {
+                                    'Authorization': `Bearer ${window.localStorage.getItem('procurely-auth-token')}`
+                                  },
+                                  body: formData
+                                });
+                                const data = await res.json();
+                                if (data.data?.url) {
+                                  setProductForm({ ...productForm, image: data.data.url });
+                                }
+                              } catch (err) {
+                                alert("Image upload failed.");
+                              }
+                            }}
+                          />
+                       </label>
+                    </div>
+                  </div>
+                </div>
                 <label className="flex items-center gap-3 cursor-pointer group">
                   <div
                     onClick={() => setProductForm(prev => ({ ...prev, featured: !prev.featured }))}

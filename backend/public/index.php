@@ -14,6 +14,7 @@ use Procurely\Api\Support\Database;
 use Procurely\Api\Support\JsonResponder;
 use Procurely\Api\Support\RateLimiter;
 use Procurely\Api\Support\RequestData;
+use Procurely\Api\Support\Storage;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Factory\AppFactory;
@@ -45,7 +46,8 @@ $emailService = new \Procurely\Api\Support\EmailService($rootPath);
 $orderService = new OrderService($database, $cartService, $paymentProcessor, $emailService);
 $engagementService = new EngagementService($database);
 $wishlistService = new \Procurely\Api\Services\WishlistService($database, $contentStore);
-$adminService = new \Procurely\Api\Services\AdminService($database, $contentStore);
+$storage = new Storage($rootPath);
+$adminService = new \Procurely\Api\Services\AdminService($database, $contentStore, $storage);
 
 $app = AppFactory::create();
 $app->addBodyParsingMiddleware();
@@ -292,12 +294,32 @@ $app->patch('/api/admin/orders/{orderNumber}', static function (ServerRequestInt
 })->add($adminMiddleware);
 
 // ─── Admin Products ──────────────────────────────────────────────────────────
-$app->get('/api/admin/products', static function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService): ResponseInterface {
-    return JsonResponder::success($response, $adminService->listProducts());
-})->add($adminMiddleware);
+$app->group('/api/admin', function (\Slim\Routing\RouteCollectorProxy $group) use ($adminService) {
+    $group->get('/products', function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService) {
+        return JsonResponder::success($response, $adminService->listProducts());
+    });
 
-$app->post('/api/admin/products', static function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService): ResponseInterface {
-    return JsonResponder::success($response, $adminService->saveProduct(RequestData::body($request)), 201);
+    $group->post('/images/upload', function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService) {
+        $files = $request->getUploadedFiles();
+        if (empty($files['image'])) {
+            throw new ApiException('No image file uploaded.', 400);
+        }
+
+        $file = $files['image'];
+        $fileArray = [
+            'name' => $file->getClientFilename(),
+            'type' => $file->getClientMediaType(),
+            'tmp_name' => $file->getFilePath(),
+            'error' => $file->getError(),
+            'size' => $file->getSize(),
+        ];
+
+        return JsonResponder::success($response, $adminService->uploadImage($fileArray));
+    });
+
+    $group->post('/products', function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService) {
+        return JsonResponder::success($response, $adminService->saveProduct(RequestData::body($request)), 201);
+    });
 })->add($adminMiddleware);
 
 $app->put('/api/admin/products/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService): ResponseInterface {

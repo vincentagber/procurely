@@ -23,26 +23,27 @@ export const readLocalContent = async (): Promise<SiteContent> => {
 };
 
 export const getProcurelyContent = async (): Promise<SiteContent> => {
-  // Always try local content first in dev/fallback
+  // Always try API first for real-time MySQL data
   try {
-    const local = await readLocalContent();
-    return local;
+    const response = await fetch(`${serverApiBase}/api/homepage`, {
+      cache: "no-store",
+      next: { revalidate: 0 },
+      signal: AbortSignal.timeout(3000),
+    });
+
+    if (!response.ok) {
+      throw new Error("Homepage API request failed.");
+    }
+
+    const payload = (await response.json()) as ApiEnvelope<SiteContent>;
+    return payload.data;
   } catch (err) {
-    // Fallback to API if local fails (e.g. in some production setups)
+    // Fallback to local content only if API fails
     try {
-      const response = await fetch(`${serverApiBase}/api/homepage`, {
-        cache: "no-store",
-        signal: AbortSignal.timeout(1500),
-      });
-
-      if (!response.ok) {
-        throw new Error("Homepage request failed.");
-      }
-
-      const payload = (await response.json()) as ApiEnvelope<SiteContent>;
-      return payload.data;
+      const local = await readLocalContent();
+      return local;
     } catch {
-      throw new Error("Unable to load any site content.");
+      throw new Error("Unable to load site content from API or local storage.");
     }
   }
 };
