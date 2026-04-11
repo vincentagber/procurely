@@ -39,11 +39,13 @@ if (!str_starts_with($databasePath, DIRECTORY_SEPARATOR)) {
 $contentStore = new ContentStore(dirname($rootPath) . '/shared/content/procurely.json');
 $database = new Database($databasePath);
 $catalogService = new CatalogService($database, $contentStore);
-$authService = new AuthService($database, $debug);
+$emailService = new \Procurely\Api\Support\EmailService($rootPath);
+$authService = new AuthService($database, $emailService, $debug);
+$notificationService = new \Procurely\Api\Services\NotificationService($database);
 $cartService = new CartService($database, $contentStore);
 $paymentProcessor = new \Procurely\Api\Support\PaymentProcessor($database);
 $emailService = new \Procurely\Api\Support\EmailService($rootPath);
-$orderService = new OrderService($database, $cartService, $paymentProcessor, $emailService);
+$orderService = new OrderService($database, $cartService, $paymentProcessor, $emailService, $notificationService);
 $engagementService = new EngagementService($database);
 $wishlistService = new \Procurely\Api\Services\WishlistService($database, $contentStore);
 $storage = new Storage($rootPath);
@@ -51,6 +53,7 @@ $adminService = new \Procurely\Api\Services\AdminService($database, $contentStor
 
 $app = AppFactory::create();
 $app->addBodyParsingMiddleware();
+$app->add(new \Procurely\Api\Support\AuthMiddleware($authService));
 
 // ─── Direct limits for intensive operations ──────────────────────────────────
 $authRateLimit = (new RateLimiter($database, 10, 60, 'auth'))->middleware();
@@ -89,27 +92,21 @@ $app->post('/api/auth/forgot-password', static function (ServerRequestInterface 
 })->add($authRateLimit);
 
 $app->post('/api/auth/logout', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService, $database): ResponseInterface {
+    $user = $request->getAttribute('user');
+    if (!$user) {
+        throw new ApiException('Authentication required.', 401);
+    }
+
     $authHeader = $request->getHeaderLine('Authorization');
     $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
-
-    if ($token === '') {
-        throw new ApiException('Authorization token required.', 401);
-    }
 
     return JsonResponder::success($response, $authService->logout($database->connection(), $token));
 });
 
-$app->get('/api/auth/me', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
-    $authHeader = $request->getHeaderLine('Authorization');
-    $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
-
-    if ($token === '') {
-        throw new ApiException('Authorization token required.', 401);
-    }
-
-    $user = $authService->resolveToken($token);
+$app->get('/api/auth/me', static function (ServerRequestInterface $request, ResponseInterface $response): ResponseInterface {
+    $user = $request->getAttribute('user');
     if (!$user) {
-        throw new ApiException('Invalid or expired token.', 401);
+        throw new ApiException('Authentication required.', 401);
     }
 
     return JsonResponder::success($response, [
@@ -117,23 +114,17 @@ $app->get('/api/auth/me', static function (ServerRequestInterface $request, Resp
             'id' => $user['uuid'],
             'fullName' => $user['full_name'],
             'email' => $user['email'],
-            'role' => $user['role'],
+            'roles' => $user['roles'],
+            'permissions' => $user['permissions'],
             'walletBalance' => (int) ($user['wallet_balance'] ?? 0),
         ]
     ]);
 })->add($authRateLimit);
 
 $app->patch('/api/auth/profile', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
-    $authHeader = $request->getHeaderLine('Authorization');
-    $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
-
-    if ($token === '') {
-        throw new ApiException('Authorization token required.', 401);
-    }
-
-    $user = $authService->resolveToken($token);
+    $user = $request->getAttribute('user');
     if (!$user) {
-        throw new ApiException('Invalid or expired token.', 401);
+        throw new ApiException('Authentication required.', 401);
     }
 
     $body = RequestData::body($request);
@@ -144,6 +135,26 @@ $app->patch('/api/auth/profile', static function (ServerRequestInterface $reques
         'message' => 'Profile updated successfully.'
     ]);
 })->add($authRateLimit);
+
+// ─── Notifications ─────────────────────────────────────────────────────────────
+$app->get('/api/notifications', static function (ServerRequestInterface $request, ResponseInterface $response) use ($notificationService): ResponseInterface {
+    $user = $request->getAttribute('user');
+    if (!$user) {
+        throw new ApiException('Authentication required.', 401);
+    }
+
+    return JsonResponder::success($response, $notificationService->getUserNotifications((int) $user['id']));
+});
+
+$app->patch('/api/notifications/{id}/read', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($notificationService): ResponseInterface {
+    $user = $request->getAttribute('user');
+    if (!$user) {
+        throw new ApiException('Authentication required.', 401);
+    }
+
+    $notificationService->markAsRead((int) $user['id'], (int) $args['id']);
+    return JsonResponder::success($response, ['message' => 'Notification marked as read.']);
+});
 
 // ─── Cart ──────────────────────────────────────────────────────────────────────
 $app->get('/api/cart/{token}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($cartService): ResponseInterface {

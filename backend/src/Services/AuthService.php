@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use PDO;
 use Procurely\Api\Support\ApiException;
 use Procurely\Api\Support\Database;
+use Procurely\Api\Support\EmailService;
 use Procurely\Api\Support\Input;
 use Ramsey\Uuid\Uuid;
 
@@ -17,6 +18,7 @@ final class AuthService
 
     public function __construct(
         private readonly Database $database,
+        private readonly EmailService $emailService,
         private readonly bool $debugMode = false,
     ) {
     }
@@ -50,17 +52,36 @@ final class AuthService
         $createdAt = (new DateTimeImmutable())->format(DateTimeImmutable::ATOM);
         $uuid = Uuid::uuid7()->toString();
         $statement = $pdo->prepare(
-            'INSERT INTO users (uuid, full_name, email, password_hash, created_at) VALUES (:uuid, :full_name, :email, :password_hash, :created_at)'
+            'INSERT INTO users (uuid, full_name, email, password_hash, wallet_balance, created_at, updated_at) VALUES (:uuid, :full_name, :email, :password_hash, 0, :created_at, :updated_at)'
         );
         $statement->execute([
             'uuid' => $uuid,
             'full_name' => $fullName,
             'email' => $email,
-            'password_hash' => password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]),
+            'password_hash' => password_hash($password, PASSWORD_ARGON2ID, [
+                'memory_cost' => 65536,
+                'time_cost' => 4,
+                'threads' => 3
+            ]),
             'created_at' => $createdAt,
+            'updated_at' => $createdAt,
         ]);
 
         $userId = (int) $pdo->lastInsertId();
+
+        // Assign default customer role
+        $roleStmt = $pdo->prepare('SELECT id FROM roles WHERE name = :name LIMIT 1');
+        $roleStmt->execute(['name' => 'customer']);
+        $role = $roleStmt->fetch();
+        if ($role) {
+            $pdo->prepare('INSERT INTO user_roles (user_id, role_id, assigned_at) VALUES (:user_id, :role_id, :assigned_at)')
+                ->execute([
+                    'user_id' => $userId,
+                    'role_id' => $role['id'],
+                    'assigned_at' => $createdAt,
+                ]);
+        }
+
         $token = $this->issueToken($pdo, $userId);
 
         return [
@@ -69,7 +90,8 @@ final class AuthService
                 'id' => $uuid,
                 'fullName' => $fullName,
                 'email' => $email,
-                'role' => 'user',
+                'roles' => ['customer'],
+                'permissions' => ['product.read', 'order.create', 'order.read'],
                 'walletBalance' => 0,
             ],
         ];
@@ -85,11 +107,19 @@ final class AuthService
         }
 
         $pdo = $this->database->connection();
-        $statement = $pdo->prepare('SELECT id, uuid, full_name, email, password_hash, role, wallet_balance FROM users WHERE email = :email LIMIT 1');
+        $statement = $pdo->prepare('
+            SELECT u.id, u.uuid, u.full_name, u.email, u.password_hash, u.wallet_balance, GROUP_CONCAT(r.name) as roles
+            FROM users u
+            LEFT JOIN user_roles ur ON u.id = ur.user_id
+            LEFT JOIN roles r ON ur.role_id = r.id
+            WHERE u.email = :email
+            GROUP BY u.id
+            LIMIT 1
+        ');
         $statement->execute(['email' => $email]);
         $user = $statement->fetch();
 
-        $dummyHash = '$2y$12$invalidhashusedtomaintaintimingXXXXXXXXXXXXXXXXXXXXXX';
+        $dummyHash = '$argon2id$v=19$m=65536,t=4,p=3$invalidhashusedtomaintaintimingXXXXXXXXXXXXXXXXXXXXXX';
         $hashToVerify = $user !== false ? (string) $user['password_hash'] : $dummyHash;
 
         if ($user === false || !password_verify($password, $hashToVerify)) {
@@ -98,13 +128,17 @@ final class AuthService
 
         $token = $this->issueToken($pdo, (int) $user['id']);
 
+        $roles = $user['roles'] ? explode(',', $user['roles']) : [];
+        $permissions = $this->getUserPermissions($pdo, (int) $user['id']);
+
         return [
             'token' => $token,
             'user' => [
                 'id' => $user['uuid'],
                 'fullName' => $user['full_name'],
                 'email' => $user['email'],
-                'role' => $user['role'],
+                'roles' => $roles,
+                'permissions' => $permissions,
                 'walletBalance' => (int) ($user['wallet_balance'] ?? 0),
             ],
         ];
@@ -116,9 +150,10 @@ final class AuthService
         $pdo = $this->database->connection();
         $lookup = $pdo->prepare('SELECT id FROM users WHERE email = :email LIMIT 1');
         $lookup->execute(['email' => $email]);
+        $user = $lookup->fetch();
 
         // Always return the same message to prevent email enumeration (timing-safe)
-        if ($lookup->fetch() === false) {
+        if ($user === false) {
             return [
                 'message' => 'If this email is registered, reset instructions have been sent.',
             ];
@@ -130,18 +165,22 @@ final class AuthService
         $now = new DateTimeImmutable();
         $expiresAt = $now->modify(sprintf('+%d minutes', self::RESET_TOKEN_TTL_MINUTES))->format(DateTimeImmutable::ATOM);
 
-        $cleanup = $pdo->prepare('DELETE FROM password_reset_requests WHERE email = :email');
-        $cleanup->execute(['email' => $email]);
+        $cleanup = $pdo->prepare('DELETE FROM password_reset_requests WHERE user_id = :user_id');
+        $cleanup->execute(['user_id' => $user['id']]);
 
         $statement = $pdo->prepare(
-            'INSERT INTO password_reset_requests (email, token_hash, expires_at, created_at) VALUES (:email, :token_hash, :expires_at, :created_at)'
+            'INSERT INTO password_reset_requests (user_id, token_hash, expires_at, created_at) VALUES (:user_id, :token_hash, :expires_at, :created_at)'
         );
         $statement->execute([
-            'email' => $email,
+            'user_id' => $user['id'],
             'token_hash' => $tokenHash,
             'expires_at' => $expiresAt,
             'created_at' => $now->format(DateTimeImmutable::ATOM),
         ]);
+
+        // Send reset email
+        $resetLink = ($_ENV['FRONTEND_URL'] ?? 'http://localhost:3000') . '/auth/reset-password?token=' . $rawToken;
+        $this->emailService->sendPasswordReset($email, $resetLink);
 
         $response = [
             'message' => 'If this email is registered, reset instructions have been sent.',
@@ -157,7 +196,7 @@ final class AuthService
     public function logout(PDO $pdo, string $token): array
     {
         $tokenHash = hash('sha256', $token);
-        $statement = $pdo->prepare('DELETE FROM user_tokens WHERE token_hash = :token_hash');
+        $statement = $pdo->prepare('DELETE FROM user_sessions WHERE session_token_hash = :token_hash');
         $statement->execute(['token_hash' => $tokenHash]);
 
         return ['message' => 'Logged out successfully.'];
@@ -178,24 +217,49 @@ final class AuthService
             throw new ApiException('This email is already in use by another account.', 409, ['field' => 'email']);
         }
 
-        $stmt = $pdo->prepare('UPDATE users SET full_name = :full_name, email = :email WHERE id = :id');
+        $stmt = $pdo->prepare('UPDATE users SET full_name = :full_name, email = :email, updated_at = NOW() WHERE id = :id');
         $stmt->execute([
             'full_name' => $fullName,
             'email' => $email,
             'id' => $userId,
         ]);
 
-        $user = $pdo->prepare('SELECT uuid, full_name, email, role FROM users WHERE id = :id LIMIT 1');
+        $user = $pdo->prepare('
+            SELECT u.uuid, u.full_name, u.email, u.wallet_balance, GROUP_CONCAT(r.name) as roles
+            FROM users u
+            LEFT JOIN user_roles ur ON u.id = ur.user_id
+            LEFT JOIN roles r ON ur.role_id = r.id
+            WHERE u.id = :id
+            GROUP BY u.id
+            LIMIT 1
+        ');
         $user->execute(['id' => $userId]);
         $updated = $user->fetch();
+
+        $roles = $updated['roles'] ? explode(',', $updated['roles']) : [];
+        $permissions = $this->getUserPermissions($pdo, $userId);
 
         return [
             'id' => $updated['uuid'],
             'fullName' => $updated['full_name'],
             'email' => $updated['email'],
-            'role' => $updated['role'],
+            'roles' => $roles,
+            'permissions' => $permissions,
             'walletBalance' => (int) ($updated['wallet_balance'] ?? 0),
         ];
+    }
+
+    private function getUserPermissions(PDO $pdo, int $userId): array
+    {
+        $stmt = $pdo->prepare('
+            SELECT DISTINCT p.name
+            FROM permissions p
+            JOIN role_permissions rp ON p.id = rp.permission_id
+            JOIN user_roles ur ON rp.role_id = ur.role_id
+            WHERE ur.user_id = :user_id
+        ');
+        $stmt->execute(['user_id' => $userId]);
+        return array_column($stmt->fetchAll(), 'name');
     }
 
     public function resolveToken(string $bearerToken): ?array
@@ -205,14 +269,22 @@ final class AuthService
         
         $pdo = $this->database->connection();
         $statement = $pdo->prepare(
-            'SELECT u.id, u.uuid, u.full_name, u.email, u.role, u.wallet_balance
-             FROM user_tokens ut
-             JOIN users u ON u.id = ut.user_id
-             WHERE ut.token_hash = :token_hash AND ut.expires_at > :now
+            'SELECT u.id, u.uuid, u.full_name, u.email, u.wallet_balance, GROUP_CONCAT(r.name) as roles
+             FROM user_sessions us
+             JOIN users u ON u.id = us.user_id
+             LEFT JOIN user_roles ur ON u.id = ur.user_id
+             LEFT JOIN roles r ON ur.role_id = r.id
+             WHERE us.session_token_hash = :token_hash AND us.expires_at > :now
+             GROUP BY u.id
              LIMIT 1'
         );
         $statement->execute(['token_hash' => $tokenHash, 'now' => $now]);
         $user = $statement->fetch();
+
+        if ($user) {
+            $user['roles'] = $user['roles'] ? explode(',', $user['roles']) : [];
+            $user['permissions'] = $this->getUserPermissions($pdo, (int) $user['id']);
+        }
 
         return $user !== false ? $user : null;
     }
@@ -225,12 +297,13 @@ final class AuthService
         $createdAt = $now->format(\DateTimeImmutable::ATOM);
         $expiresAt = $now->modify('+30 days')->format(\DateTimeImmutable::ATOM);
 
-        $statement = $pdo->prepare('INSERT INTO user_tokens (user_id, token_hash, expires_at, created_at) VALUES (:user_id, :token_hash, :expires_at, :created_at)');
+        $statement = $pdo->prepare('INSERT INTO user_sessions (user_id, session_token_hash, expires_at, created_at, last_activity) VALUES (:user_id, :token_hash, :expires_at, :created_at, :last_activity)');
         $statement->execute([
             'user_id' => $userId,
             'token_hash' => $tokenHash,
             'expires_at' => $expiresAt,
             'created_at' => $createdAt,
+            'last_activity' => $createdAt,
         ]);
 
         return $token;

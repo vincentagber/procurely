@@ -69,7 +69,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   register(payload: { fullName: string; email: string; password: string }) {
-    return request<{ token: string; user: { id: string; fullName: string; email: string; role: string; walletBalance: number } }>(
+    return request<{ token: string; user: { id: string; fullName: string; email: string; roles: string[]; permissions: string[]; walletBalance: number } }>(
       "/api/auth/register",
       {
         method: "POST",
@@ -78,7 +78,7 @@ export const api = {
     );
   },
   login(payload: { email: string; password: string }) {
-    return request<{ token: string; user: { id: string; fullName: string; email: string; role: string; walletBalance: number } }>(
+    return request<{ token: string; user: { id: string; fullName: string; email: string; roles: string[]; permissions: string[]; walletBalance: number } }>(
       "/api/auth/login",
       {
         method: "POST",
@@ -87,11 +87,19 @@ export const api = {
     );
   },
   getMe() {
-    return request<{ user: { id: string; fullName: string; email: string; role: string; walletBalance: number } }>("/api/auth/me");
+    return request<{ user: { id: string; fullName: string; email: string; roles: string[]; permissions: string[]; walletBalance: number } }>("/api/auth/me");
   },
   logout() {
     return request<{ message: string }>("/api/auth/logout", {
       method: "POST",
+    });
+  },
+  getNotifications() {
+    return request<Array<{ id: number; type: string; title: string; message?: string; data?: any; created_at: string }>>("/api/notifications");
+  },
+  markNotificationRead(id: number) {
+    return request<{ message: string }>(`/api/notifications/${id}/read`, {
+      method: "PATCH",
     });
   },
   forgotPassword(payload: { email: string }) {

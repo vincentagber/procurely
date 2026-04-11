@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Procurely\Api\Services;
 
 use DateTimeImmutable;
+use PDO;
 use Procurely\Api\Support\ApiException;
 use Procurely\Api\Support\Database;
 use Procurely\Api\Support\Input;
@@ -16,6 +17,7 @@ final class OrderService
         private readonly CartService $cartService,
         private readonly \Procurely\Api\Support\PaymentProcessor $paymentProcessor,
         private readonly \Procurely\Api\Support\EmailService $emailService,
+        private readonly NotificationService $notificationService,
     ) {
     }
 
@@ -127,6 +129,27 @@ final class OrderService
         $orderData = $this->findByOrderNumber($orderNumber);
         $this->emailService->sendOrderConfirmation($orderData);
 
+        // Create dashboard notification for admins
+        $pdo = $this->database->connection();
+        $adminStmt = $pdo->prepare('
+            SELECT u.id FROM users u
+            JOIN user_roles ur ON u.id = ur.user_id
+            JOIN roles r ON ur.role_id = r.id
+            WHERE r.name = :role
+        ');
+        $adminStmt->execute(['role' => 'admin']);
+        $admins = $adminStmt->fetchAll(PDO::FETCH_COLUMN);
+
+        foreach ($admins as $adminId) {
+            $this->notificationService->createNotification(
+                (int) $adminId,
+                'order.new',
+                'New Order Received',
+                sprintf('Order %s from %s for N%s', $orderData['orderNumber'], $orderData['customerName'], number_format($orderData['total'] / 100, 2)),
+                ['orderId' => $orderData['orderNumber']]
+            );
+        }
+
         return $orderData;
     }
 
@@ -221,6 +244,26 @@ final class OrderService
             // Webhooks get data from Paystack, bypass email check.
             $orderData = $this->findByOrderNumber($reference, '', '', true);
             $this->emailService->sendOrderConfirmation($orderData);
+
+            // Create dashboard notification for admins
+            $adminStmt = $pdo->prepare('
+                SELECT u.id FROM users u
+                JOIN user_roles ur ON u.id = ur.user_id
+                JOIN roles r ON ur.role_id = r.id
+                WHERE r.name = :role
+            ');
+            $adminStmt->execute(['role' => 'admin']);
+            $admins = $adminStmt->fetchAll(PDO::FETCH_COLUMN);
+
+            foreach ($admins as $adminId) {
+                $this->notificationService->createNotification(
+                    (int) $adminId,
+                    'order.paid',
+                    'Order Payment Confirmed',
+                    sprintf('Payment received for order %s from %s', $orderData['orderNumber'], $orderData['customerName']),
+                    ['orderId' => $orderData['orderNumber']]
+                );
+            }
 
             return ['status' => 'success'];
         } catch (\Throwable $e) {

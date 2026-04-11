@@ -66,17 +66,97 @@ final class Database
               full_name VARCHAR(255) NOT NULL,
               email VARCHAR(255) NOT NULL UNIQUE,
               password_hash VARCHAR(255) NOT NULL,
-              role VARCHAR(20) NOT NULL DEFAULT "user",
+              wallet_balance BIGINT DEFAULT 0,
+              created_at $dateTime NOT NULL,
+              updated_at $dateTime NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS roles (
+              id $pk,
+              name VARCHAR(50) NOT NULL UNIQUE,
+              description $text,
               created_at $dateTime NOT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS user_tokens (
+            CREATE TABLE IF NOT EXISTS permissions (
+              id $pk,
+              name VARCHAR(100) NOT NULL UNIQUE,
+              description $text,
+              created_at $dateTime NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS user_roles (
+              user_id INT NOT NULL,
+              role_id INT NOT NULL,
+              assigned_at $dateTime NOT NULL,
+              assigned_by INT,
+              PRIMARY KEY (user_id, role_id),
+              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+              FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+              FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS role_permissions (
+              role_id INT NOT NULL,
+              permission_id INT NOT NULL,
+              assigned_at $dateTime NOT NULL,
+              PRIMARY KEY (role_id, permission_id),
+              FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+              FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS user_sessions (
               id $pk,
               user_id INT NOT NULL,
-              token_hash VARCHAR(255) NOT NULL UNIQUE,
+              session_token_hash VARCHAR(128) NOT NULL UNIQUE,
+              ip_address VARCHAR(45),
+              user_agent $text,
+              expires_at $dateTime NOT NULL,
+              created_at $dateTime NOT NULL,
+              last_activity $dateTime NOT NULL,
+              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS audit_logs (
+              id BIGINT $pk,
+              user_id INT,
+              action VARCHAR(100) NOT NULL,
+              resource VARCHAR(100) NOT NULL,
+              resource_id VARCHAR(100),
+              old_values JSON,
+              new_values JSON,
+              ip_address VARCHAR(45),
+              user_agent $text,
+              created_at $dateTime NOT NULL,
+              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS notifications (
+              id BIGINT $pk,
+              user_id INT NOT NULL,
+              type VARCHAR(50) NOT NULL,
+              title VARCHAR(255) NOT NULL,
+              message $text,
+              data JSON,
+              read_at $dateTime,
+              created_at $dateTime NOT NULL,
+              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS password_reset_requests (
+              id $pk,
+              user_id INT NOT NULL,
+              token_hash VARCHAR(128) NOT NULL UNIQUE,
               expires_at $dateTime NOT NULL,
               created_at $dateTime NOT NULL,
               FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS rate_limits (
+                `key` VARCHAR(255) NOT NULL,
+                hits INT NOT NULL DEFAULT 1,
+                reset_at BIGINT NOT NULL,
+                PRIMARY KEY (`key`)
             );
 
             CREATE TABLE IF NOT EXISTS products (
@@ -92,14 +172,6 @@ final class Database
               homepage_slot VARCHAR(50),
               created_at $dateTime NOT NULL,
               updated_at $dateTime NOT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS password_reset_requests (
-              id $pk,
-              email VARCHAR(255) NOT NULL,
-              token_hash VARCHAR(255) NOT NULL,
-              expires_at $dateTime NOT NULL,
-              created_at $dateTime NOT NULL
             );
 
             CREATE TABLE IF NOT EXISTS cart_items (
@@ -163,13 +235,6 @@ final class Database
               updated_at $dateTime NOT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS rate_limits (
-                `key` VARCHAR(255) NOT NULL,
-                hits INT NOT NULL DEFAULT 1,
-                reset_at BIGINT NOT NULL,
-                PRIMARY KEY (`key`)
-            );
-
             CREATE TABLE IF NOT EXISTS wishlist_items (
               id $pk,
               wishlist_token VARCHAR(255) NOT NULL,
@@ -178,16 +243,64 @@ final class Database
               UNIQUE(wishlist_token, product_id)
             );
 
-            CREATE INDEX IF NOT EXISTS idx_user_tokens_user_id ON user_tokens (user_id);
-            CREATE INDEX IF NOT EXISTS idx_user_tokens_hash ON user_tokens (token_hash);
-            CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);
+            -- Indexes
+            CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
+            CREATE INDEX IF NOT EXISTS idx_users_uuid ON users (uuid);
+            CREATE INDEX IF NOT EXISTS idx_users_created_at ON users (created_at);
+            CREATE INDEX IF NOT EXISTS idx_roles_name ON roles (name);
+            CREATE INDEX IF NOT EXISTS idx_permissions_name ON permissions (name);
+            CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles (user_id);
+            CREATE INDEX IF NOT EXISTS idx_user_roles_role_id ON user_roles (role_id);
+            CREATE INDEX IF NOT EXISTS idx_role_permissions_role_id ON role_permissions (role_id);
+            CREATE INDEX IF NOT EXISTS idx_role_permissions_permission_id ON role_permissions (permission_id);
+            CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions (user_id);
+            CREATE INDEX IF NOT EXISTS idx_user_sessions_token_hash ON user_sessions (session_token_hash);
+            CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions (expires_at);
+            CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs (user_id);
+            CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs (action);
+            CREATE INDEX IF NOT EXISTS idx_audit_logs_resource ON audit_logs (resource);
+            CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs (created_at);
+            CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications (user_id);
+            CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications (type);
+            CREATE INDEX IF NOT EXISTS idx_notifications_read_at ON notifications (read_at);
+            CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications (created_at);
+            CREATE INDEX IF NOT EXISTS idx_password_reset_user_id ON password_reset_requests (user_id);
+            CREATE INDEX IF NOT EXISTS idx_password_reset_token_hash ON password_reset_requests (token_hash);
+            CREATE INDEX IF NOT EXISTS idx_password_reset_expires_at ON password_reset_requests (expires_at);
+            CREATE INDEX IF NOT EXISTS idx_rate_limits_reset_at ON rate_limits (reset_at);
             CREATE INDEX IF NOT EXISTS idx_products_category ON products (category);
             CREATE INDEX IF NOT EXISTS idx_products_featured ON products (featured);
             CREATE INDEX IF NOT EXISTS idx_products_slot ON products (homepage_slot);
             CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id);
-            CREATE INDEX IF NOT EXISTS idx_password_reset_email ON password_reset_requests (email);
             CREATE INDEX IF NOT EXISTS idx_cart_items_cart_token ON cart_items (cart_token);
-            CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits (reset_at);
+
+            -- Insert default roles and permissions if not exist
+            INSERT IGNORE INTO roles (name, description, created_at) VALUES 
+            ('admin', 'Full system access', NOW()),
+            ('customer', 'Standard customer access', NOW());
+
+            INSERT IGNORE INTO permissions (name, description, created_at) VALUES 
+            ('user.create', 'Create users', NOW()),
+            ('user.read', 'Read user data', NOW()),
+            ('user.update', 'Update users', NOW()),
+            ('user.delete', 'Delete users', NOW()),
+            ('product.create', 'Create products', NOW()),
+            ('product.read', 'Read products', NOW()),
+            ('product.update', 'Update products', NOW()),
+            ('product.delete', 'Delete products', NOW()),
+            ('order.create', 'Create orders', NOW()),
+            ('order.read', 'Read orders', NOW()),
+            ('order.update', 'Update orders', NOW()),
+            ('order.delete', 'Delete orders', NOW());
+
+            -- Assign permissions to admin role
+            INSERT IGNORE INTO role_permissions (role_id, permission_id, assigned_at)
+            SELECT r.id, p.id, NOW() FROM roles r, permissions p WHERE r.name = 'admin';
+
+            -- Assign basic permissions to customer role
+            INSERT IGNORE INTO role_permissions (role_id, permission_id, assigned_at)
+            SELECT r.id, p.id, NOW() FROM roles r, permissions p 
+            WHERE r.name = 'customer' AND p.name IN ('product.read', 'order.create', 'order.read');
             SQL
         );
     }

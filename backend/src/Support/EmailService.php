@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Procurely\Api\Support;
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 final class EmailService
 {
     private const LOG_FILE = 'storage/emails.log';
@@ -25,7 +28,7 @@ final class EmailService
             ucfirst($order['status'])
         );
 
-        $this->logEmail($to, $subject, $body);
+        $this->sendEmail($to, $subject, $body);
 
         // Notify Admin as well
         $this->sendAdminNotification($order);
@@ -43,14 +46,58 @@ final class EmailService
             $order['orderNumber']
         );
 
-        $this->logEmail($to, $subject, $body);
+        $this->sendEmail($to, $subject, $body);
     }
 
-    private function logEmail(string $to, string $subject, string $body): void
+    public function sendPasswordReset(string $to, string $resetLink): void
+    {
+        $subject = 'Password Reset Request';
+        $body = sprintf(
+            "Hi,\n\nYou requested a password reset. Click the link below to reset your password:\n\n%s\n\nIf you didn't request this, please ignore this email.\n\nThank you,\nProcurely Team",
+            $resetLink
+        );
+
+        $this->sendEmail($to, $subject, $body);
+    }
+
+    private function sendEmail(string $to, string $subject, string $body): void
+    {
+        $mail = new PHPMailer(true);
+
+        try {
+            // Server settings
+            $mail->isSMTP();
+            $mail->Host = $_ENV['SMTP_HOST'] ?? 'server381.web-hosting.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = $_ENV['SMTP_USER'] ?? 'info@useprocurely.com';
+            $mail->Password = $_ENV['SMTP_PASS'] ?? '';
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port = (int) ($_ENV['SMTP_PORT'] ?? 465);
+
+            // Recipients
+            $mail->setFrom('info@useprocurely.com', 'Procurely');
+            $mail->addAddress($to);
+
+            // Content
+            $mail->isHTML(false);
+            $mail->Subject = $subject;
+            $mail->Body = $body;
+
+            $mail->send();
+
+            $this->logEmail($to, $subject, $body, 'sent');
+        } catch (Exception $e) {
+            $this->logEmail($to, $subject, $body, 'failed: ' . $mail->ErrorInfo);
+            // In production, you might want to throw or handle differently
+        }
+    }
+
+    private function logEmail(string $to, string $subject, string $body, string $status = 'logged'): void
     {
         $entry = sprintf(
-            "[%s]\nTo: %s\nSubject: %s\nBody: %s\n-----------------------------------\n",
+            "[%s] %s\nTo: %s\nSubject: %s\nBody: %s\n-----------------------------------\n",
             (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM),
+            $status,
             $to,
             $subject,
             $body
