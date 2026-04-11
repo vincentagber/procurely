@@ -5,6 +5,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { useRouter } from "next/navigation";
 import { DashboardSidebar } from "@/components/account/shared/dashboard-sidebar";
 import { DashboardHeader } from "@/components/account/shared/dashboard-header";
+import { SidebarProvider } from "@/components/account/shared/sidebar-context";
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -28,19 +29,21 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-slate-800 font-sans flex flex-col">
-      {/* Full-width header */}
-      <DashboardHeader />
+    <SidebarProvider>
+      <div className="min-h-screen bg-[#F8F9FA] text-slate-800 font-sans flex flex-col">
+        {/* Full-width header */}
+        <DashboardHeader />
 
-      {/* Centred, boxed shell */}
-      <div className="flex-1 flex justify-center px-4 xl:px-6">
-        <div className="w-full max-w-[1440px] flex min-w-0">
-          <DashboardSidebar />
-          <main className="flex-1 p-[10px] pb-[80px] min-w-0 overflow-y-auto">
-            {children}
-          </main>
+        {/* Centred, boxed shell */}
+        <div className="flex-1 flex justify-center px-4 xl:px-6">
+          <div className="w-full max-w-[1440px] flex min-w-0">
+            <DashboardSidebar />
+            <main className="flex-1 p-[10px] pb-[80px] min-w-0 overflow-y-auto">
+              {children}
+            </main>
+          </div>
         </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
