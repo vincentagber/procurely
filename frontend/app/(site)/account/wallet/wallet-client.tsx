@@ -28,7 +28,10 @@ import {
   CheckSquare
 } from "lucide-react";
 
+import { useAuth } from "@/components/auth/auth-provider";
+
 export default function WalletClient() {
+  const { user } = useAuth();
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
@@ -43,68 +46,13 @@ export default function WalletClient() {
   const tableTabs = ["All", "Funded", "Withdrawn", "Payments", "Bonus", "Fees"];
 
   return (
-    <div className="flex min-h-screen bg-[#F8F9FA] text-slate-800 font-sans">
-      
-      {/* 📁 LEFT SIDEBAR */}
-      <aside className="w-[260px] flex-shrink-0 bg-[#0A1140] text-white hidden lg:flex flex-col sticky top-0 h-screen overflow-y-auto scrollbar-hide shadow-2xl z-10">
-         <div className="p-8 border-b border-white/10">
-            <h2 className="text-2xl font-black tracking-tight flex items-center gap-1">Procurely<span className="text-[10px]">&trade;</span></h2>
-         </div>
-         
-         <div className="p-8 border-b border-white/10 flex items-center gap-4 text-left">
-            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shrink-0">
-               <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100&h=100" alt="User Avatar" className="w-full h-full object-cover" />
-            </div>
-            <div className="min-w-0">
-               <p className="font-bold text-[14px] leading-tight text-white whitespace-nowrap">Olusegun Akapo</p>
-               <p className="text-[10px] text-white/50 font-bold uppercase tracking-wider mt-1 truncate">Procurement Manager</p>
-            </div>
-         </div>
-
-         <div className="p-6 pb-8 flex-1">
-            <div className="text-[10px] font-black tracking-[0.2em] text-white/40 mb-4 px-2">MAIN MENU</div>
-            <nav className="space-y-1 relative">
-               <SidebarItem icon={<LayoutDashboard size={18} />} label="My Dashboard" />
-               <SidebarItem icon={<ShoppingCart size={18} />} label="Orders" />
-               <SidebarItem icon={<Wallet size={18} />} label="Wallet / Payments" active />
-               <SidebarItem icon={<History size={18} />} label="Order History" />
-               <SidebarItem icon={<Bookmark size={18} />} label="Saved Materials" />
-               
-               <div className="h-4 border-b border-white/10 mx-4 mb-4" />
-               <SidebarItem icon={<Settings size={18} />} label="Account Settings" />
-               <SidebarItem icon={<LogOut size={18} />} label="Logout" />
-            </nav>
-         </div>
-      </aside>
-
-      {/* 📊 MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col min-w-0">
-         
-         {/* Top Header Placeholder */}
-         <header className="bg-white border-b border-slate-100 h-20 px-8 lg:px-12 flex items-center justify-between sticky top-0 z-20">
-            <div className="flex items-center gap-4">
-               <button className="xl:hidden p-2 bg-slate-50 rounded-xl"><Menu size={20} /></button>
-            </div>
-            <div className="flex items-center gap-6">
-               <div className="relative cursor-pointer">
-                  <Bell size={20} className="text-slate-500" />
-                  <div className="absolute top-0 right-0 w-2 h-2 bg-orange-600 rounded-full border-2 border-white" />
-               </div>
-               <div className="h-10 w-10 bg-[#0A1140] rounded-full p-0.5 border border-slate-200 shadow-sm shrink-0">
-                  <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100&h=100" className="w-full h-full object-cover rounded-full" alt="Profile" />
-               </div>
-            </div>
-         </header>
-
-         {/* Workspace Area */}
-         <main className="flex-1 p-4 lg:p-8 min-w-0">
-            <div className="max-w-[1440px] mx-auto">
+    <div className="max-w-[1440px] mx-auto min-w-0">
                
                {/* Unified Breadcrumb Strip */}
                <div className="mb-6 flex items-center gap-2 text-[12px] font-bold tracking-wide flex-wrap">
                   <span className="text-slate-400">Home</span> 
                   <span className="text-slate-300">/</span> 
-                  <span className="text-slate-400">pages</span> 
+                   <span className="text-slate-400">Account</span> 
                   <span className="text-slate-300">/</span> 
                   <span className="text-[#1D4ED8]">Wallet & Payments</span>
                </div>
@@ -121,7 +69,7 @@ export default function WalletClient() {
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                            <div>
                               <p className="text-[12px] font-bold text-slate-500 mb-1">Wallet Balance</p>
-                              <h1 className="text-4xl font-extrabold text-[#0A1140] tracking-tight">₦380,000.00</h1>
+                              <h1 className="text-4xl font-extrabold text-[#0A1140] tracking-tight">₦{(user?.walletBalance ?? 0).toLocaleString()}.00</h1>
                               <div className="flex items-center gap-3 mt-3 text-[12px] font-medium text-slate-500">
                                  <span>Available Balance</span>
                                  <span className="w-1 h-1 bg-slate-300 rounded-full shrink-0" />
@@ -432,24 +380,6 @@ export default function WalletClient() {
                   </div>
 
                </div>
-
             </div>
-         </main>
-      </div>
-    </div>
-  );
-}
-
-// --- Specific Components ---
-
-function SidebarItem({ icon, label, active = false }: any) {
-   return (
-      <button className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all focus:outline-none ${
-         active ? "bg-[#1D4ED8] text-white font-bold shadow-md shadow-blue-900/50 relative" : "text-white/60 hover:bg-white/10 hover:text-white font-medium"
-      }`}>
-         {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-400 rounded-r-md block lg:hidden" />}
-         <span className={`shrink-0 ${active ? "text-white" : "text-white/40"}`}>{icon}</span>
-         <span className="text-[13px] tracking-wide whitespace-nowrap truncate">{label}</span>
-      </button>
-   );
+    );
 }

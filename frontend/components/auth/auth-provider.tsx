@@ -9,6 +9,7 @@ interface User {
   fullName: string;
   email: string;
   role: string;
+  walletBalance: number;
 }
 
 interface AuthContextType {
@@ -49,7 +50,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser();
   }, []);
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await api.logout();
+    } catch (e) {
+      console.warn("Server-side logout failed:", e);
+    }
     window.localStorage.removeItem("procurely-auth-token");
     setUser(null);
     router.push("/login");

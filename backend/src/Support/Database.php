@@ -178,16 +178,16 @@ final class Database
               UNIQUE(wishlist_token, product_id)
             );
 
-            CREATE INDEX idx_user_tokens_user_id ON user_tokens (user_id);
-            CREATE INDEX idx_user_tokens_hash ON user_tokens (token_hash);
-            CREATE INDEX idx_users_role ON users (role);
-            CREATE INDEX idx_products_category ON products (category);
-            CREATE INDEX idx_products_featured ON products (featured);
-            CREATE INDEX idx_products_slot ON products (homepage_slot);
-            CREATE INDEX idx_orders_user_id ON orders (user_id);
-            CREATE INDEX idx_password_reset_email ON password_reset_requests (email);
-            CREATE INDEX idx_cart_items_cart_token ON cart_items (cart_token);
-            CREATE INDEX idx_rate_limits_reset ON rate_limits (reset_at);
+            CREATE INDEX IF NOT EXISTS idx_user_tokens_user_id ON user_tokens (user_id);
+            CREATE INDEX IF NOT EXISTS idx_user_tokens_hash ON user_tokens (token_hash);
+            CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);
+            CREATE INDEX IF NOT EXISTS idx_products_category ON products (category);
+            CREATE INDEX IF NOT EXISTS idx_products_featured ON products (featured);
+            CREATE INDEX IF NOT EXISTS idx_products_slot ON products (homepage_slot);
+            CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id);
+            CREATE INDEX IF NOT EXISTS idx_password_reset_email ON password_reset_requests (email);
+            CREATE INDEX IF NOT EXISTS idx_cart_items_cart_token ON cart_items (cart_token);
+            CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits (reset_at);
             SQL
         );
     }

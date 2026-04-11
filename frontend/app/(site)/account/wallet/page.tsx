@@ -8,8 +8,6 @@ export const metadata: Metadata = {
 
 export default function WalletPage() {
   return (
-    <div className="bg-[#F8F9FA] min-h-screen">
-      <WalletClient />
-    </div>
+    <WalletClient />
   );
 }

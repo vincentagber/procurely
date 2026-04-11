@@ -70,6 +70,7 @@ final class AuthService
                 'fullName' => $fullName,
                 'email' => $email,
                 'role' => 'user',
+                'walletBalance' => 0,
             ],
         ];
     }
@@ -84,7 +85,7 @@ final class AuthService
         }
 
         $pdo = $this->database->connection();
-        $statement = $pdo->prepare('SELECT id, uuid, full_name, email, password_hash, role FROM users WHERE email = :email LIMIT 1');
+        $statement = $pdo->prepare('SELECT id, uuid, full_name, email, password_hash, role, wallet_balance FROM users WHERE email = :email LIMIT 1');
         $statement->execute(['email' => $email]);
         $user = $statement->fetch();
 
@@ -104,6 +105,7 @@ final class AuthService
                 'fullName' => $user['full_name'],
                 'email' => $user['email'],
                 'role' => $user['role'],
+                'walletBalance' => (int) ($user['wallet_balance'] ?? 0),
             ],
         ];
     }
@@ -192,6 +194,7 @@ final class AuthService
             'fullName' => $updated['full_name'],
             'email' => $updated['email'],
             'role' => $updated['role'],
+            'walletBalance' => (int) ($updated['wallet_balance'] ?? 0),
         ];
     }
 
@@ -202,7 +205,7 @@ final class AuthService
         
         $pdo = $this->database->connection();
         $statement = $pdo->prepare(
-            'SELECT u.id, u.uuid, u.full_name, u.email, u.role
+            'SELECT u.id, u.uuid, u.full_name, u.email, u.role, u.wallet_balance
              FROM user_tokens ut
              JOIN users u ON u.id = ut.user_id
              WHERE ut.token_hash = :token_hash AND ut.expires_at > :now

@@ -118,6 +118,7 @@ $app->get('/api/auth/me', static function (ServerRequestInterface $request, Resp
             'fullName' => $user['full_name'],
             'email' => $user['email'],
             'role' => $user['role'],
+            'walletBalance' => (int) ($user['wallet_balance'] ?? 0),
         ]
     ]);
 })->add($authRateLimit);

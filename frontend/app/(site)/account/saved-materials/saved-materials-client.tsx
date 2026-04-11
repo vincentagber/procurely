@@ -44,71 +44,16 @@ export default function SavedMaterialsClient() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F8F9FA] text-slate-800 font-sans">
-      
-      {/* 📁 LEFT SIDEBAR - Unified with orders-client.tsx */}
-      <aside className="w-[260px] flex-shrink-0 bg-[#0A1140] text-white hidden lg:flex flex-col sticky top-0 h-screen overflow-y-auto scrollbar-hide shadow-2xl z-10">
-         <div className="p-8 border-b border-white/10">
-            <h2 className="text-2xl font-black tracking-tight flex items-center gap-1">Procurely<span className="text-[10px]">&trade;</span></h2>
-         </div>
-         
-         <div className="p-8 border-b border-white/10 flex items-center gap-4 text-left">
-            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shrink-0">
-               <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100&h=100" alt="User Avatar" className="w-full h-full object-cover" />
-            </div>
-            <div className="min-w-0">
-               <p className="font-bold text-[14px] leading-tight text-white whitespace-nowrap">Olusegun Akapo</p>
-               <p className="text-[10px] text-white/50 font-bold uppercase tracking-wider mt-1 truncate">Procurement Manager</p>
-            </div>
-         </div>
-
-         <div className="p-6 pb-8 flex-1">
-            <div className="text-[10px] font-black tracking-[0.2em] text-white/40 mb-4 px-2">MAIN MENU</div>
-            <nav className="space-y-1 relative">
-               <SidebarItem icon={<LayoutDashboard size={18} />} label="My Dashboard" />
-               <SidebarItem icon={<ShoppingCart size={18} />} label="Orders" />
-               <SidebarItem icon={<Wallet size={18} />} label="Wallet / Payments" />
-               <SidebarItem icon={<History size={18} />} label="Order History" />
-               <SidebarItem icon={<Bookmark size={18} />} label="Saved Materials" active />
+    <div className="space-y-6 min-w-0">
                
-               <div className="h-4 border-b border-white/10 mx-4 mb-4" />
-               <SidebarItem icon={<Settings size={18} />} label="Account Settings" />
-               <SidebarItem icon={<LogOut size={18} />} label="Logout" />
-            </nav>
-         </div>
-      </aside>
-
-      {/* 📊 MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col min-w-0">
-         
-         {/* Top Header Placeholder (To align with overall structure) */}
-         <header className="bg-white border-b border-slate-100 h-20 px-8 lg:px-12 flex items-center justify-between sticky top-0 z-20">
-            <div className="flex items-center gap-4">
-               <button className="xl:hidden p-2 bg-slate-50 rounded-xl"><Menu size={20} /></button>
-            </div>
-            <div className="flex items-center gap-6">
-               <div className="relative cursor-pointer">
-                  <Bell size={20} className="text-slate-500" />
-                  <div className="absolute top-0 right-0 w-2 h-2 bg-orange-600 rounded-full border-2 border-white" />
-               </div>
-               <div className="h-10 w-10 bg-[#0A1140] rounded-full p-0.5">
-                  <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100&h=100" className="w-full h-full object-cover rounded-full" alt="Profile" />
-               </div>
-            </div>
-         </header>
-
-         {/* Workspace Area */}
-         <main className="flex-1 p-4 lg:p-8 min-w-0">
-            <div className="max-w-[1440px] mx-auto">
-               
-               {/* Unified Breadcrumb Strip */}
-               <div className="mb-6 flex items-center gap-2 text-[12px] font-bold tracking-wide">
-                  <span className="text-slate-400">Home</span> 
-                  <span className="text-slate-300">/</span> 
-                  <span className="text-slate-400">pages</span> 
-                  <span className="text-slate-300">/</span> 
-                  <span className="text-[#0A1140] font-black">Saved Materials</span>
-               </div>
+       {/* Unified Breadcrumb Strip */}
+       <div className="mb-6 flex items-center gap-2 text-[12px] font-bold tracking-wide">
+          <span className="text-slate-400">Home</span> 
+          <span className="text-slate-300">/</span> 
+          <span className="text-slate-400">Account</span> 
+          <span className="text-slate-300">/</span> 
+          <span className="text-[#1D4ED8] font-bold">Saved Materials</span>
+       </div>
 
                {/* Header Section */}
                <div className="space-y-1 mb-8">
@@ -124,9 +69,6 @@ export default function SavedMaterialsClient() {
                </div>
 
             </div>
-         </main>
-      </div>
-    </div>
   );
 }
 

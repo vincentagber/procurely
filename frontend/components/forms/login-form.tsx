@@ -30,11 +30,7 @@ export function LoginForm() {
           await refreshUser();
           setMessage("Signed in successfully. Redirecting...");
           startTransition(() => {
-            if (response.user.role === "admin") {
-              router.push("/admin");
-            } else {
-              router.push("/account");
-            }
+            router.push("/account");
           });
         } catch (nextError) {
           setError(

@@ -22,10 +22,19 @@ final class ContentStore
 
     public function all(): array
     {
-        // For compatibility with homepage which expected the full content object
-        return [
-            'products' => $this->products()
-        ];
+        if (!file_exists($this->contentPath)) {
+            return [
+                'products' => $this->products(),
+                'site' => ['name' => 'Procurely', 'logoDark' => '', 'logoLight' => ''],
+                'navigation' => ['primaryLinks' => [], 'socialLinks' => [], 'accountLinks' => []],
+                'footer' => ['address' => [], 'accountLinks' => [], 'quickLinks' => []],
+            ];
+        }
+
+        $content = json_decode(file_get_contents($this->contentPath), true) ?: [];
+        $content['products'] = $this->products();
+
+        return $content;
     }
 
     public function products(): array

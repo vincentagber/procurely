@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Package, ArrowLeft } from "lucide-react";
 import OrderHistoryClient from "./orders-client";
 
 export const metadata: Metadata = {
@@ -9,5 +7,7 @@ export const metadata: Metadata = {
 };
 
 export default function OrdersPage() {
-  return <OrderHistoryClient />;
+  return (
+    <OrderHistoryClient />
+  );
 }

@@ -29,7 +29,9 @@ import {
    ChevronLeft,
    Info
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { api } from "@/lib/api";
 
 const historyData = [
    { id: "PRO102563", subId: "A85164", supplier: "Traxus Industrial", subSup: "8 Items supplied", amount: "N80,000", subAmount: "N80,000", date: "Mar 1, 2024", subDate: "Mar 10, 2026", status: "Processing", statusColor: "orange" },
@@ -43,69 +45,52 @@ const historyData = [
 
 export default function OrderHistoryClient() {
    const [hasMounted, setHasMounted] = useState(false);
+   const [orders, setOrders] = useState<any[]>([]);
+   const [loading, setLoading] = useState(true);
+   const searchParams = useSearchParams();
+   const isHistory = searchParams.get("view") === "history";
 
    useEffect(() => {
       setHasMounted(true);
+      fetchOrders();
    }, []);
+
+   const fetchOrders = async () => {
+      setLoading(true);
+      try {
+         const data = await api.getAccountOrders();
+         setOrders(data);
+      } catch (err) {
+         console.error("Failed to fetch secure orders:", err);
+      } finally {
+         setLoading(false);
+      }
+   };
 
    if (!hasMounted) {
       return <div className="bg-[#F8F9FA] min-h-screen animate-pulse" />;
    }
 
    return (
-      <div className="flex min-h-screen bg-[#F8F9FA] text-slate-800 font-sans">
+      <div className="max-w-[1440px] mx-auto min-w-0">
 
-         {/* 📁 LEFT SIDEBAR - Fixed width, no shrinking */}
-         <aside className="w-[260px] flex-shrink-0 bg-[#0A1140] text-white hidden lg:flex flex-col sticky top-0 h-screen overflow-y-auto scrollbar-hide shadow-2xl z-10">
-            <div className="p-8 border-b border-white/10">
-               <h2 className="text-2xl font-black tracking-tight flex items-center gap-1">Procurely<span className="text-[10px]">&trade;</span></h2>
-            </div>
-
-            <div className="p-8 border-b border-white/10 flex items-center gap-4 text-left">
-               <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shrink-0">
-                  <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100&h=100" alt="User Avatar" className="w-full h-full object-cover" />
-               </div>
-               <div className="min-w-0">
-                  <p className="font-bold text-[14px] leading-tight text-white whitespace-nowrap">Olusegun Akapo</p>
-                  <p className="text-[10px] text-white/50 font-bold uppercase tracking-wider mt-1 truncate">Procurement Manager</p>
-               </div>
-            </div>
-
-            <div className="p-6 pb-8 flex-1">
-               <div className="text-[10px] font-black tracking-[0.2em] text-white/40 mb-4 px-2">MAIN MENU</div>
-               <nav className="space-y-1 relative">
-                  <SidebarItem icon={<LayoutDashboard size={18} />} label="My Dashboard" />
-                  <SidebarItem icon={<ShoppingCart size={18} />} label="Orders" />
-                  <SidebarItem icon={<Wallet size={18} />} label="Wallet / Payments" />
-                  <SidebarItem icon={<History size={18} />} label="Order History" active />
-                  <SidebarItem icon={<Bookmark size={18} />} label="Saved Materials" />
-
-                  <div className="h-4 border-b border-white/10 mx-4 mb-4" />
-                  <SidebarItem icon={<Settings size={18} />} label="Account Settings" />
-                  <SidebarItem icon={<LogOut size={18} />} label="Logout" />
-               </nav>
-            </div>
-         </aside>
-
-         {/* 📊 MAIN SECTION - Growable area */}
-         <main className="flex-1 p-4 lg:p-8 min-w-0">
-            <div className="max-w-[1440px] mx-auto">
-
-               {/* Breadcrumbs */}
-               <div className="mb-6 flex items-center gap-2 text-[12px] font-bold tracking-wide">
-                  <span className="text-slate-400">Home</span>
-                  <span className="text-slate-300">/</span>
-                  <span className="text-slate-400">pages</span>
-                  <span className="text-slate-300">/</span>
-                  <span className="text-[#0A1140] font-black">Order History</span>
-               </div>
+         {/* 📁 Breadcrumbs Strip */}
+         <div className="mb-6 flex items-center gap-2 text-[12px] font-bold tracking-wide flex-wrap">
+            <span className="text-slate-400">Home</span>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-400">Account</span>
+            <span className="text-slate-300">/</span>
+            <span className="text-[#1D4ED8]">{isHistory ? 'Order History' : 'Orders'}</span>
+         </div>
 
                {/* Three-Column Content Layout */}
                <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-8">
 
                   {/* LEFT/CENTER SIDE: Header + Stats + Table */}
                   <section className="space-y-6 min-w-0">
-                     <h1 className="text-3xl lg:text-4xl font-extrabold text-[#0A1140] tracking-tight mb-2">Order History</h1>
+                     <h1 className="text-3xl lg:text-4xl font-extrabold text-[#0A1140] tracking-tight mb-2">
+                        {isHistory ? 'Order History' : 'Active Orders'}
+                     </h1>
 
                      {/* Order Summary Box */}
                      <div className="bg-white rounded-[1rem] shadow-sm py-5">
@@ -182,36 +167,48 @@ export default function OrderHistoryClient() {
                                  </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-100">
-                                 {historyData.map((order, i) => (
-                                    <tr key={i} className="hover:bg-slate-50/80 transition-colors">
-                                       <td className="px-6 py-4 whitespace-nowrap">
-                                          <div className="font-bold text-[#0A1140] text-[14px]">{order.id}</div>
-                                          <div className="text-slate-400 text-[11px] font-medium mt-0.5">{order.subId}</div>
-                                       </td>
-                                       <td className="px-6 py-4 whitespace-nowrap">
-                                          <div className="font-bold text-[#0A1140] text-[14px]">{order.supplier}</div>
-                                          <div className="text-slate-400 text-[11px] font-medium mt-0.5">{order.subSup}</div>
-                                       </td>
-                                       <td className="px-6 py-4 whitespace-nowrap">
-                                          <div className="font-bold text-[#0A1140] text-[14px]">{order.amount}</div>
-                                          <div className="text-slate-400 text-[11px] font-medium line-through mt-0.5">{order.subAmount}</div>
-                                       </td>
-                                       <td className="px-6 py-4 whitespace-nowrap">
-                                          <div className="font-bold text-[#0A1140] text-[14px]">{order.date}</div>
-                                          <div className="text-slate-400 text-[11px] font-medium mt-0.5">{order.subDate}</div>
-                                       </td>
-                                       <td className="px-6 py-4 whitespace-nowrap">
-                                          <StatusBadge status={order.status} type={order.statusColor} />
-                                       </td>
-                                       <td className="px-6 py-4 whitespace-nowrap">
-                                          <div className="flex items-center justify-center">
-                                             <button className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-[#1D4ED8] hover:text-white transition-colors">
-                                                <Eye size={16} />
-                                             </button>
-                                          </div>
-                                       </td>
-                                    </tr>
-                                 ))}
+                                 {loading ? (
+                                    <tr><td colSpan={6} className="py-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Synchronizing cloud ledger...</td></tr>
+                                 ) : orders.length > 0 ? (
+                                    orders.map((order, i) => (
+                                       <tr key={i} className="hover:bg-slate-50/80 transition-colors">
+                                          <td className="px-6 py-4 whitespace-nowrap">
+                                             <div className="font-bold text-[#0A1140] text-[14px]">{order.order_number || order.id}</div>
+                                             <div className="text-slate-400 text-[11px] font-medium mt-0.5">{order.uuid?.slice(0, 8) || "A85164"}</div>
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap">
+                                             <div className="font-bold text-[#0A1140] text-[14px]">{order.shipping_name || "Enterprise Partner"}</div>
+                                             <div className="text-slate-400 text-[11px] font-medium mt-0.5">{order.items?.length || 0} Items supplied</div>
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap">
+                                             <div className="font-bold text-[#0A1140] text-[14px]">N{(order.total / 100).toLocaleString()}</div>
+                                             <div className="text-slate-400 text-[11px] font-medium line-through mt-0.5">N{((order.total * 1.1) / 100).toLocaleString()}</div>
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap">
+                                             <div className="font-bold text-[#0A1140] text-[14px]">{new Date(order.created_at).toLocaleDateString()}</div>
+                                             <div className="text-slate-400 text-[11px] font-medium mt-0.5">{new Date(order.updated_at).toLocaleTimeString()}</div>
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap">
+                                             <StatusBadge 
+                                                status={order.status.charAt(0).toUpperCase() + order.status.slice(1)} 
+                                                type={order.status === 'paid' ? 'emerald' : order.status === 'pending' ? 'orange' : 'rose'} 
+                                             />
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap">
+                                             <div className="flex items-center justify-center">
+                                                <Link
+                                                   href={`/account/orders/${order.order_number || 'PRC-01234'}`}
+                                                   className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-[#1D4ED8] hover:text-white transition-colors"
+                                                >
+                                                   <Eye size={16} />
+                                                </Link>
+                                             </div>
+                                          </td>
+                                       </tr>
+                                    ))
+                                 ) : (
+                                    <tr><td colSpan={6} className="py-20 text-center text-slate-400 font-bold uppercase tracking-widest">No procurement records found.</td></tr>
+                                 )}
                               </tbody>
                            </table>
                         </div>
@@ -324,22 +321,10 @@ export default function OrderHistoryClient() {
 
                </div>
             </div>
-         </main>
-      </div>
-   );
+      );
 }
 
 // --- Specific Components ---
-
-function SidebarItem({ icon, label, active = false }: any) {
-   return (
-      <button className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all focus:outline-none ${active ? "bg-[#1D4ED8] text-white font-bold shadow-md shadow-blue-900/50" : "text-white/60 hover:bg-white/10 hover:text-white font-medium"
-         }`}>
-         <span className={`shrink-0 ${active ? "text-white" : "text-white/40"}`}>{icon}</span>
-         <span className="text-[13px] tracking-wide whitespace-nowrap truncate">{label}</span>
-      </button>
-   );
-}
 
 function SummaryStat({ icon, color, bg, value, label, sub }: any) {
    return (

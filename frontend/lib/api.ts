@@ -69,7 +69,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   register(payload: { fullName: string; email: string; password: string }) {
-    return request<{ token: string; user: { id: string; fullName: string; email: string; role: string } }>(
+    return request<{ token: string; user: { id: string; fullName: string; email: string; role: string; walletBalance: number } }>(
       "/api/auth/register",
       {
         method: "POST",
@@ -78,7 +78,7 @@ export const api = {
     );
   },
   login(payload: { email: string; password: string }) {
-    return request<{ token: string; user: { id: string; fullName: string; email: string; role: string } }>(
+    return request<{ token: string; user: { id: string; fullName: string; email: string; role: string; walletBalance: number } }>(
       "/api/auth/login",
       {
         method: "POST",
@@ -87,7 +87,12 @@ export const api = {
     );
   },
   getMe() {
-    return request<{ user: { id: string; fullName: string; email: string; role: string } }>("/api/auth/me");
+    return request<{ user: { id: string; fullName: string; email: string; role: string; walletBalance: number } }>("/api/auth/me");
+  },
+  logout() {
+    return request<{ message: string }>("/api/auth/logout", {
+      method: "POST",
+    });
   },
   forgotPassword(payload: { email: string }) {
     return request<{ message: string; resetTokenPreview?: string }>(
