@@ -10,6 +10,8 @@ use Procurely\Api\Support\ApiException;
 use Procurely\Api\Support\Database;
 use Procurely\Api\Support\PaymentProcessorInterface;
 use Procurely\Api\Support\Input;
+use Procurely\Api\Support\Telemetry;
+use Procurely\Api\Services\NotificationService;
 
 final class OrderService
 {
@@ -129,25 +131,31 @@ final class OrderService
             return $this->findByOrderNumber($orderNumber, '', '', true);
         });
 
-        // Create dashboard notification for admins
-        $pdo = $this->database->connection();
-        $adminStmt = $pdo->prepare('
-            SELECT u.id FROM users u
-            JOIN user_roles ur ON u.id = ur.user_id
-            JOIN roles r ON ur.role_id = r.id
-            WHERE r.name = :role
-        ');
-        $adminStmt->execute(['role' => 'admin']);
-        $admins = $adminStmt->fetchAll(\PDO::FETCH_COLUMN);
+        // Create dashboard notification for admins (Non-blocking)
+        try {
+            $pdo = $this->database->connection();
+            $adminStmt = $pdo->prepare('
+                SELECT u.id FROM users u
+                JOIN user_roles ur ON u.id = ur.user_id
+                JOIN roles r ON ur.role_id = r.id
+                WHERE r.name = "admin"
+            ');
+            $adminStmt->execute();
+            $admins = $adminStmt->fetchAll(PDO::FETCH_COLUMN);
 
-        foreach ($admins as $adminId) {
-            $this->notificationService->createNotification(
-                (int) $adminId,
-                'order.new',
-                'New Order Received',
-                sprintf('Order %s from %s for N%s', $orderData['orderNumber'], $orderData['customerName'], number_format($orderData['total'] / 100, 2)),
-                ['orderId' => $orderData['orderNumber']]
-            );
+            if (is_array($admins)) {
+                foreach ($admins as $adminId) {
+                    $this->notificationService->createNotification(
+                        (int) $adminId,
+                        'order.new',
+                        'New Order Received',
+                        sprintf('Order %s from %s for N%s', $orderData['orderNumber'], $orderData['customerName'], number_format($orderData['total'] / 100, 2)),
+                        ['orderId' => $orderData['orderNumber']]
+                    );
+                }
+            }
+        } catch (\Throwable $e) {
+            Telemetry::error('Admin notification failed', ['error' => $e->getMessage(), 'order' => $orderData['orderNumber'] ?? 'unknown']);
         }
 
         return $orderData;
