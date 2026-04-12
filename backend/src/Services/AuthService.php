@@ -224,12 +224,14 @@ final class AuthService
             throw new ApiException('This email is already in use by another account.', 409, ['field' => 'email']);
         }
 
-        $stmt = $pdo->prepare('UPDATE users SET full_name = :full_name, email = :email, phone = :phone, whatsapp = :whatsapp, updated_at = NOW() WHERE id = :id');
+        $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+        $stmt = $pdo->prepare('UPDATE users SET full_name = :full_name, email = :email, phone = :phone, whatsapp = :whatsapp, updated_at = :now WHERE id = :id');
         $stmt->execute([
             'full_name' => $fullName,
             'email' => $email,
             'phone' => $phone,
             'whatsapp' => $whatsapp,
+            'now' => $now,
             'id' => $userId,
         ]);
 

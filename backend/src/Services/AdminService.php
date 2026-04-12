@@ -59,12 +59,23 @@ final class AdminService
     public function listUsers(int $limit = 50, int $offset = 0): array
     {
         $pdo = $this->database->connection();
-        $stmt = $pdo->prepare('SELECT uuid, full_name, email, role, created_at FROM users ORDER BY created_at DESC LIMIT :limit OFFSET :offset');
+        $stmt = $pdo->prepare('
+            SELECT u.uuid, u.full_name, u.email, u.created_at, GROUP_CONCAT(r.name) as roles
+            FROM users u
+            LEFT JOIN user_roles ur ON u.id = ur.user_id
+            LEFT JOIN roles r ON ur.role_id = r.id
+            GROUP BY u.id
+            ORDER BY u.created_at DESC 
+            LIMIT :limit OFFSET :offset
+        ');
         $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
         $stmt->execute();
 
-        return $stmt->fetchAll();
+        return array_map(function ($user) {
+            $user['roles'] = $user['roles'] ? explode(',', $user['roles']) : [];
+            return $user;
+        }, $stmt->fetchAll());
     }
 
     public function updateOrderStatus(string $orderNumber, string $status): array
@@ -149,11 +160,14 @@ final class AdminService
         $pdo->beginTransaction();
 
         try {
-            // Remove active session tokens first
-            $deleteTokens = $pdo->prepare('DELETE FROM user_tokens WHERE user_uuid = :uuid');
-            $deleteTokens->execute(['uuid' => $uuid]);
+            // Remove active sessions first
+            $deleteSessions = $pdo->prepare('
+                DELETE FROM user_sessions 
+                WHERE user_id = (SELECT id FROM users WHERE uuid = :uuid)
+            ');
+            $deleteSessions->execute(['uuid' => $uuid]);
 
-            // Delete the entity registry entry
+            // Delete the user record
             $deleteUser = $pdo->prepare('DELETE FROM users WHERE uuid = :uuid');
             $deleteUser->execute(['uuid' => $uuid]);
 

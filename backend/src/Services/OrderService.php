@@ -309,8 +309,8 @@ final class OrderService
                 $update = $pdo->prepare('UPDATE users SET wallet_balance = wallet_balance + :amount, updated_at = :now WHERE id = :id');
                 $update->execute(['amount' => $creditAmount, 'id' => $userId, 'now' => $now]);
 
-                $pdo->commit();
-                
+                // ACID FIX (Jim Gray): Notification INSERT is inside the transaction.
+                // If this fails, the wallet balance update is rolled back atomically.
                 $this->notificationService->createNotification(
                     $userId,
                     'wallet.funded',
@@ -319,8 +319,10 @@ final class OrderService
                     ['amount' => $creditAmount]
                 );
 
-                Telemetry::stop('webhook_processing');
-                Telemetry::info('Wallet funded via webhook', ['userId' => $userId, 'amount' => $creditAmount]);
+                $pdo->commit();
+
+                $duration = Telemetry::stop('webhook_processing');
+                Telemetry::info('Wallet funded via webhook', ['userId' => $userId, 'amount' => $creditAmount, 'ms' => $duration]);
                 return ['status' => 'success', 'type' => 'wallet_funding'];
             }
 
@@ -367,26 +369,20 @@ final class OrderService
                 $this->cartService->clearCart((string) $order['cart_token']);
             }
 
-            $pdo->commit();
-
-            // Webhooks get data from Paystack, bypass email check.
+            // Fetch order data BEFORE commit so it's available for email + notification
             $orderData = $this->findByOrderNumber($reference, '', '', true);
-            $this->emailService->sendOrderConfirmation($orderData);
 
-            $duration = Telemetry::stop('webhook_processing');
-            Telemetry::info('Order paid via webhook', ['reference' => $reference, 'ms' => $duration]);
-
-            // Create dashboard notification for admins
+            // Notify admins inside the transaction — rolls back if notification INSERT fails
             $adminStmt = $pdo->prepare('
                 SELECT u.id FROM users u
                 JOIN user_roles ur ON u.id = ur.user_id
                 JOIN roles r ON ur.role_id = r.id
-                WHERE r.name = :role
+                WHERE r.name = "admin"
             ');
-            $adminStmt->execute(['role' => 'admin']);
-            $admins = $adminStmt->fetchAll(PDO::FETCH_COLUMN);
+            $adminStmt->execute();
+            $adminIds = $adminStmt->fetchAll(PDO::FETCH_COLUMN);
 
-            foreach ($admins as $adminId) {
+            foreach ($adminIds as $adminId) {
                 $this->notificationService->createNotification(
                     (int) $adminId,
                     'order.paid',
@@ -395,6 +391,14 @@ final class OrderService
                     ['orderId' => $orderData['orderNumber']]
                 );
             }
+
+            $pdo->commit();
+
+            // Email is a side-effect, outside the transaction — failure here does not corrupt state
+            $this->emailService->sendOrderConfirmation($orderData);
+
+            $duration = Telemetry::stop('webhook_processing');
+            Telemetry::info('Order paid via webhook', ['reference' => $reference, 'ms' => $duration]);
 
             return ['status' => 'success'];
         } catch (\Throwable $e) {

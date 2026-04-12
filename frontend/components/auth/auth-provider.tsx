@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
@@ -19,10 +19,13 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   logout: () => void;
-  refreshUser: () => Promise<void>;
+  refreshUser: (force?: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Session is considered fresh for 5 minutes — avoids spamming auth/me on every route change
+const SESSION_TTL_MS = 5 * 60 * 1000;
 
 export function AuthProvider({ 
   children, 
@@ -33,18 +36,22 @@ export function AuthProvider({
 }) {
   const [user, setUser] = useState<User | null>(initialUser);
   const [loading, setLoading] = useState(!initialUser);
+  const lastRefreshed = useRef<number>(initialUser ? Date.now() : 0);
   const router = useRouter();
 
-  const login = (token: string, userData: User) => {
-    setUser(userData);
-    router.push("/dashboard");
-  };
+  const refreshUser = async (force = false) => {
+    const isStale = Date.now() - lastRefreshed.current > SESSION_TTL_MS;
 
-  const refreshUser = async () => {
+    // Skip the network call if we have a fresh session and no force flag
+    if (!force && !isStale && user !== null) {
+      return;
+    }
+
     try {
       const data = await api.getMe();
       setUser(data.user);
-    } catch (error) {
+      lastRefreshed.current = Date.now();
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
@@ -52,7 +59,13 @@ export function AuthProvider({
   };
 
   useEffect(() => {
-    refreshUser();
+    // On mount: only fetch if SSR gave us nothing (no initialUser)
+    if (!initialUser) {
+      refreshUser(true);
+    } else {
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const logout = async () => {
@@ -62,6 +75,7 @@ export function AuthProvider({
     } catch (e) {
       console.warn("Server-side logout failed:", e);
     }
+    lastRefreshed.current = 0;
     setUser(null);
     setLoading(false);
     router.push("/login");

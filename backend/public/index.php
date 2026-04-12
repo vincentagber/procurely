@@ -103,9 +103,14 @@ $app->post('/api/auth/forgot-password', static function (ServerRequestInterface 
 })->add($authRateLimit);
 
 $app->post('/api/auth/logout', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService, $database): ResponseInterface {
+    // Clear the cookie immediately — browser must evict token regardless of server-side outcome
+    $clearCookie = 'procurely_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax; Secure';
+    $response = $response->withHeader('Set-Cookie', $clearCookie);
+
     $user = $request->getAttribute('user');
     if (!$user) {
-        throw new ApiException('Authentication required.', 401);
+        // Still return 200 with cleared cookie — the session is already gone from the client's perspective
+        return JsonResponder::success($response, ['message' => 'Logged out successfully.']);
     }
 
     $authHeader = $request->getHeaderLine('Authorization');
@@ -117,9 +122,8 @@ $app->post('/api/auth/logout', static function (ServerRequestInterface $request,
     }
 
     $result = $authService->logout($database->connection(), $token);
-    $clearCookie = 'procurely_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax; Secure';
 
-    return JsonResponder::success($response->withHeader('Set-Cookie', $clearCookie), $result);
+    return JsonResponder::success($response, $result);
 });
 
 $app->get('/api/auth/me', static function (ServerRequestInterface $request, ResponseInterface $response): ResponseInterface {
