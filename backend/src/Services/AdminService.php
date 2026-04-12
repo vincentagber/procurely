@@ -27,16 +27,21 @@ final class AdminService
     {
         $pdo = $this->database->connection();
 
-        $totalOrders = (int) $pdo->query('SELECT COUNT(*) FROM orders')->fetchColumn();
-        $totalUsers = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
-        $totalRevenue = (int) $pdo->query('SELECT SUM(total) FROM orders WHERE status = "paid"')->fetchColumn();
-        $pendingQuotes = (int) $pdo->query('SELECT COUNT(*) FROM quote_requests')->fetchColumn();
+        $sql = '
+            SELECT 
+                (SELECT COUNT(*) FROM orders) as totalOrders,
+                (SELECT COUNT(*) FROM users) as totalUsers,
+                (SELECT IFNULL(SUM(total), 0) FROM orders WHERE status = "paid") as totalRevenue,
+                (SELECT COUNT(*) FROM quote_requests) as pendingQuotes
+        ';
+        
+        $stats = $pdo->query($sql)->fetch();
 
         return [
-            'totalOrders' => $totalOrders,
-            'totalUsers' => $totalUsers,
-            'totalRevenue' => $totalRevenue,
-            'pendingQuotes' => $pendingQuotes,
+            'totalOrders' => (int) ($stats['totalOrders'] ?? 0),
+            'totalUsers' => (int) ($stats['totalUsers'] ?? 0),
+            'totalRevenue' => (int) ($stats['totalRevenue'] ?? 0),
+            'pendingQuotes' => (int) ($stats['pendingQuotes'] ?? 0),
         ];
     }
 

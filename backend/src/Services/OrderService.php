@@ -45,7 +45,7 @@ final class OrderService
             throw new ApiException('Cart is empty.', 422);
         }
 
-        return $this->database->transaction(function (PDO $pdo) use ($cart, $userId, $cartToken, $customerName, $customerEmail, $phone, $address, $skipPayment) {
+        $orderData = $this->database->transaction(function (PDO $pdo) use ($cart, $userId, $cartToken, $customerName, $customerEmail, $phone, $address, $skipPayment) {
             Telemetry::start('order_processing');
             
             // Check existing order for idempotency (Roy Fielding / Martin Kleppmann)
@@ -128,7 +128,6 @@ final class OrderService
 
             return $this->findByOrderNumber($orderNumber, '', '', true);
         });
-    }
 
         // Create dashboard notification for admins
         $pdo = $this->database->connection();
@@ -139,7 +138,7 @@ final class OrderService
             WHERE r.name = :role
         ');
         $adminStmt->execute(['role' => 'admin']);
-        $admins = $adminStmt->fetchAll(PDO::FETCH_COLUMN);
+        $admins = $adminStmt->fetchAll(\PDO::FETCH_COLUMN);
 
         foreach ($admins as $adminId) {
             $this->notificationService->createNotification(
@@ -269,6 +268,8 @@ final class OrderService
             return ['status' => 'ignored'];
         }
 
+        Telemetry::start('webhook_processing');
+
         $metadata = $event['data']['metadata'] ?? [];
         $isWalletFunding = ($metadata['type'] ?? '') === 'wallet_funding';
 
@@ -298,6 +299,8 @@ final class OrderService
                     ['amount' => $creditAmount]
                 );
 
+                Telemetry::stop('webhook_processing');
+                Telemetry::info('Wallet funded via webhook', ['userId' => $userId, 'amount' => $creditAmount]);
                 return ['status' => 'success', 'type' => 'wallet_funding'];
             }
 
@@ -320,7 +323,7 @@ final class OrderService
                 if ($pdo->inTransaction()) {
                     $pdo->rollBack();
                 }
-                // Log this discrepancy in a real production environment
+                Telemetry::error('Webhook amount mismatch', ['paid' => $paidAmount, 'expected' => $expectedAmount, 'ref' => $reference]);
                 return [
                     'status' => 'amount_mismatch',
                     'received' => $paidAmount,
@@ -349,6 +352,9 @@ final class OrderService
             // Webhooks get data from Paystack, bypass email check.
             $orderData = $this->findByOrderNumber($reference, '', '', true);
             $this->emailService->sendOrderConfirmation($orderData);
+
+            $duration = Telemetry::stop('webhook_processing');
+            Telemetry::info('Order paid via webhook', ['reference' => $reference, 'ms' => $duration]);
 
             // Create dashboard notification for admins
             $adminStmt = $pdo->prepare('

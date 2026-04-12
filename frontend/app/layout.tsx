@@ -33,15 +33,19 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({
+import { getServerUser } from "@/lib/api-server";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getServerUser();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${bebasNeue.variable} min-h-screen bg-white antialiased`}>
-        <Providers>{children}</Providers>
+        <Providers initialUser={user}>{children}</Providers>
         {/* Paystack Inline Script */}
         <script src="https://js.paystack.co/v1/inline.js" async />
       </body>

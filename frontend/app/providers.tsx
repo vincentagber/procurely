@@ -19,16 +19,18 @@ type ProvidersProps = {
   children: ReactNode;
   cartProviderProps?: Omit<CartProviderProps, "children">;
   withDrawers?: boolean;
+  initialUser?: any;
 };
 
 export function Providers({
   children,
   cartProviderProps,
   withDrawers = true,
+  initialUser = null,
 }: ProvidersProps) {
   return (
     <UiProvider>
-      <AuthProvider>
+      <AuthProvider initialUser={initialUser}>
         <CartProvider {...cartProviderProps}>
           <WishlistProvider>
             {children}
