@@ -36,7 +36,7 @@ final class PaystackPaymentProcessor implements PaymentProcessorInterface
             'reference' => $orderNumber,
             'amount' => $amountCents,
             'currency' => strtoupper($currency),
-            'email' => $_SESSION['customer_email'] ?? 'customer@example.com', // Fallback for mock
+            'email' => $_SESSION['customer_email'] ?? 'sales@procurely.com', // Fallback for mock
             'metadata' => [
                 'order_number' => $orderNumber
             ]

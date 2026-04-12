@@ -36,7 +36,7 @@ final class EmailService
 
     public function sendAdminNotification(array $order): void
     {
-        $to = 'admin@procurely.com';
+        $to = 'sales@procurely.com';
         $subject = sprintf('New Order Received - %s', $order['orderNumber']);
         $body = sprintf(
             "New order from %s (%s).\nAmount: N%s\nOrder ID: %s",
@@ -79,7 +79,7 @@ final class EmailService
             }
 
             // Recipients
-            $mail->setFrom($mail->Username, 'Procurely');
+            $mail->setFrom('sales@procurely.com', 'Procurely');
             $mail->addAddress($to);
 
             // Content

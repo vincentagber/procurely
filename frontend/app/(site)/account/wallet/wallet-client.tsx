@@ -30,10 +30,13 @@ import {
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
+import { FundWalletModal } from "@/components/account/fund-wallet-modal";
 
 export default function WalletClient() {
   const { user } = useAuth();
   const [hasMounted, setHasMounted] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFunding, setIsFunding] = useState(false);
 
   useEffect(() => {
     setHasMounted(true);
@@ -46,17 +49,9 @@ export default function WalletClient() {
   // Helper Table Tabs
   const tableTabs = ["All", "Funded", "Withdrawn", "Payments", "Bonus", "Fees"];
 
-   const handleFundWallet = async () => {
-     const amountStr = window.prompt("Enter amount to fund (NGN):", "5000");
-     if (!amountStr) return;
-     
-     const amount = parseFloat(amountStr);
-     if (isNaN(amount) || amount <= 0) {
-       alert("Please enter a valid amount.");
-       return;
-     }
-
+   const handleFundWallet = async (amount: number) => {
      try {
+       setIsFunding(true);
        // Convert to kobo/cents for backend
        const res = await api.fundWallet({ amount: Math.round(amount * 100) });
        if (res.authorization_url) {
@@ -64,6 +59,9 @@ export default function WalletClient() {
        }
      } catch (err: any) {
        alert(err.message || "Failed to initialize funding.");
+     } finally {
+       setIsFunding(false);
+       setIsModalOpen(false);
      }
    };
 
@@ -100,7 +98,7 @@ export default function WalletClient() {
                            </div>
                            <div className="flex flex-row gap-4 shrink-0">
                               <button 
-                                onClick={handleFundWallet}
+                                onClick={() => setIsModalOpen(true)}
                                 className="h-12 px-6 bg-[#0A1140] hover:bg-[#13184f] text-white rounded-xl text-[13px] font-bold shadow-md transition-colors whitespace-nowrap"
                               >
                                  Fund Wallet
@@ -349,7 +347,7 @@ export default function WalletClient() {
                            <div className="flex items-center gap-4 bg-slate-50 border border-slate-100 p-3 rounded-xl cursor-not-allowed">
                                <div className="w-8 h-8 rounded bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
                                  <FileText size={16} />
-                               </div>
+                                </div>
                                <div className="min-w-0 flex-1">
                                   <p className="text-[12px] font-bold text-[#0A1140] truncate">Wallet Statements</p>
                                   <p className="text-[11px] font-medium text-slate-500 mt-0.5">₦335,000,000</p>
@@ -405,6 +403,13 @@ export default function WalletClient() {
                   </div>
 
                </div>
+
+               <FundWalletModal 
+                 isOpen={isModalOpen}
+                 onClose={() => setIsModalOpen(false)}
+                 onConfirm={handleFundWallet}
+                 isLoading={isFunding}
+               />
             </div>
-    );
+   );
 }
