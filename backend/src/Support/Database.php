@@ -78,11 +78,14 @@ final class Database
 
         $isMysql = $driver === 'mysql';
 
-        // Optimization: Use a filesystem flag to skip schema checks in production.
+        // Ensure schema is created / updated even when the DB file was initialized
+        // in an earlier version. CREATE TABLE IF NOT EXISTS is safe and will
+        // prevent one-off migration issues for existing databases.
+        $this->migrate($this->connection, $driver);
+
         $initFlag = dirname($this->databasePath) . '/.initialized';
         if (!file_exists($initFlag)) {
-            $this->migrate($this->connection, $driver);
-            file_put_contents($initFlag, date('Y-m-d H:i:s'));
+          file_put_contents($initFlag, date('Y-m-d H:i:s'));
         }
         
         return $this->connection;

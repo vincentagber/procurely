@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -25,6 +26,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
 
 export default function SettingsClient() {
+   const router = useRouter();
   const { user, refreshUser } = useAuth();
   const [hasMounted, setHasMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("Profile Information");
@@ -474,7 +476,10 @@ export default function SettingsClient() {
 
                    {/* Add New Payment Button */}
                    <div className="mt-8">
-                      <button className="h-11 px-6 bg-[#0A1140] hover:bg-[#13184f] text-white rounded-xl text-[12px] font-bold shadow-md transition-colors flex items-center gap-2">
+                      <button
+                        onClick={() => router.push("/account/wallet")}
+                        className="h-11 px-6 bg-[#0A1140] hover:bg-[#13184f] text-white rounded-xl text-[12px] font-bold shadow-md transition-colors flex items-center gap-2"
+                      >
                          <Plus size={16} />
                          Add Payment Method
                       </button>
