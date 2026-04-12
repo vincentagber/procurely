@@ -41,7 +41,7 @@ export type SiteContent = {
     linkLabel: string;
     items: CategoryCard[];
   };
-  brands: string[];
+  brands: Brand[];
   products: Product[];
   bestSellerSection: {
     monthLabel: string;
@@ -139,6 +139,11 @@ export type AuthScreen = {
   title: string;
   image: string;
   submitLabel: string;
+};
+
+export type Brand = {
+  name: string;
+  logo: string;
 };
 
 export type ApiEnvelope<T> = {

@@ -143,18 +143,18 @@
     ]
   },
   "brands": [
-    "Allisa",
-    "Amere",
-    "Belt",
-    "Bticin",
-    "Jurosa",
-    "Mape",
-    "Motu",
-    "Optimize",
-    "Spectra",
-    "Sport",
-    "Unter",
-    "Waveset"
+    { "name": "Allisa", "logo": "/assets/design/brands/Item0.png" },
+    { "name": "Amere", "logo": "/assets/design/brands/Item (1).png" },
+    { "name": "Belt", "logo": "/assets/design/brands/Item (2).png" },
+    { "name": "Bticin", "logo": "/assets/design/brands/Item (3).png" },
+    { "name": "Jurosa", "logo": "/assets/design/brands/Item (4).png" },
+    { "name": "Mape", "logo": "/assets/design/brands/Item (5).png" },
+    { "name": "Motu", "logo": "/assets/design/brands/Item (6).png" },
+    { "name": "Optimize", "logo": "/assets/design/brands/Item (7).png" },
+    { "name": "Spectra", "logo": "/assets/design/brands/Item (8).png" },
+    { "name": "Sport", "logo": "/assets/design/brands/Item (9).png" },
+    { "name": "Unter", "logo": "/assets/design/brands/Item (10).png" },
+    { "name": "Waveset", "logo": "/assets/design/brands/Item (11).png" }
   ],
   "products": [
     {
