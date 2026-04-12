@@ -88,7 +88,7 @@ export function DashboardSidebar() {
             {user?.fullName || "User Account"}
           </p>
           <p className="text-[10px] text-white/50 font-bold uppercase tracking-wider mt-1 truncate">
-            {user?.role || "Procurement Manager"}
+            {user?.roles?.[0] || "Procurement Manager"}
           </p>
         </div>
       </div>
@@ -124,7 +124,7 @@ export function DashboardSidebar() {
   return (
     <>
       {/* ── Desktop: always-visible sticky sidebar ─────────────────── */}
-      <aside className="w-[280px] flex-shrink-0 bg-[#0A1140] text-white hidden lg:flex flex-col sticky top-20 h-[calc(100vh-80px)] overflow-y-auto scrollbar-hide shadow-2xl z-10 pb-10">
+      <aside className="w-[280px] flex-shrink-0 bg-[#0A1140] text-white hidden lg:flex flex-col sticky top-20 h-[calc(100vh-80px-15px)] overflow-y-auto scrollbar-hide shadow-2xl z-10 pb-10">
         {sidebarContent}
       </aside>
 

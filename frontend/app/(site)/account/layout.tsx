@@ -36,7 +36,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
         {/* Centred, boxed shell */}
         <div className="flex-1 flex justify-center px-4 xl:px-6">
-          <div className="w-full max-w-[1440px] flex min-w-0">
+          <div className="w-full max-w-[1440px] flex min-w-0 mb-[15px]">
             <DashboardSidebar />
             <main className="flex-1 p-[10px] pb-[80px] min-w-0 overflow-y-auto">
               {children}
