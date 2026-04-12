@@ -11,7 +11,6 @@ use Procurely\Api\Support\Database;
 use Procurely\Api\Support\PaymentProcessorInterface;
 use Procurely\Api\Support\Input;
 use Procurely\Api\Support\Telemetry;
-use Procurely\Api\Services\NotificationService;
 
 final class OrderService
 {
@@ -143,7 +142,7 @@ final class OrderService
             $adminStmt->execute();
             $admins = $adminStmt->fetchAll(PDO::FETCH_COLUMN);
 
-            if (is_array($admins)) {
+            if (is_array($admins) && count($admins) > 0) {
                 foreach ($admins as $adminId) {
                     $this->notificationService->createNotification(
                         (int) $adminId,
@@ -155,7 +154,8 @@ final class OrderService
                 }
             }
         } catch (\Throwable $e) {
-            Telemetry::error('Admin notification failed', ['error' => $e->getMessage(), 'order' => $orderData['orderNumber'] ?? 'unknown']);
+            $orderRef = is_array($orderData) ? ($orderData['orderNumber'] ?? 'unknown') : 'unknown';
+            Telemetry::error('Admin notification failed', ['error' => $e->getMessage(), 'order' => $orderRef]);
         }
 
         return $orderData;
@@ -294,8 +294,9 @@ final class OrderService
                     return ['status' => 'invalid_wallet_metadata'];
                 }
 
-                $update = $pdo->prepare('UPDATE users SET wallet_balance = wallet_balance + :amount, updated_at = NOW() WHERE id = :id');
-                $update->execute(['amount' => $creditAmount, 'id' => $userId]);
+                $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+                $update = $pdo->prepare('UPDATE users SET wallet_balance = wallet_balance + :amount, updated_at = :now WHERE id = :id');
+                $update->execute(['amount' => $creditAmount, 'id' => $userId, 'now' => $now]);
 
                 $pdo->commit();
                 

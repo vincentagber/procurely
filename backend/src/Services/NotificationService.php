@@ -31,20 +31,28 @@ final class NotificationService
     public function markAsRead(int $userId, int $notificationId): void
     {
         $pdo = $this->database->connection();
+        $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+        
         $stmt = $pdo->prepare('
             UPDATE notifications
-            SET read_at = NOW()
+            SET read_at = :now
             WHERE id = :id AND user_id = :user_id
         ');
-        $stmt->execute(['id' => $notificationId, 'user_id' => $userId]);
+        $stmt->execute([
+            'now' => $now,
+            'id' => $notificationId, 
+            'user_id' => $userId
+        ]);
     }
 
     public function createNotification(int $userId, string $type, string $title, ?string $message = null, ?array $data = null): void
     {
         $pdo = $this->database->connection();
+        $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+        
         $stmt = $pdo->prepare('
             INSERT INTO notifications (user_id, type, title, message, data, created_at)
-            VALUES (:user_id, :type, :title, :message, :data, NOW())
+            VALUES (:user_id, :type, :title, :message, :data, :created_at)
         ');
         $stmt->execute([
             'user_id' => $userId,
@@ -52,6 +60,7 @@ final class NotificationService
             'title' => $title,
             'message' => $message,
             'data' => $data ? json_encode($data) : null,
+            'created_at' => $now,
         ]);
     }
 }
