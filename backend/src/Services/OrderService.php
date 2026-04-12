@@ -46,10 +46,11 @@ final class OrderService
             throw new ApiException('Cart is empty.', 422);
         }
 
+        /** @var array $orderData */
         $orderData = $this->database->transaction(function (PDO $pdo) use ($cart, $userId, $cartToken, $customerName, $customerEmail, $phone, $address, $skipPayment) {
             Telemetry::start('order_processing');
             
-            // Check existing order for idempotency (Roy Fielding / Martin Kleppmann)
+            // 1. Idempotency Check
             $checkExisting = $pdo->prepare('SELECT order_number FROM orders WHERE cart_token = :cart_token LIMIT 1');
             $checkExisting->execute(['cart_token' => $cartToken]);
             $existing = $checkExisting->fetch();
@@ -58,7 +59,7 @@ final class OrderService
                 return $this->findByOrderNumber((string) $existing['order_number']);
             }
 
-            // Verify and deduct stock
+            // 2. Inventory Validation & Deduction
             $checkStock = $pdo->prepare('SELECT stock_level FROM inventory WHERE product_id = :product_id LIMIT 1');
             $deductStock = $pdo->prepare('UPDATE inventory SET stock_level = stock_level - :qty, updated_at = :now WHERE product_id = :product_id AND stock_level >= :qty');
             $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
@@ -76,18 +77,16 @@ final class OrderService
                 }
 
                 $deductStock->execute(['qty' => $quantity, 'now' => $now, 'product_id' => $productId]);
-                if ($deductStock->rowCount() === 0) {
-                    throw new ApiException(sprintf('Stock for %s was depleted by another order.', $item['product']['name']), 422);
-                }
             }
 
+            // 3. Persist Order Root
             $orderNumber = sprintf('PR-%s', strtoupper(substr(bin2hex(random_bytes(6)), 0, 10)));
             $createdAt = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
             
-            $insertOrder = $pdo->prepare(
-                'INSERT INTO orders (user_id, order_number, cart_token, customer_name, customer_email, phone, address, subtotal, vat, shipping_fee, service_fee, total, status, created_at)
-                 VALUES (:user_id, :order_number, :cart_token, :customer_name, :customer_email, :phone, :address, :subtotal, :vat, :shipping_fee, :service_fee, :total, :status, :created_at)'
-            );
+            $insertOrder = $pdo->prepare('
+                INSERT INTO orders (user_id, order_number, cart_token, customer_name, customer_email, phone, address, subtotal, vat, shipping_fee, service_fee, total, status, created_at)
+                VALUES (:user_id, :order_number, :cart_token, :customer_name, :customer_email, :phone, :address, :subtotal, :vat, :shipping_fee, :service_fee, :total, "processing", :created_at)
+            ');
             $insertOrder->execute([
                 'user_id' => $userId,
                 'order_number' => $orderNumber,
@@ -101,12 +100,16 @@ final class OrderService
                 'shipping_fee' => $cart['shippingFee'] ?? 0,
                 'service_fee' => $cart['serviceFee'],
                 'total' => $cart['total'],
-                'status' => 'processing',
                 'created_at' => $createdAt,
             ]);
 
             $orderId = (int) $pdo->lastInsertId();
-            $insertItem = $pdo->prepare('INSERT INTO order_items (order_id, product_id, product_name, unit_price, quantity, line_total) VALUES (:order_id, :product_id, :product_name, :unit_price, :quantity, :line_total)');
+            
+            // 4. Persist Order Items
+            $insertItem = $pdo->prepare('
+                INSERT INTO order_items (order_id, product_id, product_name, unit_price, quantity, line_total) 
+                VALUES (:order_id, :product_id, :product_name, :unit_price, :quantity, :line_total)
+            ');
 
             foreach ($cart['items'] as $item) {
                 $insertItem->execute([
@@ -119,18 +122,23 @@ final class OrderService
                 ]);
             }
 
+            // 5. Finalize State
+            $finalOrder = $this->findByOrderNumber($orderNumber, '', '', true);
+
             if (!$skipPayment) {
                 $this->paymentProcessor->capture($orderNumber, (int) $cart['total'], $customerEmail);
-                $this->emailService->sendOrderConfirmation($this->findByOrderNumber($orderNumber));
+                $this->emailService->sendOrderConfirmation($finalOrder);
             }
 
-            $duration = Telemetry::stop('order_processing');
-            Telemetry::info('Order finalized', ['number' => $orderNumber, 'ms' => $duration]);
+            Telemetry::info('Order finalized', [
+                'number' => $orderNumber, 
+                'ms' => Telemetry::stop('order_processing')
+            ]);
 
-            return $this->findByOrderNumber($orderNumber, '', '', true);
+            return $finalOrder;
         });
 
-        // Create dashboard notification for admins (Non-blocking)
+        // 6. Async Notifications (Simulation)
         try {
             $pdo = $this->database->connection();
             $adminStmt = $pdo->prepare('
@@ -140,22 +148,25 @@ final class OrderService
                 WHERE r.name = "admin"
             ');
             $adminStmt->execute();
-            $admins = $adminStmt->fetchAll(PDO::FETCH_COLUMN);
+            $adminIds = $adminStmt->fetchAll(PDO::FETCH_COLUMN);
 
-            if (is_array($admins) && count($admins) > 0) {
-                foreach ($admins as $adminId) {
+            if (!empty($adminIds)) {
+                $orderRef = $orderData['orderNumber'] ?? 'Unknown';
+                $customer = $orderData['customerName'] ?? 'Guest';
+                $totalStr = number_format(($orderData['total'] ?? 0) / 100, 2);
+
+                foreach ($adminIds as $id) {
                     $this->notificationService->createNotification(
-                        (int) $adminId,
+                        (int) $id,
                         'order.new',
                         'New Order Received',
-                        sprintf('Order %s from %s for N%s', $orderData['orderNumber'], $orderData['customerName'], number_format($orderData['total'] / 100, 2)),
-                        ['orderId' => $orderData['orderNumber']]
+                        "Order {$orderRef} from {$customer} for N{$totalStr}",
+                        ['orderId' => $orderRef]
                     );
                 }
             }
         } catch (\Throwable $e) {
-            $orderRef = is_array($orderData) ? ($orderData['orderNumber'] ?? 'unknown') : 'unknown';
-            Telemetry::error('Admin notification failed', ['error' => $e->getMessage(), 'order' => $orderRef]);
+            Telemetry::error('Admin alert failed', ['error' => $e->getMessage()]);
         }
 
         return $orderData;
