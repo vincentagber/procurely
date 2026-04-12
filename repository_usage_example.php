@@ -11,6 +11,11 @@ use Procurely\Api\Repositories\ProductRepository;
 use Procurely\Api\Repositories\UserRepository;
 use Procurely\Api\Repositories\CategoryRepository;
 
+require_once __DIR__ . '/backend/vendor/autoload.php';
+
+use Dotenv\Dotenv;
+Dotenv::createImmutable(__DIR__ . '/backend')->safeLoad();
+
 // 1. Initialize Database
 $db = new Database(__DIR__ . '/backend/storage/procurely.sqlite');
 
@@ -23,19 +28,21 @@ try {
     // --- EXAMPLE 1: Create a Category & Product ---
     $catId = $categoryRepo->create('Premium Tools', 'premium-tools', 'High-end industrial tools');
     
+    $catName = 'Premium Tools';
+    
     $productId = $productRepo->create([
         'id' => 'drill-xt-500',
         'slug' => 'drill-xt-500',
         'name' => 'Industrial Drill XT-500',
         'short_description' => 'Power drill for heavy duty',
-        'category_id' => $catId,
+        'category' => $catName,
         'price' => 1250000, // stored as kobo/cents
     ]);
 
     echo "Product created: " . $productId . "\n";
 
     // --- EXAMPLE 2: Filter Products by Category ---
-    $products = $productRepo->findByCategory($catId);
+    $products = $productRepo->findByCategory($catName);
     foreach ($products as $p) {
         echo "Found: " . $p['name'] . " - N" . ($p['price'] / 100) . "\n";
     }

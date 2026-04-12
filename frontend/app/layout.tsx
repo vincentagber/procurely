@@ -42,6 +42,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${bebasNeue.variable} min-h-screen bg-white antialiased`}>
         <Providers>{children}</Providers>
+        {/* Paystack Inline Script */}
+        <script src="https://js.paystack.co/v1/inline.js" async />
       </body>
     </html>
   );

@@ -12,18 +12,15 @@ class ProductRepository extends BaseRepository
         return $this->fetchOne('products', 'id', $id);
     }
 
-    public function findByCategory(int $categoryId): array
+    public function findByCategory(string $category): array
     {
-        $sql = "SELECT * FROM products WHERE category_id = :category_id ORDER BY created_at DESC";
-        return $this->execute($sql, ['category_id' => $categoryId])->fetchAll();
+        $sql = "SELECT * FROM products WHERE category = :category ORDER BY created_at DESC";
+        return $this->execute($sql, ['category' => $category])->fetchAll();
     }
 
     public function search(array $filters): array
     {
-        $sql = "SELECT p.*, c.name as category_name 
-                FROM products p 
-                LEFT JOIN categories c ON p.category_id = c.id 
-                WHERE 1=1";
+        $sql = "SELECT p.* FROM products p WHERE 1=1";
         $params = [];
 
         if (!empty($filters['name'])) {
@@ -41,9 +38,9 @@ class ProductRepository extends BaseRepository
             $params['max_price'] = $filters['max_price'];
         }
 
-        if (!empty($filters['category_id'])) {
-            $sql .= " AND p.category_id = :cat_id";
-            $params['cat_id'] = $filters['category_id'];
+        if (!empty($filters['category'])) {
+            $sql .= " AND p.category = :category";
+            $params['category'] = $filters['category'];
         }
 
         $sql .= " ORDER BY p.created_at DESC";
@@ -52,20 +49,23 @@ class ProductRepository extends BaseRepository
 
     public function create(array $data): string
     {
-        $sql = "INSERT INTO products (id, slug, name, short_description, category_id, price, image, badge, featured, homepage_slot, created_at, updated_at) 
-                VALUES (:id, :slug, :name, :short_desc, :cat_id, :price, :image, :badge, :featured, :slot, NOW(), NOW())";
+        $sql = "INSERT INTO products (id, slug, name, short_description, category, price, image, badge, featured, homepage_slot, created_at, updated_at) 
+                VALUES (:id, :slug, :name, :short_desc, :category, :price, :image, :badge, :featured, :slot, :created_at, :updated_at)";
         
+        $now = date('Y-m-d H:i:s');
         $this->execute($sql, [
             'id' => $data['id'],
             'slug' => $data['slug'],
             'name' => $data['name'],
             'short_desc' => $data['short_description'],
-            'cat_id' => $data['category_id'] ?? null,
+            'category' => $data['category'] ?? 'General',
             'price' => $data['price'],
             'image' => $data['image'] ?? null,
             'badge' => $data['badge'] ?? null,
             'featured' => $data['featured'] ?? 0,
             'slot' => $data['homepage_slot'] ?? null,
+            'created_at' => $now,
+            'updated_at' => $now,
         ]);
 
         return $data['id'];

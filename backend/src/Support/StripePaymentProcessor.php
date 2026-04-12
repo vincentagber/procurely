@@ -17,17 +17,15 @@ final class StripePaymentProcessor implements PaymentProcessorInterface
 
     public function __construct(string $apiKey = '', string $webhookSecret = '')
     {
-        $key = $_ENV['STRIPE_SECRET_KEY'] ?? '';
-        $webhook = $_ENV['STRIPE_WEBHOOK_SECRET'] ?? '';
+        $key = $apiKey ?: ($_ENV['STRIPE_SECRET_KEY'] ?? '');
+        $webhook = $webhookSecret ?: ($_ENV['STRIPE_WEBHOOK_SECRET'] ?? '');
 
-        $isDebug = filter_var($_ENV['APP_DEBUG'] ?? 'false', FILTER_VALIDATE_BOOL);
-
-        if ($key === '' && !$isDebug) {
-            throw new \RuntimeException('STRIPE_SECRET_KEY is required in production.');
+        if ($key === '') {
+            throw new \RuntimeException('STRIPE_SECRET_KEY is required.');
         }
 
-        $this->stripe = new StripeClient($key ?: 'sk_test_mock_stripe_key');
-        $this->webhookSecret = $webhook ?: 'whsec_mock_webhook_secret';
+        $this->stripe = new StripeClient($key);
+        $this->webhookSecret = $webhook;
     }
 
     /**

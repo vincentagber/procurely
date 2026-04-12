@@ -67,15 +67,19 @@ final class EmailService
         try {
             // Server settings
             $mail->isSMTP();
-            $mail->Host = $_ENV['SMTP_HOST'] ?? 'server381.web-hosting.com';
+            $mail->Host = $_ENV['SMTP_HOST'] ?? '';
             $mail->SMTPAuth = true;
-            $mail->Username = $_ENV['SMTP_USER'] ?? 'info@useprocurely.com';
+            $mail->Username = $_ENV['SMTP_USER'] ?? '';
             $mail->Password = $_ENV['SMTP_PASS'] ?? '';
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
             $mail->Port = (int) ($_ENV['SMTP_PORT'] ?? 465);
 
+            if ($mail->Host === '' || $mail->Username === '' || $mail->Password === '') {
+                throw new \RuntimeException('SMTP configuration is incomplete.');
+            }
+
             // Recipients
-            $mail->setFrom('info@useprocurely.com', 'Procurely');
+            $mail->setFrom($mail->Username, 'Procurely');
             $mail->addAddress($to);
 
             // Content

@@ -40,24 +40,46 @@ export function CheckoutPageClient() {
     e.preventDefault();
     setIsProcessing(true);
 
-    // Simulate Payment Gateway UI Lag
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      const cartTokenSnap = cart.cartToken;
+      
+      // 1. Create the order first (in pending status)
+      const order = await checkout({
+        customerName: formData.firstName,
+        customerEmail: formData.email,
+        phone: formData.phone,
+        address: `${formData.address}, ${formData.city}`,
+      });
 
-    const cartTokenSnap = cart.cartToken;
+      if (!order) {
+        throw new Error("Failed to create order");
+      }
 
-    const order = await checkout({
-      customerName: formData.firstName,
-      customerEmail: formData.email,
-      phone: formData.phone,
-      address: `${formData.address}, ${formData.city}`,
-    });
+      // 2. Initialize Paystack
+      // @ts-ignore
+      const handler = window.PaystackPop.setup({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_mock_key',
+        email: formData.email,
+        amount: total, // amount is already in kobo from backend/server logic if used directly, but here 'total' is in Naira if isNgn
+        currency: isNgn ? 'NGN' : 'USD',
+        ref: order.orderNumber,
+        callback: function(response: any) {
+          // 3. Payment successful, redirect to confirmation
+          persistOrderRef(order.orderNumber, cartTokenSnap);
+          router.push("/order-confirmation");
+        },
+        onClose: function() {
+          setIsProcessing(false);
+          alert('Transaction was not completed, window closed.');
+        }
+      });
 
-    // Persist order ref so /account/orders can display it
-    if (order) {
-      persistOrderRef(order.orderNumber, cartTokenSnap);
+      handler.openIframe();
+
+    } catch (err: any) {
+      alert(err.message || "An error occurred during checkout");
+      setIsProcessing(false);
     }
-
-    router.push("/order-confirmation");
   };
 
   return (

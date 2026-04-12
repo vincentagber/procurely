@@ -26,8 +26,8 @@ class CategoryRepository extends BaseRepository
 
     public function create(string $name, string $slug, string $description = ''): int
     {
-        $sql = "INSERT INTO categories (name, slug, description, created_at) VALUES (:name, :slug, :desc, NOW())";
-        $this->execute($sql, ['name' => $name, 'slug' => $slug, 'desc' => $description]);
+        $sql = "INSERT INTO categories (name, slug, description, created_at) VALUES (:name, :slug, :desc, :created_at)";
+        $this->execute($sql, ['name' => $name, 'slug' => $slug, 'desc' => $description, 'created_at' => date('Y-m-d H:i:s')]);
         return (int) $this->db->lastInsertId();
     }
 }

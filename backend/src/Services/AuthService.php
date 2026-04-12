@@ -179,7 +179,12 @@ final class AuthService
         ]);
 
         // Send reset email
-        $resetLink = ($_ENV['FRONTEND_URL'] ?? 'http://localhost:3000') . '/auth/reset-password?token=' . $rawToken;
+        $frontendUrl = $_ENV['FRONTEND_URL'] ?? '';
+        if ($frontendUrl === '') {
+            throw new \RuntimeException('FRONTEND_URL is not configured.');
+        }
+
+        $resetLink = $frontendUrl . '/auth/reset-password?token=' . $rawToken;
         $this->emailService->sendPasswordReset($email, $resetLink);
 
         $response = [

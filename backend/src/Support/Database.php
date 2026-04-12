@@ -24,11 +24,15 @@ final class Database
         $driver = $_ENV['DB_DRIVER'] ?? 'sqlite';
 
         if ($driver === 'mysql') {
-            $host = $_ENV['DB_HOST'] ?? 'localhost';
+            $host = $_ENV['DB_HOST'] ?? '';
             $name = $_ENV['DB_NAME'] ?? 'procurely';
-            $user = $_ENV['DB_USER'] ?? 'root';
+            $user = $_ENV['DB_USER'] ?? '';
             $pass = $_ENV['DB_PASS'] ?? '';
             $port = $_ENV['DB_PORT'] ?? '3306';
+
+            if ($host === '' || $user === '') {
+                throw new \RuntimeException('DB_HOST and DB_USER are required for MySQL connection.');
+            }
 
             $dsn = sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', $host, $port, $name);
             $this->connection = new PDO($dsn, $user, $pass);
@@ -41,6 +45,9 @@ final class Database
             $this->connection->exec('PRAGMA foreign_keys = ON');
             $this->connection->exec('PRAGMA journal_mode = WAL');
             $this->connection->exec('PRAGMA synchronous = NORMAL');
+            
+            // Add NOW() function for SQLite compatibility
+            $this->connection->sqliteCreateFunction('NOW', fn() => date('Y-m-d H:i:s'));
         }
 
         $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -161,6 +168,14 @@ final class Database
                 hits INT NOT NULL DEFAULT 1,
                 reset_at BIGINT NOT NULL,
                 PRIMARY KEY (`key`)
+            );
+
+            CREATE TABLE IF NOT EXISTS categories (
+              id $pk,
+              name VARCHAR(255) NOT NULL,
+              slug VARCHAR(100) NOT NULL UNIQUE,
+              description $text,
+              created_at $dateTime NOT NULL
             );
 
             CREATE TABLE IF NOT EXISTS products (
