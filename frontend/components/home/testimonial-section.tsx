@@ -24,7 +24,7 @@ export function TestimonialSection({
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
       setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5); // 5px buffer
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
     }
   };
 
@@ -47,81 +47,79 @@ export function TestimonialSection({
   };
 
   return (
-    <div className="relative mx-auto w-full max-w-[1400px]">
-      {title && (
-        <Reveal>
-          <h2 className="mb-12 text-center text-3xl font-bold tracking-tight text-[var(--color-brand-navy)] sm:mb-16 sm:text-4xl md:text-[3rem]">
-            {title}
-          </h2>
-        </Reveal>
-      )}
+    <section className="w-full bg-[#fde8df] py-16 md:py-24">
+      <div className="container-shell">
+        {title && (
+          <Reveal>
+            <h2 className="mb-12 text-center text-[1.8rem] font-bold tracking-tight text-[#0A1140] sm:mb-16 md:text-[2.2rem]">
+              {title}
+            </h2>
+          </Reveal>
+        )}
 
-      {/* Navigation Arrows */}
-      {items.length > 3 && (
-        <>
+        <div className="relative">
+          {/* Navigation Arrows */}
           <button
             onClick={scrollLeft}
             disabled={!canScrollLeft}
-            className={`absolute left-0 top-1/2 z-10 -ml-4 flex size-12 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-md transition-all sm:-ml-6 ${!canScrollLeft ? "opacity-30 cursor-not-allowed" : "hover:scale-110 hover:text-[#1900ff]"}`}
+            className={`absolute left-0 top-1/2 z-10 -ml-4 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-all sm:-ml-6 ${!canScrollLeft ? "opacity-30 cursor-not-allowed" : "hover:scale-110 hover:text-[#1900ff]"}`}
             aria-label="Scroll left"
           >
-            <ChevronLeft className="size-6" />
+            <ChevronLeft className="size-5" />
           </button>
           <button
             onClick={scrollRight}
             disabled={!canScrollRight}
-            className={`absolute right-0 top-1/2 z-10 -mr-4 flex size-12 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-md transition-all sm:-mr-6 ${!canScrollRight ? "opacity-30 cursor-not-allowed" : "hover:scale-110 hover:text-[#1900ff]"}`}
+            className={`absolute right-0 top-1/2 z-10 -mr-4 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-all sm:-mr-6 ${!canScrollRight ? "opacity-30 cursor-not-allowed" : "hover:scale-110 hover:text-[#1900ff]"}`}
             aria-label="Scroll right"
           >
-            <ChevronRight className="size-6" />
+            <ChevronRight className="size-5" />
           </button>
-        </>
-      )}
 
-      {/* Carousel Container */}
-      <div 
-        ref={scrollRef}
-        onScroll={checkScroll}
-        className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-8 pt-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {items.map((item, index) => (
-          <Reveal
-            className="w-full shrink-0 snap-center sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]"
-            delay={index * 0.1}
-            key={item.id}
+          {/* Carousel Container */}
+          <div 
+            ref={scrollRef}
+            onScroll={checkScroll}
+            className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-6"
           >
-            <motion.article
-              className="group relative flex h-full w-full flex-col justify-between overflow-hidden rounded-[24px] bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.06)] ring-1 ring-slate-100 transition-shadow hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] sm:rounded-[28px]"
-              transition={{ duration: 0.3 }}
-              whileHover="hover"
-            >
-              <div className="mb-6 flex justify-center gap-1 text-[#f59e0b]">
-                {Array.from({ length: item.rating || 5 }).map((_, i) => (
-                  <Star key={i} className="size-5 fill-current" />
-                ))}
-              </div>
-              
-              <blockquote className="mb-8 flex-1 text-center text-[15px] leading-relaxed text-slate-600 sm:text-base">
-                "{item.quote}"
-              </blockquote>
-              
-              <div className="mt-2 flex items-center justify-center gap-4">
-                <div className="relative size-12 shrink-0 overflow-hidden rounded-full shadow-sm">
-                  <img
-                    alt={`Avatar of ${item.name}`}
-                    className="h-full w-full object-cover"
-                    src={item.cardImage}
-                  />
-                </div>
-                <cite className="not-italic text-left">
-                  <div className="text-sm font-extrabold text-[var(--color-brand-navy)] leading-tight">{item.name}</div>
-                  <div className="text-[13px] font-medium text-slate-500 mt-0.5">{item.role}</div>
-                </cite>
-              </div>
-            </motion.article>
-          </Reveal>
-        ))}
+            {items.map((item, index) => (
+              <Reveal
+                className="w-full shrink-0 snap-center sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]"
+                delay={index * 0.1}
+                key={item.id}
+              >
+                <article
+                  className="relative flex h-full w-full flex-col items-center justify-between rounded-[8px] bg-white p-8 md:p-10"
+                >
+                  <div className="mb-6 flex justify-center gap-1.5 text-[#f59e0b]">
+                    {Array.from({ length: item.rating || 5 }).map((_, i) => (
+                      <Star key={i} className="size-5 fill-current" />
+                    ))}
+                  </div>
+                  
+                  <blockquote className="mb-8 flex-1 text-center text-[1rem] leading-[1.6] font-medium text-[#1E293B]">
+                    "{item.quote}"
+                  </blockquote>
+                  
+                  <div className="flex flex-col items-center">
+                    <div className="relative mb-4 size-16 overflow-hidden rounded-full shadow-sm bg-slate-100">
+                      <img
+                        alt={`Avatar of ${item.name}`}
+                        className="h-full w-full object-cover"
+                        src={item.cardImage}
+                      />
+                    </div>
+                    <div className="text-center">
+                      <div className="text-[0.9rem] font-bold text-slate-400 uppercase tracking-wide">{item.name}</div>
+                      <div className="text-[13px] font-medium text-slate-300 mt-1">{item.role}</div>
+                    </div>
+                  </div>
+                </article>
+              </Reveal>
+            ))}
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
