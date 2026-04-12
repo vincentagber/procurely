@@ -20,11 +20,20 @@ final class AuthMiddleware implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $authHeader = $request->getHeaderLine('Authorization');
-        if (!str_starts_with($authHeader, 'Bearer ')) {
+        $token = '';
+
+        if (str_starts_with($authHeader, 'Bearer ')) {
+            $token = substr($authHeader, 7);
+        } else {
+            // Check cookies as fallback (allows HttpOnly session management)
+            $cookies = $request->getCookieParams();
+            $token = (string) ($cookies['procurely_auth_token'] ?? '');
+        }
+
+        if ($token === '') {
             return $handler->handle($request);
         }
 
-        $token = substr($authHeader, 7);
         $user = $this->authService->resolveToken($token);
 
         if ($user) {

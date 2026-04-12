@@ -22,14 +22,6 @@ if (
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
 
-  // Retrieve auth token if available
-  if (typeof window !== "undefined") {
-    const token = window.localStorage.getItem("procurely-auth-token");
-    if (token) {
-      headers.set("Authorization", `Bearer ${token}`);
-    }
-  }
-
   if (init?.body) {
     headers.set("Content-Type", "application/json");
   }
@@ -40,7 +32,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     response = await fetch(`${apiBaseUrl}${path}`, {
       ...init,
       headers,
-      signal: init?.signal ?? AbortSignal.timeout(8000),
+      credentials: "include", // Required for Cookie-based Auth
+      signal: init?.signal ?? AbortSignal.timeout(15000), // Increased to 15s for enterprise stability
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === "TimeoutError") {
@@ -111,11 +104,37 @@ export const api = {
       },
     );
   },
-  updateProfile(payload: { fullName: string; email: string }) {
+   updateProfile(payload: { fullName: string; email: string; phone?: string; whatsapp?: string }) {
     return request<{ user: any; message: string }>("/api/auth/profile", {
       method: "PATCH",
       body: JSON.stringify(payload),
     });
+  },
+  getCompanyInfo() {
+    return request<any>("/api/account/company");
+  },
+  updateCompany(payload: any) {
+    return request<{ message: string }>("/api/account/company", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  },
+  getAddresses() {
+    return request<any[]>("/api/account/addresses");
+  },
+  addAddress(payload: any) {
+    return request<any>("/api/account/addresses", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  deleteAddress(id: number) {
+    return request<{ message: string }>(`/api/account/addresses/${id}`, {
+      method: "DELETE",
+    });
+  },
+  getPaymentMethods() {
+    return request<any[]>("/api/account/payment-methods");
   },
   getCart(cartToken: string) {
     return request<Cart>(`/api/cart/${cartToken}`);

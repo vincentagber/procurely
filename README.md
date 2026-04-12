@@ -71,8 +71,8 @@ php scripts/migrate.php
 ## 🔑 Administrative Credentials (Initial Seed)
 | Role | Email | Password |
 | :--- | :--- | :--- |
-| **Super Admin** | `admin@procurely.com` | `Apassword123!` |
-| **Sample Customer** | `customer@procurely.com` | `Apassword123!` |
+| **Super Admin** | `admin@useprocurely.com` | `Apassword123!` |
+| **Sample Customer** | `customer@useprocurely.com` | `Apassword123!` |
 
 ---
 

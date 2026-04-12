@@ -15,6 +15,29 @@ final class Database
     ) {
     }
 
+    /**
+     * Executes a callback within a database transaction.
+     * Inspired by Jim Gray's ACID principles.
+     */
+    public function transaction(callable $callback): mixed
+    {
+        $pdo = $this->connection();
+        
+        // Use BEGIN IMMEDIATE for SQLite to prevent contention
+        $pdo->exec($_ENV['DB_DRIVER'] === 'mysql' ? 'START TRANSACTION' : 'BEGIN IMMEDIATE TRANSACTION');
+
+        try {
+            $result = $callback($pdo);
+            $pdo->commit();
+            return $result;
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
+    }
+
     public function connection(): PDO
     {
         if ($this->connection instanceof PDO) {
@@ -55,21 +78,11 @@ final class Database
 
         $isMysql = $driver === 'mysql';
 
-        // Optimization: Only run migrations if schema is not initialized
-        // This prevents enormous overhead in production on every request.
-        $stmt = $this->connection->prepare($isMysql 
-            ? "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = :db AND table_name = 'users'"
-            : "SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
-        );
-        
-        if ($isMysql) {
-            $stmt->execute(['db' => $_ENV['DB_NAME'] ?? 'procurely']);
-        } else {
-            $stmt->execute();
-        }
-
-        if ($stmt->fetch() === false) {
+        // Optimization: Use a filesystem flag to skip schema checks in production.
+        $initFlag = dirname($this->databasePath) . '/.initialized';
+        if (!file_exists($initFlag)) {
             $this->migrate($this->connection, $driver);
+            file_put_contents($initFlag, date('Y-m-d H:i:s'));
         }
         
         return $this->connection;
@@ -93,6 +106,8 @@ final class Database
               uuid VARCHAR(36) NOT NULL UNIQUE,
               full_name VARCHAR(255) NOT NULL,
               email VARCHAR(255) NOT NULL UNIQUE,
+              phone VARCHAR(50),
+              whatsapp VARCHAR(50),
               password_hash VARCHAR(255) NOT NULL,
               wallet_balance BIGINT DEFAULT 0,
               created_at $dateTime NOT NULL,
@@ -229,6 +244,8 @@ final class Database
               phone VARCHAR(50) NOT NULL,
               address $text NOT NULL,
               subtotal BIGINT NOT NULL,
+              vat BIGINT DEFAULT 0,
+              shipping_fee BIGINT DEFAULT 0,
               service_fee BIGINT NOT NULL,
               total BIGINT NOT NULL,
               status VARCHAR(50) NOT NULL,
@@ -269,6 +286,39 @@ final class Database
               product_id VARCHAR(50) PRIMARY KEY,
               stock_level INT NOT NULL DEFAULT 0,
               updated_at $dateTime NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS user_addresses (
+              id $pk,
+              user_uuid VARCHAR(36) NOT NULL,
+              label VARCHAR(100) NOT NULL,
+              address $text NOT NULL,
+              is_default TINYINT DEFAULT 0,
+              created_at $dateTime NOT NULL,
+              FOREIGN KEY (user_uuid) REFERENCES users(uuid) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS user_payment_methods (
+              id $pk,
+              user_uuid VARCHAR(36) NOT NULL,
+              type VARCHAR(50) NOT NULL,
+              provider VARCHAR(100) NOT NULL,
+              last4 VARCHAR(4) NOT NULL,
+              is_default TINYINT DEFAULT 0,
+              created_at $dateTime NOT NULL,
+              FOREIGN KEY (user_uuid) REFERENCES users(uuid) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS user_company_info (
+              user_uuid VARCHAR(36) PRIMARY KEY,
+              company_name VARCHAR(255),
+              tax_id VARCHAR(100),
+              business_type VARCHAR(100),
+              email VARCHAR(255),
+              whatsapp VARCHAR(50),
+              address $text,
+              updated_at $dateTime NOT NULL,
+              FOREIGN KEY (user_uuid) REFERENCES users(uuid) ON DELETE CASCADE
             );
 
             CREATE TABLE IF NOT EXISTS wishlist_items (

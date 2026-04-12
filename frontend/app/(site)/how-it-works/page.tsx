@@ -141,7 +141,7 @@ export default async function HowItWorksPage() {
                        <p className="text-sm text-slate-500">5000 Bags</p>
                     </div>
                     <div className="text-right">
-                       <p className="text-lg font-bold text-[#13184f]">$42,500</p>
+                       <p className="text-lg font-bold text-[#13184f]">₦42,500</p>
                        <p className="text-xs font-semibold text-emerald-600">3 Suppliers</p>
                     </div>
                  </div>
@@ -151,7 +151,7 @@ export default async function HowItWorksPage() {
                        <p className="text-sm text-slate-500">25 Tons</p>
                     </div>
                     <div className="text-right">
-                       <p className="text-lg font-bold text-[#13184f]">$18,200</p>
+                       <p className="text-lg font-bold text-[#13184f]">₦18,200</p>
                        <p className="text-xs font-semibold text-emerald-600">3 Suppliers</p>
                     </div>
                  </div>

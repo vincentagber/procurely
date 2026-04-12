@@ -12,12 +12,12 @@ interface PaymentProcessorInterface
     /**
      * Capture a payment for the given order.
      */
-    public function capture(string $orderNumber, int $amountCents): bool;
+    public function capture(string $orderNumber, int $amountCents, string $customerEmail = ''): bool;
 
     /**
      * Create a payment intent.
      */
-    public function createPaymentIntent(string $orderNumber, int $amountCents, string $currency = 'usd'): array;
+    public function createPaymentIntent(string $orderNumber, int $amountCents, string $customerEmail = '', string $currency = 'NGN'): array;
 
     /**
      * Confirm a payment intent.

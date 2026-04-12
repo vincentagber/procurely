@@ -48,6 +48,7 @@ $emailService = new \Procurely\Api\Support\EmailService($rootPath);
 $orderService = new OrderService($database, $cartService, $paymentProcessor, $emailService, $notificationService);
 $engagementService = new EngagementService($database);
 $wishlistService = new \Procurely\Api\Services\WishlistService($database, $contentStore);
+$accountService = new \Procurely\Api\Services\AccountService($database);
 $storage = new Storage($rootPath);
 $adminService = new \Procurely\Api\Services\AdminService($database, $contentStore, $storage);
 
@@ -80,11 +81,21 @@ $app->get('/api/products/{slug}', static function (ServerRequestInterface $reque
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
 $app->post('/api/auth/register', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
-    return JsonResponder::success($response, $authService->register(RequestData::body($request)), 201);
+    $data = $authService->register(RequestData::body($request));
+    $token = $data['token'] ?? '';
+    
+    $cookie = sprintf('procurely_auth_token=%s; Max-Age=2592000; Path=/; HttpOnly; SameSite=Lax; Secure', $token);
+    
+    return JsonResponder::success($response->withHeader('Set-Cookie', $cookie), $data, 201);
 })->add($authRateLimit);
 
 $app->post('/api/auth/login', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
-    return JsonResponder::success($response, $authService->login(RequestData::body($request)));
+    $data = $authService->login(RequestData::body($request));
+    $token = $data['token'] ?? '';
+    
+    $cookie = sprintf('procurely_auth_token=%s; Max-Age=2592000; Path=/; HttpOnly; SameSite=Lax; Secure', $token);
+
+    return JsonResponder::success($response->withHeader('Set-Cookie', $cookie), $data);
 })->add($authRateLimit);
 
 $app->post('/api/auth/forgot-password', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
@@ -99,8 +110,16 @@ $app->post('/api/auth/logout', static function (ServerRequestInterface $request,
 
     $authHeader = $request->getHeaderLine('Authorization');
     $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
+    
+    if ($token === '') {
+        $cookies = $request->getCookieParams();
+        $token = (string) ($cookies['procurely_auth_token'] ?? '');
+    }
 
-    return JsonResponder::success($response, $authService->logout($database->connection(), $token));
+    $result = $authService->logout($database->connection(), $token);
+    $clearCookie = 'procurely_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax; Secure';
+
+    return JsonResponder::success($response->withHeader('Set-Cookie', $clearCookie), $result);
 });
 
 $app->get('/api/auth/me', static function (ServerRequestInterface $request, ResponseInterface $response): ResponseInterface {
@@ -154,6 +173,49 @@ $app->patch('/api/notifications/{id}/read', static function (ServerRequestInterf
 
     $notificationService->markAsRead((int) $user['id'], (int) $args['id']);
     return JsonResponder::success($response, ['message' => 'Notification marked as read.']);
+});
+
+// ─── Account & Company ────────────────────────────────────────────────────────
+$app->get('/api/account/company', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
+    $user = $request->getAttribute('user');
+    if (!$user) throw new ApiException('Authentication required.', 401);
+
+    return JsonResponder::success($response, $accountService->getCompanyInfo($user['uuid']));
+});
+
+$app->patch('/api/account/company', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
+    $user = $request->getAttribute('user');
+    if (!$user) throw new ApiException('Authentication required.', 401);
+
+    return JsonResponder::success($response, $accountService->updateCompany($user['uuid'], RequestData::body($request)));
+});
+
+$app->get('/api/account/addresses', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
+    $user = $request->getAttribute('user');
+    if (!$user) throw new ApiException('Authentication required.', 401);
+
+    return JsonResponder::success($response, $accountService->getAddresses($user['uuid']));
+});
+
+$app->post('/api/account/addresses', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
+    $user = $request->getAttribute('user');
+    if (!$user) throw new ApiException('Authentication required.', 401);
+
+    return JsonResponder::success($response, $accountService->addAddress($user['uuid'], RequestData::body($request)));
+});
+
+$app->delete('/api/account/addresses/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($accountService): ResponseInterface {
+    $user = $request->getAttribute('user');
+    if (!$user) throw new ApiException('Authentication required.', 401);
+
+    return JsonResponder::success($response, $accountService->deleteAddress($user['uuid'], (int) $args['id']));
+});
+
+$app->get('/api/account/payment-methods', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
+    $user = $request->getAttribute('user');
+    if (!$user) throw new ApiException('Authentication required.', 401);
+
+    return JsonResponder::success($response, $accountService->getPaymentMethods($user['uuid']));
 });
 
 // ─── Cart ──────────────────────────────────────────────────────────────────────

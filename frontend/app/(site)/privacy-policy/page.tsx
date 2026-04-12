@@ -61,7 +61,7 @@ export default function PrivacyPolicyPage() {
 
             <hr className="my-10 border-slate-200" />
             
-            <p className="text-slate-500 text-base">If you have any questions about this privacy policy or our privacy practices, please contact our Data Privacy Manager at <Link href="mailto:privacy@procurely.com" className="font-bold text-[#1900ff] hover:underline">privacy@procurely.com</Link>.</p>
+            <p className="text-slate-500 text-base">If you have any questions about this privacy policy or our privacy practices, please contact our Data Privacy Manager at <Link href="mailto:privacy@useprocurely.com" className="font-bold text-[#1900ff] hover:underline">privacy@useprocurely.com</Link>.</p>
           </div>
         </div>
       </section>

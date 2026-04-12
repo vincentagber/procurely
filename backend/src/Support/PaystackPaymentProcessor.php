@@ -25,7 +25,7 @@ final class PaystackPaymentProcessor implements PaymentProcessorInterface
     /**
      * Initialize a Paystack transaction.
      */
-    public function createPaymentIntent(string $orderNumber, int $amountCents, string $currency = 'NGN'): array
+    public function createPaymentIntent(string $orderNumber, int $amountCents, string $customerEmail = '', string $currency = 'NGN'): array
     {
         
         // Actually, let's look at the OrderService to see if we can get the email.
@@ -36,7 +36,7 @@ final class PaystackPaymentProcessor implements PaymentProcessorInterface
             'reference' => $orderNumber,
             'amount' => $amountCents,
             'currency' => strtoupper($currency),
-            'email' => $_SESSION['customer_email'] ?? 'sales@procurely.com', // Fallback for mock
+            'email' => $customerEmail ?: 'info@useprocurely.com',
             'metadata' => [
                 'order_number' => $orderNumber
             ]
@@ -105,7 +105,7 @@ final class PaystackPaymentProcessor implements PaymentProcessorInterface
     /**
      * Capture method (required by interface).
      */
-    public function capture(string $orderNumber, int $amountCents): bool
+    public function capture(string $orderNumber, int $amountCents, string $customerEmail = ''): bool
     {
         // In Paystack, capture is usually automatic or handled via separate capture API 
         // if using "charge" vs "capture". For this simple integration, we return true.

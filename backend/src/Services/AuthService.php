@@ -211,6 +211,8 @@ final class AuthService
     {
         $fullName = Input::requiredString($payload, 'fullName', 'Full name', 120);
         $email = Input::email($payload, 'email', 'email address');
+        $phone = (string) ($payload['phone'] ?? '');
+        $whatsapp = (string) ($payload['whatsapp'] ?? '');
 
         $pdo = $this->database->connection();
 
@@ -222,15 +224,17 @@ final class AuthService
             throw new ApiException('This email is already in use by another account.', 409, ['field' => 'email']);
         }
 
-        $stmt = $pdo->prepare('UPDATE users SET full_name = :full_name, email = :email, updated_at = NOW() WHERE id = :id');
+        $stmt = $pdo->prepare('UPDATE users SET full_name = :full_name, email = :email, phone = :phone, whatsapp = :whatsapp, updated_at = NOW() WHERE id = :id');
         $stmt->execute([
             'full_name' => $fullName,
             'email' => $email,
+            'phone' => $phone,
+            'whatsapp' => $whatsapp,
             'id' => $userId,
         ]);
 
         $user = $pdo->prepare('
-            SELECT u.uuid, u.full_name, u.email, u.wallet_balance, GROUP_CONCAT(r.name) as roles
+            SELECT u.uuid, u.full_name, u.email, u.phone, u.whatsapp, u.wallet_balance, GROUP_CONCAT(r.name) as roles
             FROM users u
             LEFT JOIN user_roles ur ON u.id = ur.user_id
             LEFT JOIN roles r ON ur.role_id = r.id
@@ -248,6 +252,8 @@ final class AuthService
             'id' => $updated['uuid'],
             'fullName' => $updated['full_name'],
             'email' => $updated['email'],
+            'phone' => $updated['phone'],
+            'whatsapp' => $updated['whatsapp'],
             'roles' => $roles,
             'permissions' => $permissions,
             'walletBalance' => (int) ($updated['wallet_balance'] ?? 0),

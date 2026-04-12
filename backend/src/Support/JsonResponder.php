@@ -33,6 +33,7 @@ final class JsonResponder
 
         return $response
             ->withHeader('Content-Type', 'application/json')
+            ->withHeader('X-Request-Id', bin2hex(random_bytes(8)))
             ->withStatus($status);
     }
 }

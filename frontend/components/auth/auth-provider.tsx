@@ -8,6 +8,8 @@ interface User {
   id: string;
   fullName: string;
   email: string;
+  phone?: string;
+  whatsapp?: string;
   roles: string[];
   permissions: string[];
   walletBalance: number;
@@ -27,20 +29,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const refreshUser = async () => {
-    const token = window.localStorage.getItem("procurely-auth-token");
-    if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
+  const login = (token: string, userData: User) => {
+    setUser(userData);
+    router.push("/dashboard");
+  };
 
+  const refreshUser = async () => {
     try {
       const data = await api.getMe();
       setUser(data.user);
     } catch (error) {
-      console.error("Auth error:", error);
-      window.localStorage.removeItem("procurely-auth-token");
       setUser(null);
     } finally {
       setLoading(false);
@@ -52,13 +50,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = async () => {
+    setLoading(true);
     try {
       await api.logout();
     } catch (e) {
       console.warn("Server-side logout failed:", e);
     }
-    window.localStorage.removeItem("procurely-auth-token");
     setUser(null);
+    setLoading(false);
     router.push("/login");
   };
 

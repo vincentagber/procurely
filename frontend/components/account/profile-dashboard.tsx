@@ -64,10 +64,10 @@ const supplierData = [
 ];
 
 const orderHistory = [
-  { id: 'PRO102563', supplier: 'Traxus Industrial', total: 'N80,000', date: 'Mar 1, 2024', status: 'Processing', color: 'orange' },
-  { id: 'PRO102567', supplier: 'Gibson Holdings', total: 'N45,000', date: 'Mar 1, 2024', status: 'In Progress', color: 'blue' },
-  { id: 'PRO102541', supplier: 'Halcyon Supplies', total: 'N85,000', date: 'Mar 1, 2024', status: 'Delivered', color: 'green' },
-  { id: 'PRO102532', supplier: 'Primelogic Systems', total: 'N85,000', date: 'Mar 1, 2024', status: 'Canceled', color: 'red' },
+  { id: 'PRO102563', supplier: 'Traxus Industrial', total: '₦80,000', date: 'Mar 1, 2024', status: 'Processing', color: 'orange' },
+  { id: 'PRO102567', supplier: 'Gibson Holdings', total: '₦45,000', date: 'Mar 1, 2024', status: 'In Progress', color: 'blue' },
+  { id: 'PRO102541', supplier: 'Halcyon Supplies', total: '₦85,000', date: 'Mar 1, 2024', status: 'Delivered', color: 'green' },
+  { id: 'PRO102532', supplier: 'Primelogic Systems', total: '₦85,000', date: 'Mar 1, 2024', status: 'Canceled', color: 'red' },
 ];
 
 import { useAuth } from "@/components/auth/auth-provider";
@@ -152,7 +152,7 @@ export default function ProfileDashboard() {
            />
            <MetricCard 
              label="Savings" 
-             value="N4.2M" 
+             value="₦4.2M" 
              trend="-3% s/s" 
              sub="Total cost savings" 
              color="orange" 
@@ -201,7 +201,7 @@ export default function ProfileDashboard() {
                        axisLine={false} 
                        tickLine={false} 
                        tick={{fill: '#94A3B8', fontSize: 10, fontWeight: 700}} 
-                       tickFormatter={(v) => `N${v/1000}k`}
+                       tickFormatter={(v) => `₦${v/1000}k`}
                        dx={-10}
                     />
                     <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />

@@ -30,11 +30,10 @@ export function CheckoutPageClient() {
     );
   }
 
-  const vat = Math.round(cart.subtotal * 0.075);
-  const shipping = 20000;
-  // If the currency is NGN, applying VAT and shipping based on mockup
   const isNgn = cart.items[0]?.product.currency === 'NGN';
-  const total = isNgn ? cart.subtotal + vat + shipping : cart.subtotal;
+  const total = cart.total;
+  const vat = cart.vat;
+  const shipping = cart.shippingFee;
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();

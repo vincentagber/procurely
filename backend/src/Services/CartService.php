@@ -56,13 +56,19 @@ final class CartService
         }
 
         $serviceFee = $subtotal >= 100000 ? 0 : ($subtotal > 0 ? 3500 : 0);
+        
+        // Centralized business rules for VAT and Shipping
+        $vat = round($subtotal * 0.075); // 7.5% VAT
+        $shippingFee = $subtotal > 0 ? 20000 : 0; // Flat N20k shipping for active carts
 
         return [
             'cartToken' => $cartToken,
             'items' => $items,
             'subtotal' => $subtotal,
+            'vat' => (int) $vat,
+            'shippingFee' => (int) $shippingFee,
             'serviceFee' => $serviceFee,
-            'total' => $subtotal + $serviceFee,
+            'total' => $subtotal + $vat + $shippingFee + $serviceFee,
         ];
     }
 

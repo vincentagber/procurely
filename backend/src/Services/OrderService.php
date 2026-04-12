@@ -41,29 +41,26 @@ final class OrderService
         $address = Input::requiredString($payload, 'address', 'Address', 400, false);
 
         $cart = $this->cartService->getCart($cartToken);
-
         if (($cart['items'] ?? []) === []) {
             throw new ApiException('Cart is empty.', 422);
         }
 
-        $pdo = $this->database->connection();
+        return $this->database->transaction(function (PDO $pdo) use ($cart, $userId, $cartToken, $customerName, $customerEmail, $phone, $address, $skipPayment) {
+            Telemetry::start('order_processing');
+            
+            // Check existing order for idempotency (Roy Fielding / Martin Kleppmann)
+            $checkExisting = $pdo->prepare('SELECT order_number FROM orders WHERE cart_token = :cart_token LIMIT 1');
+            $checkExisting->execute(['cart_token' => $cartToken]);
+            $existing = $checkExisting->fetch();
 
-        $checkExisting = $pdo->prepare('SELECT order_number FROM orders WHERE cart_token = :cart_token LIMIT 1');
-        $checkExisting->execute(['cart_token' => $cartToken]);
-        $existing = $checkExisting->fetch();
+            if ($existing !== false) {
+                return $this->findByOrderNumber((string) $existing['order_number']);
+            }
 
-        if ($existing !== false) {
-            return $this->findByOrderNumber((string) $existing['order_number']);
-        }
-
-        // Use BEGIN IMMEDIATE to prevent write-lock contention during stock validation.
-        $pdo->exec('BEGIN IMMEDIATE TRANSACTION');
-
-        try {
-            // Verify and deduct stock for each item
+            // Verify and deduct stock
             $checkStock = $pdo->prepare('SELECT stock_level FROM inventory WHERE product_id = :product_id LIMIT 1');
             $deductStock = $pdo->prepare('UPDATE inventory SET stock_level = stock_level - :qty, updated_at = :now WHERE product_id = :product_id AND stock_level >= :qty');
-            $now = (new DateTimeImmutable())->format(DateTimeImmutable::ATOM);
+            $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
 
             foreach ($cart['items'] as $item) {
                 $productId = (string) $item['product']['id'];
@@ -73,25 +70,22 @@ final class OrderService
                 $stock = $checkStock->fetch();
 
                 if ($stock === false || (int) $stock['stock_level'] < $quantity) {
+                    Telemetry::error('Inadequate stock', ['product' => $productId]);
                     throw new ApiException(sprintf('Insufficient stock for %s.', $item['product']['name']), 422);
                 }
 
-                $deductStock->execute([
-                    'qty' => $quantity,
-                    'now' => $now,
-                    'product_id' => $productId,
-                ]);
-
+                $deductStock->execute(['qty' => $quantity, 'now' => $now, 'product_id' => $productId]);
                 if ($deductStock->rowCount() === 0) {
                     throw new ApiException(sprintf('Stock for %s was depleted by another order.', $item['product']['name']), 422);
                 }
             }
 
             $orderNumber = sprintf('PR-%s', strtoupper(substr(bin2hex(random_bytes(6)), 0, 10)));
-            $createdAt = (new DateTimeImmutable())->format(DateTimeImmutable::ATOM);
+            $createdAt = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+            
             $insertOrder = $pdo->prepare(
-                'INSERT INTO orders (user_id, order_number, cart_token, customer_name, customer_email, phone, address, subtotal, service_fee, total, status, created_at)
-                 VALUES (:user_id, :order_number, :cart_token, :customer_name, :customer_email, :phone, :address, :subtotal, :service_fee, :total, :status, :created_at)'
+                'INSERT INTO orders (user_id, order_number, cart_token, customer_name, customer_email, phone, address, subtotal, vat, shipping_fee, service_fee, total, status, created_at)
+                 VALUES (:user_id, :order_number, :cart_token, :customer_name, :customer_email, :phone, :address, :subtotal, :vat, :shipping_fee, :service_fee, :total, :status, :created_at)'
             );
             $insertOrder->execute([
                 'user_id' => $userId,
@@ -102,6 +96,8 @@ final class OrderService
                 'phone' => $phone,
                 'address' => $address,
                 'subtotal' => $cart['subtotal'],
+                'vat' => $cart['vat'] ?? 0,
+                'shipping_fee' => $cart['shippingFee'] ?? 0,
                 'service_fee' => $cart['serviceFee'],
                 'total' => $cart['total'],
                 'status' => 'processing',
@@ -109,10 +105,7 @@ final class OrderService
             ]);
 
             $orderId = (int) $pdo->lastInsertId();
-            $insertItem = $pdo->prepare(
-                'INSERT INTO order_items (order_id, product_id, product_name, unit_price, quantity, line_total)
-                 VALUES (:order_id, :product_id, :product_name, :unit_price, :quantity, :line_total)'
-            );
+            $insertItem = $pdo->prepare('INSERT INTO order_items (order_id, product_id, product_name, unit_price, quantity, line_total) VALUES (:order_id, :product_id, :product_name, :unit_price, :quantity, :line_total)');
 
             foreach ($cart['items'] as $item) {
                 $insertItem->execute([
@@ -126,22 +119,16 @@ final class OrderService
             }
 
             if (!$skipPayment) {
-                $this->paymentProcessor->capture($orderNumber, (int) $cart['total']);
+                $this->paymentProcessor->capture($orderNumber, (int) $cart['total'], $customerEmail);
+                $this->emailService->sendOrderConfirmation($this->findByOrderNumber($orderNumber));
             }
 
-            $pdo->commit();
-        } catch (\Throwable $exception) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
-            throw $exception;
-        }
+            $duration = Telemetry::stop('order_processing');
+            Telemetry::info('Order finalized', ['number' => $orderNumber, 'ms' => $duration]);
 
-        $orderData = $this->findByOrderNumber($orderNumber);
-
-        if (!$skipPayment) {
-            $this->emailService->sendOrderConfirmation($orderData);
-        }
+            return $this->findByOrderNumber($orderNumber, '', '', true);
+        });
+    }
 
         // Create dashboard notification for admins
         $pdo = $this->database->connection();
@@ -224,7 +211,7 @@ final class OrderService
     {
         $pdo = $this->database->connection();
         $orderStatement = $pdo->prepare(
-            'SELECT order_number, cart_token, customer_name, customer_email, phone, address, subtotal, service_fee, total, status, created_at
+            'SELECT order_number, cart_token, customer_name, customer_email, phone, address, subtotal, vat, shipping_fee, service_fee, total, status, created_at
              FROM orders WHERE order_number = :order_number LIMIT 1'
         );
         $orderStatement->execute(['order_number' => $orderNumber]);
@@ -255,6 +242,8 @@ final class OrderService
             'phone' => $order['phone'],
             'address' => $order['address'],
             'subtotal' => (int) $order['subtotal'],
+            'vat' => (int) ($order['vat'] ?? 0),
+            'shippingFee' => (int) ($order['shipping_fee'] ?? 0),
             'serviceFee' => (int) $order['service_fee'],
             'total' => (int) $order['total'],
             'createdAt' => $order['created_at'],

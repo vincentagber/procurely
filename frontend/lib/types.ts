@@ -161,6 +161,8 @@ export type Cart = {
   cartToken: string;
   items: CartItem[];
   subtotal: number;
+  vat: number;
+  shippingFee: number;
   serviceFee: number;
   total: number;
 };
@@ -188,6 +190,8 @@ export type Order = {
   phone: string;
   address: string;
   subtotal: number;
+  vat: number;
+  shippingFee: number;
   serviceFee: number;
   total: number;
   createdAt: string;

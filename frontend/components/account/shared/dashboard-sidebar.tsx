@@ -157,11 +157,10 @@ function SidebarLink({ item, active }: { item: any; active: boolean }) {
   return (
     <Link
       href={item.href}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-        active
-          ? "bg-[#1D4ED8] text-white font-bold shadow-md shadow-blue-900/50"
-          : "text-white/60 hover:bg-white/10 hover:text-white font-medium"
-      }`}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${active
+        ? "bg-[#1D4ED8] text-white font-bold shadow-md shadow-blue-900/50"
+        : "text-white/60 hover:bg-white/10 hover:text-white font-medium"
+        }`}
     >
       <span className={`shrink-0 ${active ? "text-white" : "text-white/40"}`}>
         {item.icon}

@@ -20,11 +20,11 @@ final class RequestData
             throw new ApiException('Request body must be a JSON object.', 400);
         }
 
-        return $parsed;
+        return (array) Sanitizer::clean($parsed);
     }
 
     public static function query(ServerRequestInterface $request): array
     {
-        return $request->getQueryParams();
+        return (array) Sanitizer::clean($request->getQueryParams());
     }
 }

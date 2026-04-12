@@ -43,7 +43,7 @@ export default async function ContactQuotePage() {
                <Mail className="size-7" />
              </div>
              <h2 className="mb-2 text-xl font-bold text-[#13184f]">Email</h2>
-             <p className="font-semibold text-slate-800 text-lg">sales@procurely.com</p>
+             <p className="font-semibold text-slate-800 text-lg">sales@useprocurely.com</p>
              <p className="mt-1 text-sm text-slate-500 font-medium">Response within 24h</p>
           </div>
           <div className="group flex flex-col items-center rounded-3xl bg-white p-10 text-center shadow-[0_10px_40px_rgb(0,0,0,0.05)] ring-1 ring-slate-100 transition-all hover:-translate-y-2 hover:shadow-[0_20px_60px_rgb(0,0,0,0.08)]">

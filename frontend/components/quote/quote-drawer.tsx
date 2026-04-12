@@ -140,7 +140,7 @@ export function QuoteDrawer() {
                       email: event.target.value,
                     }))
                   }
-                  placeholder="team@procurely.com"
+                  placeholder="team@useprocurely.com"
                   required
                   type="email"
                   value={form.email}

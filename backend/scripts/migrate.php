@@ -66,11 +66,11 @@ try {
     // Seed Admin & Customer if not exists
     $passwordHash = password_hash('Apassword123!', PASSWORD_BCRYPT, ['cost' => 12]);
     $pdo->prepare('INSERT OR IGNORE INTO users (uuid, full_name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, "admin", ?)')
-        ->execute(['admin-user-id', 'Admin User', 'admin@procurely.com', $passwordHash, $now]);
+        ->execute(['admin-user-id', 'Admin User', 'admin@useprocurely.com', $passwordHash, $now]);
 
     $custHash = password_hash('Cpassword123!', PASSWORD_BCRYPT, ['cost' => 12]);
     $pdo->prepare('INSERT OR IGNORE INTO users (uuid, full_name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, "user", ?)')
-        ->execute(['customer-user-id', 'Sample Customer', 'customer@procurely.com', $custHash, $now]);
+        ->execute(['customer-user-id', 'Sample Customer', 'customer@useprocurely.com', $custHash, $now]);
 
     $pdo->commit();
     echo "Migration completed successfully!\n";
