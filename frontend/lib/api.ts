@@ -157,6 +157,18 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
+  createPaymentIntent(orderNumber: string, amount: number) {
+    return request<{ client_secret: string; payment_intent_id: string }>("/api/payments/create-intent", {
+      method: "POST",
+      body: JSON.stringify({ orderNumber, amount }),
+    });
+  },
+  confirmPaymentIntent(paymentIntentId: string) {
+    return request<{ success: boolean }>("/api/payments/confirm-intent", {
+      method: "POST",
+      body: JSON.stringify({ paymentIntentId }),
+    });
+  },
   requestQuote(payload: {
     companyName: string;
     fullName: string;

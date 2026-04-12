@@ -55,8 +55,12 @@ final class Database
     {
         $isMysql = $driver === 'mysql';
         $pk = $isMysql ? 'INT AUTO_INCREMENT PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+        $bigPk = $isMysql ? 'BIGINT AUTO_INCREMENT PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
         $text = $isMysql ? 'LONGTEXT' : 'TEXT';
         $dateTime = $isMysql ? 'DATETIME' : 'TEXT';
+        $insertIgnore = $isMysql ? 'INSERT IGNORE' : 'INSERT OR IGNORE';
+        $onConflict = $isMysql ? 'ON CONFLICT(key) DO UPDATE SET hits = hits + 1, reset_at = $now' : 'ON CONFLICT(key) DO UPDATE SET hits = hits + 1, reset_at = excluded.reset_at';
+        $now = $isMysql ? 'NOW()' : "datetime('now')";
 
         $pdo->exec(
             <<<SQL
@@ -118,7 +122,7 @@ final class Database
             );
 
             CREATE TABLE IF NOT EXISTS audit_logs (
-              id BIGINT $pk,
+              id $bigPk,
               user_id INT,
               action VARCHAR(100) NOT NULL,
               resource VARCHAR(100) NOT NULL,
@@ -132,7 +136,7 @@ final class Database
             );
 
             CREATE TABLE IF NOT EXISTS notifications (
-              id BIGINT $pk,
+              id $bigPk,
               user_id INT NOT NULL,
               type VARCHAR(50) NOT NULL,
               title VARCHAR(255) NOT NULL,
@@ -275,31 +279,31 @@ final class Database
             CREATE INDEX IF NOT EXISTS idx_cart_items_cart_token ON cart_items (cart_token);
 
             -- Insert default roles and permissions if not exist
-            INSERT IGNORE INTO roles (name, description, created_at) VALUES 
-            ('admin', 'Full system access', NOW()),
-            ('customer', 'Standard customer access', NOW());
+            $insertIgnore INTO roles (name, description, created_at) VALUES 
+            ('admin', 'Full system access', $now),
+            ('customer', 'Standard customer access', $now);
 
-            INSERT IGNORE INTO permissions (name, description, created_at) VALUES 
-            ('user.create', 'Create users', NOW()),
-            ('user.read', 'Read user data', NOW()),
-            ('user.update', 'Update users', NOW()),
-            ('user.delete', 'Delete users', NOW()),
-            ('product.create', 'Create products', NOW()),
-            ('product.read', 'Read products', NOW()),
-            ('product.update', 'Update products', NOW()),
-            ('product.delete', 'Delete products', NOW()),
-            ('order.create', 'Create orders', NOW()),
-            ('order.read', 'Read orders', NOW()),
-            ('order.update', 'Update orders', NOW()),
-            ('order.delete', 'Delete orders', NOW());
+            $insertIgnore INTO permissions (name, description, created_at) VALUES 
+            ('user.create', 'Create users', $now),
+            ('user.read', 'Read user data', $now),
+            ('user.update', 'Update users', $now),
+            ('user.delete', 'Delete users', $now),
+            ('product.create', 'Create products', $now),
+            ('product.read', 'Read products', $now),
+            ('product.update', 'Update products', $now),
+            ('product.delete', 'Delete products', $now),
+            ('order.create', 'Create orders', $now),
+            ('order.read', 'Read orders', $now),
+            ('order.update', 'Update orders', $now),
+            ('order.delete', 'Delete orders', $now);
 
             -- Assign permissions to admin role
-            INSERT IGNORE INTO role_permissions (role_id, permission_id, assigned_at)
-            SELECT r.id, p.id, NOW() FROM roles r, permissions p WHERE r.name = 'admin';
+            $insertIgnore INTO role_permissions (role_id, permission_id, assigned_at)
+            SELECT r.id, p.id, $now FROM roles r, permissions p WHERE r.name = 'admin';
 
             -- Assign basic permissions to customer role
-            INSERT IGNORE INTO role_permissions (role_id, permission_id, assigned_at)
-            SELECT r.id, p.id, NOW() FROM roles r, permissions p 
+            $insertIgnore INTO role_permissions (role_id, permission_id, assigned_at)
+            SELECT r.id, p.id, $now FROM roles r, permissions p 
             WHERE r.name = 'customer' AND p.name IN ('product.read', 'order.create', 'order.read');
             SQL
         );

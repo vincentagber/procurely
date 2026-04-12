@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 use Procurely\Api\Support\Database;
 use Procurely\Api\Support\ContentStore;
 use Procurely\Api\Services\CatalogService;
@@ -24,7 +25,7 @@ class ApiTest extends TestCase
         // In this slim setup, Database->connection() runs migrate automatically.
     }
 
-    /** @test */
+    #[Test]
     public function database_schema_is_functional_and_tables_exist()
     {
         $tables = ['users', 'products', 'orders', 'order_items', 'cart_items'];
@@ -35,7 +36,7 @@ class ApiTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function homepage_api_returns_correct_structure()
     {
         // Mock requirements
@@ -50,7 +51,7 @@ class ApiTest extends TestCase
         $this->assertEquals('Procurely', $data['site']['name']);
     }
 
-    /** @test */
+    #[Test]
     public function product_catalog_can_be_queried()
     {
         $contentStore = new ContentStore(__DIR__ . '/../../../shared/content/procurely.json');
@@ -62,24 +63,25 @@ class ApiTest extends TestCase
         // Even if empty, it should be an array. If we have seed data, we could assert count > 0.
     }
 
-    /** @test */
+    #[Test]
     public function user_registration_constraint_validation()
     {
-        $auth = new AuthService($this->db, true);
+        $emailService = new \Procurely\Api\Support\EmailService(__DIR__ . '/../../');
+        $auth = new AuthService($this->db, $emailService, true);
         
         // Test missing fields
         $this->expectException(\Procurely\Api\Support\ApiException::class);
         $auth->register(['email' => 'test@example.com']); // Missing fullName and password
     }
 
-    /** @test */
+    #[Test]
     public function critical_migration_integrity_check()
     {
         // Verify that we can't insert a user with a duplicate email (Unique constraint test)
         $uuid = 'test-uuid-' . uniqid();
-        $this->pdo->exec("INSERT INTO users (uuid, full_name, email, password_hash, created_at) VALUES ('$uuid', 'Test User', 'dup@example.com', 'hash', '2024-01-01')");
+        $this->pdo->exec("INSERT INTO users (uuid, full_name, email, password_hash, created_at, updated_at) VALUES ('$uuid', 'Test User', 'dup@example.com', 'hash', '2024-01-01', '2024-01-01')");
         
         $this->expectException(\PDOException::class);
-        $this->pdo->exec("INSERT INTO users (uuid, full_name, email, password_hash, created_at) VALUES ('other-uuid', 'Other User', 'dup@example.com', 'hash', '2024-01-01')");
+        $this->pdo->exec("INSERT INTO users (uuid, full_name, email, password_hash, created_at, updated_at) VALUES ('other-uuid', 'Other User', 'dup@example.com', 'hash', '2024-01-01', '2024-01-01')");
     }
 }

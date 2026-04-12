@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use PDO;
 use Procurely\Api\Support\ApiException;
 use Procurely\Api\Support\Database;
+use Procurely\Api\Support\PaymentProcessorInterface;
 use Procurely\Api\Support\Input;
 
 final class OrderService
@@ -15,13 +16,23 @@ final class OrderService
     public function __construct(
         private readonly Database $database,
         private readonly CartService $cartService,
-        private readonly \Procurely\Api\Support\PaymentProcessor $paymentProcessor,
+        private readonly PaymentProcessorInterface $paymentProcessor,
         private readonly \Procurely\Api\Support\EmailService $emailService,
         private readonly NotificationService $notificationService,
     ) {
     }
 
     public function checkout(array $payload, ?int $userId = null): array
+    {
+        return $this->checkoutInternal($payload, $userId, false);
+    }
+
+    public function createOrder(array $payload, ?int $userId = null): array
+    {
+        return $this->checkoutInternal($payload, $userId, true);
+    }
+
+    private function checkoutInternal(array $payload, ?int $userId = null, bool $skipPayment = false): array
     {
         $cartToken = Input::cartToken($payload);
         $customerName = Input::requiredString($payload, 'customerName', 'Customer name', 120);
@@ -114,7 +125,9 @@ final class OrderService
                 ]);
             }
 
-            $this->paymentProcessor->capture($orderNumber, (int) $cart['total']);
+            if (!$skipPayment) {
+                $this->paymentProcessor->capture($orderNumber, (int) $cart['total']);
+            }
 
             $pdo->commit();
         } catch (\Throwable $exception) {
@@ -124,10 +137,11 @@ final class OrderService
             throw $exception;
         }
 
-        $this->cartService->clearCart($cartToken);
-
-        $orderData = $this->findByOrderNumber($orderNumber);
-        $this->emailService->sendOrderConfirmation($orderData);
+        if (!$skipPayment) {
+            $this->cartService->clearCart($cartToken);
+            $orderData = $this->findByOrderNumber($orderNumber);
+            $this->emailService->sendOrderConfirmation($orderData);
+        }
 
         // Create dashboard notification for admins
         $pdo = $this->database->connection();
@@ -283,5 +297,18 @@ final class OrderService
         $stmt->execute(['user_id' => $userId]);
 
         return $stmt->fetchAll();
+    }
+
+    public function markOrderPaid(string $orderNumber): void
+    {
+        $pdo = $this->database->connection();
+        $stmt = $pdo->prepare(
+            'UPDATE orders SET status = :status, paid_at = :paid_at WHERE order_number = :order_number'
+        );
+        $stmt->execute([
+            'status' => 'paid',
+            'paid_at' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
+            'order_number' => $orderNumber,
+        ]);
     }
 }

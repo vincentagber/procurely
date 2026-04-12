@@ -7,7 +7,7 @@ namespace Procurely\Api\Support;
 /**
  * Simulated Payment Processor with Circuit Breaker implementation.
  */
-final class PaymentProcessor
+final class PaymentProcessor implements PaymentProcessorInterface
 {
     private const FAILURE_THRESHOLD = 3;
     private const RECOVERY_TIMEOUT_SECONDS = 30;
@@ -76,5 +76,20 @@ final class PaymentProcessor
         $pdo->exec("INSERT INTO rate_limits (key, hits, reset_at) 
                     VALUES ('$key', 1, $now) 
                     ON CONFLICT(key) DO UPDATE SET hits = hits + 1, reset_at = $now");
+    }
+
+    public function createPaymentIntent(string $orderNumber, int $amountCents, string $currency = 'usd'): array
+    {
+        // Mock implementation
+        return [
+            'client_secret' => 'pi_mock_' . uniqid() . '_secret_mock',
+            'payment_intent_id' => 'pi_mock_' . uniqid(),
+        ];
+    }
+
+    public function confirmPaymentIntent(string $paymentIntentId): bool
+    {
+        // Mock implementation - simulate success
+        return true;
     }
 }

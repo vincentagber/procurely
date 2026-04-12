@@ -43,7 +43,7 @@ $emailService = new \Procurely\Api\Support\EmailService($rootPath);
 $authService = new AuthService($database, $emailService, $debug);
 $notificationService = new \Procurely\Api\Services\NotificationService($database);
 $cartService = new CartService($database, $contentStore);
-$paymentProcessor = new \Procurely\Api\Support\PaymentProcessor($database);
+$paymentProcessor = new \Procurely\Api\Support\StripePaymentProcessor();
 $emailService = new \Procurely\Api\Support\EmailService($rootPath);
 $orderService = new OrderService($database, $cartService, $paymentProcessor, $emailService, $notificationService);
 $engagementService = new EngagementService($database);
@@ -204,6 +204,64 @@ $app->post('/api/checkout', static function (ServerRequestInterface $request, Re
 
     return JsonResponder::success($response, $orderService->checkout(RequestData::body($request), $userId), 201);
 })->add($orderRateLimit);
+
+$app->post('/api/orders', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService, $authService): ResponseInterface {
+    $authHeader = $request->getHeaderLine('Authorization');
+    $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
+    $userId = null;
+
+    if ($token !== '') {
+        $user = $authService->resolveToken($token);
+        if ($user) {
+            $userId = (int) $user['id'];
+        }
+    }
+
+    return JsonResponder::success($response, $orderService->createOrder(RequestData::body($request), $userId), 201);
+})->add($orderRateLimit);
+
+// ─── Payments ──────────────────────────────────────────────────────────────────
+$app->post('/api/payments/create-intent', static function (ServerRequestInterface $request, ResponseInterface $response) use ($paymentProcessor): ResponseInterface {
+    $data = RequestData::body($request);
+    $orderNumber = $data['orderNumber'] ?? '';
+    $amount = (int) ($data['amount'] ?? 0);
+
+    if ($orderNumber === '' || $amount <= 0) {
+        throw new ApiException('Invalid payment data.', 400);
+    }
+
+    return JsonResponder::success($response, $paymentProcessor->createPaymentIntent($orderNumber, $amount));
+});
+
+$app->post('/api/payments/confirm-intent', static function (ServerRequestInterface $request, ResponseInterface $response) use ($paymentProcessor): ResponseInterface {
+    $data = RequestData::body($request);
+    $paymentIntentId = $data['paymentIntentId'] ?? '';
+
+    if ($paymentIntentId === '') {
+        throw new ApiException('Payment intent ID required.', 400);
+    }
+
+    $success = $paymentProcessor->confirmPaymentIntent($paymentIntentId);
+    return JsonResponder::success($response, ['success' => $success]);
+});
+
+$app->post('/api/webhooks/stripe', static function (ServerRequestInterface $request, ResponseInterface $response) use ($paymentProcessor, $orderService): ResponseInterface {
+    $payload = (string) $request->getBody();
+    $signature = $request->getHeaderLine('stripe-signature');
+
+    $event = $paymentProcessor->processWebhook($payload, $signature);
+
+    if ($event['event_type'] === 'payment_intent.succeeded') {
+        $paymentIntent = $event['event_data'];
+        $orderNumber = $paymentIntent->metadata->order_number ?? '';
+
+        if ($orderNumber !== '') {
+            $orderService->markOrderPaid($orderNumber);
+        }
+    }
+
+    return $response->withStatus(200);
+});
 
 $app->post('/api/webhooks/paystack', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService): ResponseInterface {
     $payload = (string) $request->getBody();
