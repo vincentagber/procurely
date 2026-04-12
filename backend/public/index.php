@@ -220,6 +220,23 @@ $app->post('/api/orders', static function (ServerRequestInterface $request, Resp
     return JsonResponder::success($response, $orderService->createOrder(RequestData::body($request), $userId), 201);
 })->add($orderRateLimit);
 
+// ─── Wallet ────────────────────────────────────────────────────────────────────
+$app->post('/api/wallet/fund', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService): ResponseInterface {
+    $user = $request->getAttribute('user');
+    if (!$user) {
+        throw new ApiException('Authentication required.', 401);
+    }
+
+    $body = RequestData::body($request);
+    $amount = (int) ($body['amount'] ?? 0);
+
+    if ($amount <= 0) {
+        throw new ApiException('Invalid funding amount.', 400);
+    }
+
+    return JsonResponder::success($response, $orderService->initialiseWalletFunding((int) $user['id'], $amount));
+})->add($orderRateLimit);
+
 // ─── Payments ──────────────────────────────────────────────────────────────────
 $app->post('/api/payments/create-intent', static function (ServerRequestInterface $request, ResponseInterface $response) use ($paymentProcessor): ResponseInterface {
     $data = RequestData::body($request);

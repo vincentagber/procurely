@@ -53,7 +53,24 @@ final class Database
         $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
-        $this->migrate($this->connection, $driver);
+        $isMysql = $driver === 'mysql';
+
+        // Optimization: Only run migrations if schema is not initialized
+        // This prevents enormous overhead in production on every request.
+        $stmt = $this->connection->prepare($isMysql 
+            ? "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = :db AND table_name = 'users'"
+            : "SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
+        );
+        
+        if ($isMysql) {
+            $stmt->execute(['db' => $_ENV['DB_NAME'] ?? 'procurely']);
+        } else {
+            $stmt->execute();
+        }
+
+        if ($stmt->fetch() === false) {
+            $this->migrate($this->connection, $driver);
+        }
         
         return $this->connection;
     }

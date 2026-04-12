@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { api } from "@/lib/api";
 
 export default function WalletClient() {
   const { user } = useAuth();
@@ -45,8 +46,29 @@ export default function WalletClient() {
   // Helper Table Tabs
   const tableTabs = ["All", "Funded", "Withdrawn", "Payments", "Bonus", "Fees"];
 
-  return (
-    <div className="max-w-[1440px] mx-auto min-w-0">
+   const handleFundWallet = async () => {
+     const amountStr = window.prompt("Enter amount to fund (NGN):", "5000");
+     if (!amountStr) return;
+     
+     const amount = parseFloat(amountStr);
+     if (isNaN(amount) || amount <= 0) {
+       alert("Please enter a valid amount.");
+       return;
+     }
+
+     try {
+       // Convert to kobo/cents for backend
+       const res = await api.fundWallet({ amount: Math.round(amount * 100) });
+       if (res.authorization_url) {
+         window.location.href = res.authorization_url;
+       }
+     } catch (err: any) {
+       alert(err.message || "Failed to initialize funding.");
+     }
+   };
+
+   return (
+     <div className="max-w-[1440px] mx-auto min-w-0">
                
                {/* Unified Breadcrumb Strip */}
                <div className="mb-6 flex items-center gap-2 text-[12px] font-bold tracking-wide flex-wrap">
@@ -77,7 +99,10 @@ export default function WalletClient() {
                               </div>
                            </div>
                            <div className="flex flex-row gap-4 shrink-0">
-                              <button className="h-12 px-6 bg-[#0A1140] hover:bg-[#13184f] text-white rounded-xl text-[13px] font-bold shadow-md transition-colors whitespace-nowrap">
+                              <button 
+                                onClick={handleFundWallet}
+                                className="h-12 px-6 bg-[#0A1140] hover:bg-[#13184f] text-white rounded-xl text-[13px] font-bold shadow-md transition-colors whitespace-nowrap"
+                              >
                                  Fund Wallet
                               </button>
                               <button className="h-12 px-6 bg-white border-2 border-orange-100 text-[#FF5C00] hover:bg-orange-50 rounded-xl text-[13px] font-bold transition-colors whitespace-nowrap">

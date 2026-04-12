@@ -36,7 +36,10 @@ final class RateLimiter
             $pdo = $this->database->connection();
             $pdo->beginTransaction();
             try {
-                $pdo->exec('DELETE FROM rate_limits WHERE reset_at < ' . $now);
+                // Stochastic cleanup: Only delete old records 10% of the time to reduce DB load.
+                if (random_int(1, 10) === 1) {
+                    $pdo->exec('DELETE FROM rate_limits WHERE reset_at < ' . $now);
+                }
 
                 $stmt = $pdo->prepare('SELECT hits, reset_at FROM rate_limits WHERE key = :key LIMIT 1');
                 $stmt->execute(['key' => $key]);

@@ -167,6 +167,59 @@ final class OrderService
         return $orderData;
     }
 
+    public function initialiseWalletFunding(int $userId, int $amountCents): array
+    {
+        $pdo = $this->database->connection();
+        $userStmt = $pdo->prepare('SELECT email, full_name FROM users WHERE id = :id LIMIT 1');
+        $userStmt->execute(['id' => $userId]);
+        $user = $userStmt->fetch();
+
+        if (!$user) {
+            throw new ApiException('User not found.', 404);
+        }
+
+        $reference = sprintf('FW-%s-%d', strtoupper(substr(bin2hex(random_bytes(4)), 0, 8)), $userId);
+        
+        $url = "https://api.paystack.co/transaction/initialize";
+        $secretKey = $_ENV['PAYSTACK_SECRET_KEY'] ?? '';
+
+        $fields = [
+            'reference' => $reference,
+            'amount' => $amountCents,
+            'email' => $user['email'],
+            'metadata' => [
+                'type' => 'wallet_funding',
+                'user_id' => $userId,
+                'amount' => $amountCents
+            ]
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Authorization: Bearer " . $secretKey,
+            "Cache-Control: no-cache",
+            "Content-Type: application/json"
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        $result = curl_exec($ch);
+        curl_close($ch);
+
+        $response = json_decode($result, true);
+
+        if (!($response['status'] ?? false)) {
+            throw new ApiException('Funding Initialization Failed: ' . ($response['message'] ?? 'Unknown error'), 502);
+        }
+
+        return [
+            'authorization_url' => $response['data']['authorization_url'],
+            'reference' => $reference,
+        ];
+    }
+
     public function findByOrderNumber(string $orderNumber, string $cartToken = '', string $email = '', bool $isAdmin = false): array
     {
         $pdo = $this->database->connection();
@@ -227,11 +280,39 @@ final class OrderService
             return ['status' => 'ignored'];
         }
 
+        $metadata = $event['data']['metadata'] ?? [];
+        $isWalletFunding = ($metadata['type'] ?? '') === 'wallet_funding';
+
         $pdo = $this->database->connection();
         $pdo->exec('BEGIN IMMEDIATE TRANSACTION');
 
         try {
-            $stmt = $pdo->prepare('SELECT status, paid_at FROM orders WHERE order_number = :reference');
+            if ($isWalletFunding) {
+                $userId = (int) ($metadata['user_id'] ?? 0);
+                $creditAmount = (int) ($metadata['amount'] ?? 0);
+
+                if ($userId <= 0 || $creditAmount <= 0) {
+                    if ($pdo->inTransaction()) { $pdo->rollBack(); }
+                    return ['status' => 'invalid_wallet_metadata'];
+                }
+
+                $update = $pdo->prepare('UPDATE users SET wallet_balance = wallet_balance + :amount, updated_at = NOW() WHERE id = :id');
+                $update->execute(['amount' => $creditAmount, 'id' => $userId]);
+
+                $pdo->commit();
+                
+                $this->notificationService->createNotification(
+                    $userId,
+                    'wallet.funded',
+                    'Wallet Funded Successfully',
+                    sprintf('Your wallet has been credited with N%s', number_format($creditAmount / 100, 2)),
+                    ['amount' => $creditAmount]
+                );
+
+                return ['status' => 'success', 'type' => 'wallet_funding'];
+            }
+
+            $stmt = $pdo->prepare('SELECT status, paid_at, total FROM orders WHERE order_number = :reference');
             $stmt->execute(['reference' => $reference]);
             $order = $stmt->fetch();
 
@@ -240,6 +321,22 @@ final class OrderService
                     $pdo->rollBack();
                 }
                 return ['status' => 'order_not_found'];
+            }
+
+            // Verify amount matches order total (Paystack sends amount in cents/kobo)
+            $paidAmount = (int) ($event['data']['amount'] ?? 0);
+            $expectedAmount = (int) $order['total'];
+
+            if ($paidAmount !== $expectedAmount) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                // Log this discrepancy in a real production environment
+                return [
+                    'status' => 'amount_mismatch',
+                    'received' => $paidAmount,
+                    'expected' => $expectedAmount
+                ];
             }
 
             if ($order['status'] === 'paid' || $order['paid_at'] !== null) {

@@ -399,7 +399,7 @@ export default function ProfileDashboard() {
             </div>
             
             <h3 className="text-[18px] font-black text-[#0A1140] mb-0.5 tracking-tight">{user?.fullName || "User Account"}</h3>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-8">{user?.role || "Procurement Manager"}</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-8">{user?.roles?.[0] || "Procurement Manager"}</p>
             
             <div className="w-full bg-slate-50 rounded-full h-1.5 mb-2 overflow-hidden">
                <div className="bg-[#1D4ED8] h-full w-[70%] rounded-full shadow-[0_0_8px_rgba(29,78,216,0.3)]" />

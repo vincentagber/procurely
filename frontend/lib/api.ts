@@ -199,6 +199,12 @@ export const api = {
   getAccountOrders() {
     return request<any[]>("/api/account/orders");
   },
+  fundWallet(payload: { amount: number }) {
+    return request<{ authorization_url: string; reference: string }>("/api/wallet/fund", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
   getWishlist(wishlistToken: string) {
     return request<{ wishlistToken: string; items: any[] }>(`/api/wishlist/${wishlistToken}`);
   },
