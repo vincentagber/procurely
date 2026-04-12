@@ -24,6 +24,7 @@ type CartContextValue = {
   removeItem: (id: number) => Promise<void>;
   checkout: (payload: CheckoutPayload) => Promise<Order | undefined>;
   refreshCart: () => Promise<void>;
+  clearCart: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -358,16 +359,6 @@ export function CartProvider({
       setLoading(true);
       setError(null);
       const order = await api.checkout({ ...payload, cartToken });
-      startTransition(() => {
-        setLastOrder(order);
-        setCart({
-          cartToken,
-          items: [],
-          subtotal: 0,
-          serviceFee: 0,
-          total: 0,
-        });
-      });
       return order;
     } catch (nextError) {
       setError(
@@ -393,6 +384,11 @@ export function CartProvider({
     await hydrateCart(cartToken);
   }
 
+  function clearCart() {
+    if (!cartToken) return;
+    setCart(buildEmptyCart(cartToken));
+  }
+
   const value: CartContextValue = {
     cart,
     cartToken,
@@ -404,6 +400,7 @@ export function CartProvider({
     removeItem,
     checkout,
     refreshCart,
+    clearCart,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

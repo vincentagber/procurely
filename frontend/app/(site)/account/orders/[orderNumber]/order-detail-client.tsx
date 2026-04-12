@@ -14,77 +14,9 @@ import {
   Mail,
   ExternalLink,
 } from "lucide-react";
-
-// ─── Static order data (wire-ready) ─────────────────────────────────────────
-const ORDER = {
-  number: "PRC-01234",
-  status: "In Transit",
-  delivery: "Friday, Feb 28, 2026",
-  deliveryEta: "2 days from now",
-  supplier: {
-    name: "Loksand Supplies",
-    contact: "Adewale Shola",
-    phone: "+234 803 456 7891",
-    email: "info@loksand-ng.com",
-    orderDate: "Feb 26, 2024",
-  },
-  delivery_address: {
-    label: "Site A Construction",
-    address: "AH16-R5, Lekki Peninsula II, Lagos Nigeria",
-  },
-  payment: {
-    status: "Paid",
-    method: "Wallet & Pay Later",
-    walletBalance: "N380,000.00",
-    subtotal: "N107,900",
-    deliveryFee: "N6,300",
-    walletUsage: "-N96,300",
-    totalPaid: "N17,900",
-  },
-  notes:
-    "Please inform me 1 hour before delivery so we can arrange for someone to receive the materials at site. All items must be unloaded and counted before the driver leaves.",
-  notesDate: "Tue, Feb 26, 2024, 10:35AM",
-};
-
-const ORDER_ITEMS = [
-  {
-    id: "P002334",
-    name: "Sharp Sand",
-    category: "Procurely Sharp Sand 20 Tons",
-    price: "N4,000",
-    qty: "20 Tons",
-    total: "N80,000",
-    image:
-      "https://images.unsplash.com/photo-1518115392630-9db699292931?auto=format&fit=crop&q=80&w=200&h=200",
-  },
-  {
-    id: "P002198",
-    name: "Marine Plywood",
-    category: "Phoenix Marine Boards",
-    price: "N2,200",
-    qty: "10 Sheets",
-    total: "N22,000",
-    image:
-      "https://images.unsplash.com/photo-1549401053-ec06d0ba405f?auto=format&fit=crop&q=80&w=200&h=200",
-  },
-  {
-    id: "P001108",
-    name: "Reinforcement Steel (Rebars)",
-    category: "10mm Deformed Bars, B500",
-    price: "N2,450",
-    qty: "2 Bundles",
-    total: "N4,900",
-    image:
-      "https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?auto=format&fit=crop&q=80&w=200&h=200",
-  },
-];
-
-const STEPPER_STEPS = [
-  { label: "Confirmed", date: "Feb 26, 2026", done: true },
-  { label: "Processing", date: "Feb 27, 2026", done: true },
-  { label: "In Transit", date: "ETA: Feb 28, 2026", done: true, active: true },
-  { label: "Delivered", date: "", done: false },
-];
+import { api } from "@/lib/api";
+import { formatCurrency } from "@/lib/format";
+import { useAuth } from "@/components/auth/auth-provider";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function OrderDetailClient({
@@ -92,15 +24,48 @@ export default function OrderDetailClient({
 }: {
   orderNumber: string;
 }) {
+  const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const [order, setOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    fetchOrder();
+  }, [orderNumber]);
 
-  if (!mounted) {
+  const fetchOrder = async () => {
+    setLoading(true);
+    try {
+      const data = await api.getOrder(orderNumber);
+      setOrder(data);
+    } catch (err) {
+      console.error("Failed to fetch order detail:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!mounted || loading) {
     return <div className="min-h-screen bg-[#F8F9FA] animate-pulse" />;
   }
+
+  if (!order) {
+    return (
+      <div className="min-h-[400px] flex flex-col items-center justify-center bg-white rounded-2xl border border-slate-100 p-12 text-center">
+        <h2 className="text-2xl font-bold text-[#0A1140] mb-2">Order Not Found</h2>
+        <p className="text-slate-500 mb-8">We couldn't find the procurement record you're looking for.</p>
+        <button onClick={() => window.location.href = "/account/orders"} className="px-8 py-3 bg-[#0A1140] text-white rounded-xl font-bold">Back to Orders</button>
+      </div>
+    );
+  }
+
+  const STEPPER_STEPS = [
+    { label: "Confirmed", date: new Date(order.createdAt).toLocaleDateString(), done: true },
+    { label: "Processing", date: order.status === 'processing' ? 'Now' : 'Done', done: true },
+    { label: "In Transit", date: "ETA: 2 Days", done: order.status === 'paid' || order.status === 'shipped', active: order.status === 'paid' },
+    { label: "Delivered", date: "", done: order.status === 'delivered' },
+  ];
 
   return (
     <div className="space-y-6 max-w-[1440px] mx-auto">
@@ -111,24 +76,26 @@ export default function OrderDetailClient({
         <span className="text-slate-300">/</span>
         <span className="text-slate-400">pages</span>
         <span className="text-slate-300">/</span>
-        <span className="text-[#1D4ED8]">Order #{ORDER.number}</span>
+        <span className="text-[#1D4ED8]">Order #{order.orderNumber}</span>
       </div>
 
       {/* ── Order Header ─────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div className="flex items-center gap-4 flex-wrap">
           <h1 className="text-3xl lg:text-4xl font-extrabold text-[#0A1140] tracking-tight">
-            #{ORDER.number}
+            #{order.orderNumber}
           </h1>
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-orange-50 text-orange-600 rounded-full text-[11px] font-bold border border-orange-100 shadow-sm uppercase tracking-widest">
-            {ORDER.status}
+          <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] font-bold border shadow-sm uppercase tracking-widest ${
+            order.status === 'paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'
+          }`}>
+            {order.status}
           </span>
         </div>
         <p className="text-[13px] font-medium text-slate-500 flex items-center gap-2">
           Expected Delivery:&nbsp;
           <Calendar size={15} className="text-[#0A1140] shrink-0" />
-          <span className="font-bold text-[#0A1140]">{ORDER.delivery}</span>
-          <span className="text-slate-400">({ORDER.deliveryEta})</span>
+          <span className="font-bold text-[#0A1140]">{new Date(new Date(order.createdAt).getTime() + 86400000 * 2).toLocaleDateString()}</span>
+          <span className="text-slate-400">(2 days from now)</span>
         </p>
       </div>
 
@@ -137,8 +104,10 @@ export default function OrderDetailClient({
         <div className="relative flex justify-between items-start">
           {/* background track */}
           <div className="absolute top-4 left-[6.25%] right-[6.25%] h-[3px] bg-slate-100 z-0" />
-          {/* active track — covers first 3 steps (75 % of track) */}
-          <div className="absolute top-4 left-[6.25%] w-[62.5%] h-[3px] bg-emerald-500 z-0" />
+          {/* active track */}
+          <div className={`absolute top-4 left-[6.25%] h-[3px] bg-emerald-500 z-0 transition-all duration-500 ${
+            order.status === 'delivered' ? 'w-[87.5%]' : order.status === 'paid' ? 'w-[62.5%]' : 'w-[25%]'
+          }`} />
 
           {STEPPER_STEPS.map((step, i) => (
             <StepperStep key={i} {...step} />
@@ -161,25 +130,19 @@ export default function OrderDetailClient({
                 Order &amp; Supplier Details
               </h3>
 
-              <p className="text-2xl font-black text-[#0A1140]">#{ORDER.number}</p>
+              <p className="text-2xl font-black text-[#0A1140]">#{order.orderNumber}</p>
 
               <div className="space-y-1">
-                <InfoRow label="Supplier" value={ORDER.supplier.name} />
-                <InfoRow label="Contact" value={ORDER.supplier.contact} />
-                <div className="flex gap-2 items-center mt-1 ml-[90px]">
-                  <Phone size={12} className="text-slate-400 shrink-0" />
-                  <span className="text-[12px] font-medium text-slate-500">
-                    {ORDER.supplier.phone}
-                  </span>
-                </div>
+                <InfoRow label="Proprietor" value={order.customerName} />
+                <InfoRow label="Contact" value={order.phone} />
                 <div className="flex gap-2 items-center ml-[90px]">
                   <Mail size={12} className="text-slate-400 shrink-0" />
                   <span className="text-[12px] font-medium text-slate-500">
-                    {ORDER.supplier.email}
+                    {order.customerEmail}
                   </span>
                 </div>
                 <div className="pt-3">
-                  <InfoRow label="Order Date" value={ORDER.supplier.orderDate} />
+                  <InfoRow label="Order Date" value={new Date(order.createdAt).toLocaleDateString()} />
                 </div>
               </div>
 
@@ -191,10 +154,10 @@ export default function OrderDetailClient({
                   <MapPin size={14} className="text-[#FF5C00] shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[14px] font-bold text-[#0A1140]">
-                      {ORDER.delivery_address.label}
+                      Primary Delivery Site
                     </p>
                     <p className="text-[12px] font-medium text-slate-500 mt-0.5">
-                      {ORDER.delivery_address.address}
+                      {order.address}
                     </p>
                   </div>
                 </div>
@@ -230,7 +193,7 @@ export default function OrderDetailClient({
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-4 py-2 rounded-xl shadow-lg border border-slate-100 flex items-center gap-2 whitespace-nowrap">
                   <Truck size={15} className="text-[#FF5C00]" />
                   <span className="text-[12px] font-bold text-[#0A1140]">
-                    Arriving in 2 Days
+                    {order.status === 'delivered' ? 'Delivered' : 'Arriving in 2 Days'}
                   </span>
                 </div>
               </div>
@@ -244,7 +207,7 @@ export default function OrderDetailClient({
                 Order Items
               </h2>
               <span className="text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-4 py-1.5 rounded-full uppercase tracking-wider">
-                {ORDER_ITEMS.length} Items — Total: N80,000
+                {order.items.length} Items
               </span>
             </div>
 
@@ -254,7 +217,6 @@ export default function OrderDetailClient({
                 <thead>
                   <tr className="bg-slate-50/80 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
                     <th className="px-7 py-4 font-black">Product</th>
-                    <th className="px-4 py-4 font-black">Product ID</th>
                     <th className="px-4 py-4 font-black">Unit Price</th>
                     <th className="px-4 py-4 font-black">Quantity</th>
                     <th className="px-4 py-4 font-black">Total</th>
@@ -262,7 +224,7 @@ export default function OrderDetailClient({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {ORDER_ITEMS.map((item, idx) => (
+                  {order.items.map((item: any, idx: number) => (
                     <tr
                       key={idx}
                       className="hover:bg-slate-50/60 transition-colors group"
@@ -270,41 +232,26 @@ export default function OrderDetailClient({
                       {/* Image + Name */}
                       <td className="px-7 py-5">
                         <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 rounded-xl overflow-hidden border border-slate-100 shadow-sm shrink-0">
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
                           <div className="min-w-0">
                             <p className="text-[13px] font-bold text-[#0A1140] leading-tight">
-                              {item.name}
-                            </p>
-                            <p className="text-[11px] font-medium text-slate-400 mt-0.5 truncate">
-                              {item.category}
+                              {item.productName}
                             </p>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-5 whitespace-nowrap">
-                        <span className="text-[12px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">
-                          {item.id}
+                        <span className="text-[13px] font-bold text-[#0A1140]">
+                          {formatCurrency(item.unitPrice)}
                         </span>
                       </td>
                       <td className="px-4 py-5 whitespace-nowrap">
                         <span className="text-[13px] font-bold text-[#0A1140]">
-                          {item.price}
-                        </span>
-                      </td>
-                      <td className="px-4 py-5 whitespace-nowrap">
-                        <span className="text-[13px] font-bold text-[#0A1140]">
-                          {item.qty}
+                          {item.quantity}
                         </span>
                       </td>
                       <td className="px-4 py-5 whitespace-nowrap">
                         <span className="text-[13px] font-black text-[#0A1140]">
-                          {item.total}
+                          {formatCurrency(item.lineTotal)}
                         </span>
                       </td>
                       <td className="px-4 py-5 whitespace-nowrap text-center">
@@ -322,10 +269,10 @@ export default function OrderDetailClient({
             {/* Total row */}
             <div className="flex items-center justify-between px-7 py-5 bg-slate-50/50 border-t border-slate-100">
               <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">
-                Total Amount
+                Basket Subtotal
               </span>
               <span className="text-[18px] font-black text-[#0A1140]">
-                N 80,000
+                {formatCurrency(order.subtotal)}
               </span>
             </div>
           </div>
@@ -341,8 +288,10 @@ export default function OrderDetailClient({
               <h4 className="text-[11px] font-black uppercase tracking-widest text-[#0A1140]">
                 Payment Status
               </h4>
-              <span className="text-[10px] font-bold text-[#1D4ED8] bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-md uppercase tracking-wider">
-                {ORDER.payment.status}
+              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider ${
+                order.status === 'paid' ? 'text-emerald-600 bg-emerald-50 border border-emerald-100' : 'text-orange-600 bg-orange-50 border border-orange-100'
+              }`}>
+                {order.status === 'paid' ? 'Paid' : 'Pending'}
               </span>
             </div>
 
@@ -352,49 +301,29 @@ export default function OrderDetailClient({
                 Payment Method
               </p>
               <p className="text-[13px] font-bold text-[#0A1140]">
-                {ORDER.payment.method}
+                Online Payment (Paystack)
               </p>
-            </div>
-
-            {/* Wallet Balance */}
-            <div className="mb-5 pb-5 border-b border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                Wallet Balance
-              </p>
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[20px] font-black text-[#0A1140]">
-                  {ORDER.payment.walletBalance}
-                </p>
-                <button className="h-8 px-3 bg-[#1D4ED8] text-white rounded-lg text-[10px] font-bold hover:bg-blue-800 transition-colors shrink-0 shadow-sm">
-                  + Fund Wallet
-                </button>
-              </div>
             </div>
 
             {/* Fee breakdown */}
             <div className="space-y-3 pb-5 border-b border-slate-100">
               <BreakdownRow
                 label="Subtotal"
-                value={ORDER.payment.subtotal}
+                value={formatCurrency(order.subtotal)}
               />
               <BreakdownRow
-                label="Delivery Fee"
-                value={ORDER.payment.deliveryFee}
-              />
-              <BreakdownRow
-                label="Wallet Usage"
-                value={ORDER.payment.walletUsage}
-                highlight="green"
+                label="Service Fee"
+                value={formatCurrency(order.serviceFee)}
               />
             </div>
 
             {/* Total paid */}
             <div className="flex items-center justify-between pt-4 mb-5">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Total Paid
+                Total Amount
               </span>
               <span className="text-[18px] font-black text-[#0A1140]">
-                {ORDER.payment.totalPaid}
+                {formatCurrency(order.total)}
               </span>
             </div>
 
@@ -442,21 +371,6 @@ export default function OrderDetailClient({
               <RotateCcw size={15} />
               Reorder All Items
             </button>
-          </div>
-
-          {/* Order Notes */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
-              Order Notes
-            </h4>
-            <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
-              <p className="text-[12px] font-medium text-slate-600 leading-relaxed">
-                {ORDER.notes}
-              </p>
-            </div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-3">
-              {ORDER.notesDate}
-            </p>
           </div>
 
         </div>

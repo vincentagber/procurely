@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { persistOrderRef } from "@/lib/api";
 
 export function CheckoutPageClient() {
-  const { cart, checkout, loading } = useCart();
+  const { cart, checkout, clearCart, loading } = useCart();
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState({
@@ -60,12 +60,13 @@ export function CheckoutPageClient() {
       const handler = window.PaystackPop.setup({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_mock_key',
         email: formData.email,
-        amount: total, // amount is already in kobo from backend/server logic if used directly, but here 'total' is in Naira if isNgn
+        amount: total * 100, // Paystack expects amount in kobo/cents
         currency: isNgn ? 'NGN' : 'USD',
         ref: order.orderNumber,
         callback: function(response: any) {
           // 3. Payment successful, redirect to confirmation
           persistOrderRef(order.orderNumber, cartTokenSnap);
+          clearCart();
           router.push("/order-confirmation");
         },
         onClose: function() {

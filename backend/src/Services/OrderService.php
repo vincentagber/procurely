@@ -137,9 +137,9 @@ final class OrderService
             throw $exception;
         }
 
+        $orderData = $this->findByOrderNumber($orderNumber);
+
         if (!$skipPayment) {
-            $this->cartService->clearCart($cartToken);
-            $orderData = $this->findByOrderNumber($orderNumber);
             $this->emailService->sendOrderConfirmation($orderData);
         }
 
@@ -312,7 +312,7 @@ final class OrderService
                 return ['status' => 'success', 'type' => 'wallet_funding'];
             }
 
-            $stmt = $pdo->prepare('SELECT status, paid_at, total FROM orders WHERE order_number = :reference');
+            $stmt = $pdo->prepare('SELECT status, paid_at, total, cart_token FROM orders WHERE order_number = :reference');
             $stmt->execute(['reference' => $reference]);
             $order = $stmt->fetch();
 
@@ -349,6 +349,11 @@ final class OrderService
             $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
             $update = $pdo->prepare('UPDATE orders SET status = "paid", paid_at = :paid_at WHERE order_number = :reference');
             $update->execute(['paid_at' => $now, 'reference' => $reference]);
+
+            // Clear the associated cart
+            if (!empty($order['cart_token'])) {
+                $this->cartService->clearCart((string) $order['cart_token']);
+            }
 
             $pdo->commit();
 
