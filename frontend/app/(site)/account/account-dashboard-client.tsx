@@ -1,288 +1,532 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  CircleUser, LayoutDashboard, Package, Settings, LogOut, 
-  MapPin, Mail, Phone, CreditCard, ChevronRight,
-  TrendingUp, Clock, CheckCircle2, ShoppingBag, 
-  ArrowUpRight, ExternalLink, Target, Shield
-} from "lucide-react";
-import { formatCurrency } from "@/lib/format";
-import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Wallet,
+  History,
+  Bookmark,
+  Settings,
+  LogOut,
+  Bell,
+  Search,
+  Plus,
+  ArrowUpRight,
+  ArrowDownLeft,
+  CreditCard,
+  Gift,
+  FileText,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Building,
+  FileDown,
+  Filter,
+  CheckSquare,
+  ChevronDown,
+  ChevronRight,
+  MoreHorizontal,
+  Mail,
+  User as UserIcon,
+  Heart,
+  ShoppingBag
+} from "lucide-react";
 
-type AuthUser = { id: string; fullName: string; email: string };
+import { useAuth } from "@/components/auth/auth-provider";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  AreaChart,
+  Area
+} from "recharts";
 
-const ORDER_HISTORY_KEY = "procurely-order-history";
-type StoredOrderRef = { orderNumber: string; cartToken: string; placedAt: string };
+// Mock Data matching Figma design
+const spendData = [
+  { name: '16.02', spend1: 300, spend2: 380 },
+  { name: '17.02', spend1: 450, spend2: 340 },
+  { name: '21.02', spend1: 380, spend2: 480 },
+  { name: '21.02', spend1: 520, spend2: 390 },
+  { name: '21.02', spend1: 420, spend2: 550 },
+  { name: '22.02', spend1: 350, spend2: 420 },
+];
+
+const categoryData = [
+  { name: 'Sand', value: 45, color: '#FF7D00' },
+  { name: 'Cement', value: 25, color: '#1D4ED8' },
+  { name: 'Rebars', value: 20, color: '#3182CE' },
+  { name: 'Finishing', value: 10, color: '#CBD5E0' },
+];
+
+const supplierData = [
+  { name: 'Mon', value: 3 },
+  { name: 'Tue', value: 4 },
+  { name: 'Wed', value: 5.5 },
+  { name: 'Thu', value: 6.5 },
+  { name: 'Fri', value: 3.5 },
+  { name: 'Sat', value: 4.5 },
+];
+
+const activityData = [
+  { name: 'Mon', value: 4 },
+  { name: 'Tue', value: 7 },
+  { name: 'Wed', value: 4 },
+  { name: 'Thu', value: 5 },
+  { name: 'Fri', value: 8 },
+  { name: 'Sat', value: 4 },
+];
+
+const orderHistory = [
+  { id: 'PRO102563', subId: 'A85264', supplier: 'Traxus Industrial', items: '8 items supplied', amount: '₦80,000', date: 'Mar 1, 2024', status: 'Processing', statusColor: 'bg-amber-50 text-amber-600 border-amber-100' },
+  { id: 'PRO102567', subId: 'A85264', supplier: 'Gibson Holdings', items: '5 items supplied', amount: '₦45,000', date: 'Mar 1, 2024', status: 'In Progress', statusColor: 'bg-blue-50 text-blue-600 border-blue-100' },
+  { id: 'PRO102541', subId: 'A85264', supplier: 'Halcyon Supplies', items: '10 items supplied', amount: '₦85,000', date: 'Mar 1, 2024', status: 'Delivered', statusColor: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
+  { id: 'PRO102532', subId: 'A85264', supplier: 'Primalogic Systems', items: '12 items supplied', amount: '₦85,000', date: 'Mar 1, 2024', status: 'Canceled', statusColor: 'bg-rose-50 text-rose-600 border-rose-100' },
+];
 
 export default function AccountDashboardClient() {
-  const router = useRouter();
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [orderRefs, setOrderRefs] = useState<StoredOrderRef[]>([]);
+  const { user } = useAuth();
+  const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ fullName: "", email: "" });
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    try {
-      const storedUser = window.localStorage.getItem("procurely-auth-user");
-      const storedRefs = window.sessionStorage.getItem(ORDER_HISTORY_KEY);
-      
-      if (storedUser) {
-        const u = JSON.parse(storedUser) as AuthUser;
-        setUser(u);
-        setEditForm({ fullName: u.fullName, email: u.email });
+    async function fetchData() {
+      try {
+        const data = await api.getAccountOrders();
+        setOrders(data);
+      } catch (err) {
+        console.error("Failed to fetch dashboard data:", err);
+      } finally {
+        setLoading(false);
       }
-      
-      if (storedRefs) {
-        setOrderRefs(JSON.parse(storedRefs) as StoredOrderRef[]);
-      }
-    } catch {
-      // Degrade silently
-    } finally {
-      setLoading(false);
     }
+    fetchData();
   }, []);
 
-  const handleLogout = () => {
-    window.localStorage.removeItem("procurely-auth-token");
-    window.localStorage.removeItem("procurely-auth-user");
-    router.push("/login");
+  const getStatusColor = (status: string) => {
+    const s = status.toLowerCase();
+    if (s === 'delivered' || s === 'paid') return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+    if (s === 'processing' || s === 'pending') return 'bg-amber-50 text-amber-600 border-amber-100';
+    if (s === 'canceled' || s === 'cancelled') return 'bg-rose-50 text-rose-600 border-rose-100';
+    return 'bg-blue-50 text-blue-600 border-blue-100';
   };
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      const resp = await api.updateProfile(editForm);
-      window.localStorage.setItem("procurely-auth-user", JSON.stringify(resp.user));
-      setUser(resp.user);
-      setIsEditing(false);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to update profile");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex h-[400px] items-center justify-center">
-        <div className="size-8 animate-spin border-4 border-[#1900ff] border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  // Redirect if not logged in
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-        <div className="size-20 bg-[#f0f1fa] rounded-full flex items-center justify-center text-[#1900ff] mb-8">
-           <CircleUser className="size-10" />
-        </div>
-        <h2 className="text-2xl font-black text-[#13184f] mb-3">Login Required</h2>
-        <p className="text-slate-500 font-medium mb-10 max-w-sm">Please sign in to access your secure developer dashboard.</p>
-        <Link href="/login" className="px-10 h-14 bg-[#1900ff] text-white font-bold rounded-2xl flex items-center transition hover:bg-[#1310cc]">
-          Go to Login
-        </Link>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-10">
-      {/* Welcome Banner */}
-      <section className="relative overflow-hidden rounded-[2.5rem] bg-[#13184f] p-10 sm:p-14 text-white">
-        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[#1900ff]/20 to-transparent pointer-events-none" />
-        <div className="relative z-10">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-            <div className="flex-1">
-              <span className="inline-block py-1 px-3 rounded-full bg-white/10 text-white/70 text-[11px] font-bold uppercase tracking-widest mb-6">
-                Developer Dashboard
-              </span>
-              
-              {isEditing ? (
-                <form onSubmit={handleUpdateProfile} className="max-w-md space-y-4">
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-white/40 block mb-1.5 ml-1">Full Name</label>
-                    <input 
-                      type="text" 
-                      value={editForm.fullName}
-                      onChange={e => setEditForm({ ...editForm, fullName: e.target.value })}
-                      className="w-full bg-white/10 border border-white/20 rounded-xl px-4 h-12 text-white font-bold outline-none focus:border-[#1900ff]/60"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-white/40 block mb-1.5 ml-1">Email Address</label>
-                    <input 
-                      type="email" 
-                      value={editForm.email}
-                      onChange={e => setEditForm({ ...editForm, email: e.target.value })}
-                      className="w-full bg-white/10 border border-white/20 rounded-xl px-4 h-12 text-white font-bold outline-none focus:border-[#1900ff]/60"
-                      required
-                    />
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <button 
-                      type="submit" 
-                      disabled={saving}
-                      className="h-11 px-6 bg-[#1900ff] text-white font-bold rounded-xl text-sm disabled:opacity-50"
-                    >
-                      {saving ? "Saving..." : "Save Profile"}
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => setIsEditing(false)}
-                      className="h-11 px-6 bg-white/10 text-white font-bold rounded-xl text-sm border border-white/15"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <>
-                  <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-none mb-4">
-                    Welcome back, <br/>
-                    <span className="text-[#1900ff] brightness-150">{user.fullName.split(" ")[0]}</span>
-                  </h1>
-                  <p className="text-white/50 font-medium flex items-center gap-2">
-                    <Mail className="size-3.5" /> {user.email}
-                  </p>
-                  <button 
-                    onClick={() => setIsEditing(true)}
-                    className="mt-6 text-[11px] font-bold uppercase tracking-wider text-[#1900ff] brightness-150 flex items-center gap-1.5 hover:underline"
-                  >
-                    <Settings className="size-3" /> Edit Profile
-                  </button>
-                </>
-              )}
-            </div>
-            
-            <div className="flex flex-wrap gap-4">
-               <Link href="/materials" className="h-14 px-8 bg-white text-[#13184f] font-bold rounded-2xl flex items-center justify-center shadow-lg transition hover:-translate-y-1">
-                 Order Materials <ShoppingBag className="size-4 ml-2" />
-               </Link>
-               <button onClick={handleLogout} className="h-14 px-8 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-bold rounded-2xl flex items-center justify-center border border-white/15 transition">
-                 Sign Out <LogOut className="size-4 ml-2" />
-               </button>
-            </div>
-          </div>
-        </div>
-      </section>
+    <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <div className="flex items-center gap-2 text-[12px] font-bold tracking-wide">
+        <span className="text-slate-400">Home</span>
+        <span className="text-slate-300">/</span>
+        <span className="text-slate-400">pages</span>
+        <span className="text-slate-300">/</span>
+        <span className="text-[#1D4ED8]">my account</span>
+      </div>
 
-      {/* Grid of Stats/Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Main Column */}
-        <div className="lg:col-span-2 space-y-8">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-[#0A1140]">Hello {user?.fullName?.split(' ')[0] || 'Olusegun'}!</h1>
+          <p className="text-[12px] font-bold text-slate-400 mt-1">Welcome back. Manage your procurement.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-sm">
+            <Bell size={16} />
+          </button>
+          <button className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-sm">
+            <Settings size={16} />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6">
+        {/* Main Content (Left) */}
+        <div className="space-y-6 min-w-0">
           
-          {/* Recent Orders Overview */}
-          <div className="rounded-[2rem] bg-white border border-slate-100 p-8 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
-            <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-50">
-               <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-xl bg-[#f0f1fa] text-[#1900ff] flex items-center justify-center">
-                     <Package className="size-5" />
+          {/* Top Stat Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Stat Card 1 */}
+            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between overflow-hidden">
+               <div>
+                  <div className="flex items-center gap-2 mb-1">
+                     <span className="text-2xl font-black text-[#0A1140]">124</span>
+                     <span className="text-[12px] font-bold text-slate-500">Orders</span>
+                     <span className="text-[10px] font-bold text-[#1D4ED8] bg-blue-50 px-1.5 py-0.5 rounded">-10%</span>
                   </div>
-                  <h3 className="text-xl font-bold text-[#13184f] tracking-tight">Recent Orders</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">In the last 10 weeks</p>
                </div>
-               <Link href="/account/orders" className="text-sm font-bold text-[#1900ff] hover:underline flex items-center gap-1">
-                  View full history <ChevronRight className="size-4" />
-               </Link>
+               <div className="w-24 h-12">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[{v:10},{v:50},{v:30},{v:40},{v:60},{v:40}]}>
+                       <Line type="monotone" dataKey="v" stroke="#8B5CF6" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+               </div>
             </div>
 
-            {orderRefs.length > 0 ? (
-              <div className="space-y-4">
-                {orderRefs.slice(0, 3).map((ref) => (
-                  <Link 
-                    key={ref.orderNumber} 
-                    href={`/account/orders/${ref.orderNumber}`}
-                    className="flex items-center justify-between p-5 rounded-2xl border border-transparent hover:border-[#f0f1fa] hover:bg-[#f6f7fd]/50 transition group"
-                  >
-                    <div className="flex items-center gap-4">
-                       <div className="size-11 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:text-[#1900ff] transition-colors">
-                          <Clock className="size-5" />
-                       </div>
-                       <div>
-                          <p className="font-bold text-[#13184f]">Order #{ref.orderNumber}</p>
-                          <p className="text-xs font-medium text-slate-400">Placed on {new Date(ref.placedAt).toLocaleDateString()}</p>
-                       </div>
-                    </div>
-                    <ArrowUpRight className="size-5 text-slate-300 transition group-hover:text-[#1900ff] group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="py-12 text-center">
-                 <p className="text-slate-400 font-medium mb-6">No recent procurement activity found.</p>
-                 <Link href="/materials" className="text-[#1900ff] font-bold text-sm border-b-2 border-transparent hover:border-[#1900ff] transition pb-0.5">Start an order</Link>
-              </div>
-            )}
+            {/* Stat Card 2 */}
+            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between overflow-hidden">
+               <div>
+                  <div className="flex items-center gap-2 mb-1">
+                     <span className="text-2xl font-black text-[#0A1140]">30</span>
+                     <span className="text-[12px] font-bold text-slate-500">Request</span>
+                  </div>
+                  <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">+3 new today</p>
+               </div>
+               <div className="w-24 h-12">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[{v:20},{v:60},{v:25},{v:50},{v:40},{v:70}]}>
+                       <Line type="monotone" dataKey="v" stroke="#10B981" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+               </div>
+            </div>
+
+            {/* Stat Card 3 */}
+            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between overflow-hidden">
+               <div>
+                  <div className="flex items-center gap-2 mb-1">
+                     <span className="text-2xl font-black text-[#0A1140]">₦4.2M</span>
+                     <span className="text-[10px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded">-5% o/o</span>
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total cost savings</p>
+               </div>
+               <div className="w-24 h-12">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[{v:40},{v:30},{v:50},{v:20},{v:60},{v:35}]}>
+                       <Line type="monotone" dataKey="v" stroke="#F97316" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+               </div>
+            </div>
           </div>
 
-          {/* Featured Services/Shortcuts */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-             <div className="rounded-[2rem] bg-gradient-to-br from-[#fde8df] to-white p-8 border border-[#fde8df]/30 relative overflow-hidden group">
-                <Target className="absolute top-[-20px] right-[-20px] size-40 opacity-5 transition-transform group-hover:scale-110" />
-                <h4 className="text-xl font-black text-[#13184f] mb-2">Track Credit</h4>
-                <p className="text-slate-500 font-medium text-sm leading-relaxed mb-6">Manage your structured payment cycles and remaining limits.</p>
-                <button className="text-[13px] font-bold text-[#ff6f4d] uppercase tracking-wider flex items-center gap-1.5 opacity-60 pointer-events-none">
-                  Coming Soon <Clock className="size-3.5" />
-                </button>
+          {/* Spend Overview Chart */}
+          <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+             <div className="flex items-center justify-between mb-8">
+                <h3 className="text-sm font-black text-[#0A1140]">Procurement Spend Overview</h3>
+                <div className="flex items-center gap-2">
+                   <div className="flex bg-slate-50 rounded-lg p-1">
+                      <button className="px-3 py-1 text-[10px] font-bold text-slate-400 bg-white shadow-sm rounded-md">7 Days</button>
+                      <button className="px-3 py-1 text-[10px] font-bold text-slate-400">30 Days</button>
+                      <button className="px-3 py-1 text-[10px] font-bold text-slate-400">90 Days</button>
+                   </div>
+                </div>
              </div>
-             <div className="rounded-[2rem] bg-gradient-to-br from-[#e8fbf1] to-white p-8 border border-[#e8fbf1]/30 relative overflow-hidden group">
-                <Shield className="absolute top-[-20px] right-[-20px] size-40 opacity-5 transition-transform group-hover:scale-110" />
-                <h4 className="text-xl font-black text-[#13184f] mb-2">Manage Sites</h4>
-                <p className="text-slate-500 font-medium text-sm leading-relaxed mb-6">Aggregate multiple delivery locations and construction projects.</p>
-                <button className="text-[13px] font-bold text-[#059669] uppercase tracking-wider flex items-center gap-1.5 opacity-60 pointer-events-none">
-                  In Development <TrendingUp className="size-3.5" />
-                </button>
+             <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center gap-1.5">
+                   <div className="w-2 h-2 rounded-full bg-[#FF5C00]" />
+                   <span className="text-[10px] font-bold text-slate-500">Orders Placed</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                   <div className="w-2 h-2 rounded-full bg-[#1D4ED8]" />
+                   <span className="text-[10px] font-bold text-slate-500">Payments Made</span>
+                </div>
+             </div>
+             <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                   <AreaChart data={spendData}>
+                      <defs>
+                        <linearGradient id="colorValue1" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#FF5C00" stopOpacity={0.1}/>
+                          <stop offset="95%" stopColor="#FF5C00" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="colorValue2" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#1D4ED8" stopOpacity={0.1}/>
+                          <stop offset="95%" stopColor="#1D4ED8" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94A3B8'}} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94A3B8'}} />
+                      <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
+                      <Area type="monotone" dataKey="spend1" stroke="#FF5C00" strokeWidth={3} fillOpacity={1} fill="url(#colorValue1)" dot={{ r: 4, fill: '#FF5C00', strokeWidth: 2, stroke: '#fff' }} />
+                      <Area type="monotone" dataKey="spend2" stroke="#1D4ED8" strokeWidth={3} fillOpacity={1} fill="url(#colorValue2)" dot={{ r: 4, fill: '#1D4ED8', strokeWidth: 2, stroke: '#fff' }} />
+                   </AreaChart>
+                </ResponsiveContainer>
              </div>
           </div>
 
+          {/* Widget Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+             {/* Material Category Spend */}
+             <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm col-span-1">
+                <div className="flex items-center justify-between mb-4">
+                   <h3 className="text-[11px] font-black text-[#0A1140] whitespace-nowrap">Material Category Spend</h3>
+                   <div className="flex gap-1 bg-slate-50 rounded p-0.5">
+                      <button className="px-1.5 py-0.5 text-[8px] font-bold bg-white rounded shadow-sm">6W</button>
+                      <button className="px-1.5 py-0.5 text-[8px] font-bold text-slate-400">6M</button>
+                   </div>
+                </div>
+                <div className="h-40 w-full relative">
+                   <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                         <Pie
+                           data={categoryData}
+                           cx="50%"
+                           cy="50%"
+                           innerRadius={35}
+                           outerRadius={55}
+                           paddingAngle={5}
+                           dataKey="value"
+                         >
+                            {categoryData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                         </Pie>
+                      </PieChart>
+                   </ResponsiveContainer>
+                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                      <div className="text-[12px] font-black text-[#0A1140]">82%</div>
+                   </div>
+                </div>
+                <div className="space-y-2 mt-2">
+                   {categoryData.map(item => (
+                     <div key={item.name} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                           <div className="w-2 h-2 rounded-full" style={{backgroundColor: item.color}} />
+                           <span className="text-[9px] font-bold text-slate-500">{item.name}</span>
+                        </div>
+                        <span className="text-[9px] font-black text-[#0A1140]">{item.value}%</span>
+                     </div>
+                   ))}
+                </div>
+             </div>
+
+             {/* Supplier Distribution */}
+             <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm col-span-1">
+                <h3 className="text-[11px] font-black text-[#0A1140] mb-4">Supplier Distribution</h3>
+                <div className="h-40 w-full">
+                   <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={supplierData}>
+                         <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} barSize={12} />
+                         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 8, fontWeight: 'bold', fill: '#94A3B8'}} />
+                      </BarChart>
+                   </ResponsiveContainer>
+                </div>
+             </div>
+
+             {/* Order Activity */}
+             <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm col-span-1">
+                <div className="flex items-center justify-between mb-4">
+                   <h3 className="text-[11px] font-black text-[#0A1140]">Order Activity</h3>
+                   <div className="flex gap-1 bg-slate-50 rounded p-0.5">
+                      <button className="px-1.5 py-0.5 text-[8px] font-bold bg-white rounded shadow-sm">W</button>
+                      <button className="px-1.5 py-0.5 text-[8px] font-bold text-slate-400">M</button>
+                   </div>
+                </div>
+                <div className="h-40 w-full">
+                   <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={activityData}>
+                         <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} barSize={12} />
+                         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 8, fontWeight: 'bold', fill: '#94A3B8'}} />
+                      </BarChart>
+                   </ResponsiveContainer>
+                </div>
+             </div>
+
+             {/* Delivery Performance */}
+             <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm col-span-1">
+                <h3 className="text-[11px] font-black text-[#0A1140] mb-6">Delivery Performance</h3>
+                <div className="flex gap-4 items-end justify-center mb-6 h-16">
+                   <div className="flex flex-col items-center gap-1 w-full">
+                      <div className="w-full bg-[#10B981]/20 rounded-full h-10 relative overflow-hidden">
+                        <div className="absolute bottom-0 w-full bg-[#10B981] h-[33%]" />
+                      </div>
+                   </div>
+                   <div className="flex flex-col items-center gap-1 w-full">
+                      <div className="w-full bg-[#FF7D00]/20 rounded-full h-14 relative overflow-hidden">
+                        <div className="absolute bottom-0 w-full bg-[#FF7D00] h-[67%]" />
+                      </div>
+                   </div>
+                </div>
+                <div className="flex items-center justify-center gap-4">
+                   <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-[#10B981]" />
+                      <span className="text-[9px] font-bold text-slate-500">On-Time <span className="text-[#0A1140]">33%</span></span>
+                   </div>
+                   <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-[#FF7D00]" />
+                      <span className="text-[9px] font-bold text-slate-500">Delayed <span className="text-[#0A1140]">67%</span></span>
+                   </div>
+                </div>
+             </div>
+          </div>
+
+          {/* Orders History Table */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+             <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+                <h3 className="text-sm font-black text-[#FF5C00]">Orders History</h3>
+                <Link href="#" className="text-[11px] font-black text-[#1D4ED8] flex items-center gap-1 hover:underline">
+                   More <ChevronRight size={14} />
+                </Link>
+             </div>
+             <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                   <thead>
+                      <tr className="border-b border-slate-50">
+                         <th className="px-6 py-4 text-[11px] font-black text-slate-500 uppercase tracking-wider">Order ID</th>
+                         <th className="px-6 py-4 text-[11px] font-black text-slate-500 uppercase tracking-wider">Supplier</th>
+                         <th className="px-6 py-4 text-[11px] font-black text-slate-500 uppercase tracking-wider">Total Amount</th>
+                         <th className="px-6 py-4 text-[11px] font-black text-slate-500 uppercase tracking-wider">Date Placed</th>
+                         <th className="px-6 py-4 text-[11px] font-black text-slate-500 uppercase tracking-wider text-center">Delivery Status</th>
+                         <th className="px-6 py-4 text-[11px] font-black text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                      </tr>
+                   </thead>
+                   <tbody className="divide-y divide-slate-50">
+                      {loading ? (
+                        <tr><td colSpan={6} className="py-10 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Loading Ledger...</td></tr>
+                      ) : orders.length > 0 ? (
+                        orders.slice(0, 5).map(order => (
+                          <tr key={order.order_number} className="hover:bg-slate-50/50 transition-colors">
+                             <td className="px-6 py-4">
+                                <p className="text-[12px] font-black text-[#0A1140]">{order.order_number}</p>
+                                <p className="text-[9px] font-bold text-slate-400">{order.uuid?.slice(0,8)}</p>
+                             </td>
+                             <td className="px-6 py-4">
+                                <p className="text-[12px] font-black text-[#0A1140]">{order.shipping_name || "Partner"}</p>
+                                <p className="text-[9px] font-bold text-slate-400">{order.items?.length || 0} items supplied</p>
+                             </td>
+                             <td className="px-6 py-4">
+                                <p className="text-[12px] font-black text-[#0A1140]">₦{(order.total / 100).toLocaleString()}</p>
+                                <p className="text-[9px] font-bold text-slate-400">Total including fees</p>
+                             </td>
+                             <td className="px-6 py-4">
+                                <p className="text-[12px] font-black text-[#0A1140]">{new Date(order.created_at).toLocaleDateString()}</p>
+                                <p className="text-[9px] font-bold text-slate-400">{new Date(order.created_at).toLocaleTimeString()}</p>
+                             </td>
+                             <td className="px-6 py-4 text-center">
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black border ${getStatusColor(order.status)}`}>
+                                   <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                                   {order.status}
+                                </span>
+                             </td>
+                             <td className="px-6 py-4 text-right">
+                                <button className="text-slate-300 hover:text-[#1D4ED8]">
+                                   <MoreHorizontal size={18} />
+                                </button>
+                             </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr><td colSpan={6} className="py-10 text-center text-slate-400 font-bold uppercase tracking-widest">No recent activity.</td></tr>
+                      )}
+                   </tbody>
+                </table>
+             </div>
+          </div>
         </div>
 
-        {/* Sidebar Column */}
-        <div className="space-y-8">
+        {/* Right Sidebar Column */}
+        <div className="space-y-6">
            
-           {/* Quick Actions List */}
-           <div className="rounded-[2rem] bg-white border border-slate-100 p-8 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
-              <h3 className="text-lg font-black text-[#13184f] mb-6 tracking-tight">Quick Actions</h3>
+           {/* My Profile Widget */}
+           <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm flex flex-col items-center">
+              <div className="w-full flex items-center justify-between mb-6">
+                 <h3 className="text-[12px] font-black text-[#0A1140]">My profile</h3>
+                 <div className="flex gap-2 text-slate-400">
+                    <button className="hover:text-[#1D4ED8]"><Settings size={14} /></button>
+                 </div>
+              </div>
+              <div className="w-24 h-24 rounded-full border-[6px] border-[#F8F9FA] overflow-hidden mb-4 shadow-inner ring-2 ring-slate-100">
+                 <img src="/api/placeholder/100/100" className="w-full h-full object-cover" alt="Profile" />
+              </div>
+              <h4 className="text-[14px] font-black text-[#0A1140]">{user?.fullName || 'Olusegun Akapo'}</h4>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Procurement Manager</p>
+              
+              <div className="w-full mt-6">
+                 <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold text-slate-500">Profile Completion</span>
+                    <span className="text-[10px] font-black text-[#0A1140]">70</span>
+                 </div>
+                 <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-[#1D4ED8] h-full w-[70%]" />
+                 </div>
+              </div>
+           </div>
+
+           {/* Activity Summary */}
+           <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+              <h3 className="text-[12px] font-black text-[#0A1140] mb-5">Activity Summary</h3>
               <div className="space-y-4">
                  {[
-                   { label: "My Profile", icon: CircleUser, href: "#profile" },
-                   { label: "Address Book", icon: MapPin, href: "#addresses" },
-                   { label: "Payment Info", icon: CreditCard, href: "#billing" },
-                   { label: "Security & App", icon: Settings, href: "#security" },
-                 ].map((item) => (
-                   <button 
-                    key={item.label}
-                    className="w-full flex items-center justify-between p-4 rounded-xl text-slate-500 hover:bg-[#f6f7fd] hover:text-[#1900ff] transition-all group"
-                   >
-                     <div className="flex items-center gap-3">
-                        <item.icon className="size-4.5" />
-                        <span className="text-sm font-bold tracking-tight">{item.label}</span>
-                     </div>
-                     <ChevronRight className="size-4 opacity-0 transition group-hover:opacity-100 group-hover:translate-x-0.5" />
+                   { icon: <FileText size={14} />, label: "Requests placed", val: "112", color: "text-[#FF5C00]", bg: "bg-orange-50" },
+                   { icon: <ShoppingBag size={14} />, label: "Orders delivered", val: "68", color: "text-[#1D4ED8]", bg: "bg-blue-50" },
+                   { icon: <UserIcon size={14} />, label: "Suppliers engaged", val: "27", color: "text-blue-400", bg: "bg-sky-50" },
+                   { icon: <AlertCircle size={14} />, label: "Deliveries in progress", val: "4", color: "text-amber-500", bg: "bg-amber-50" },
+                 ].map(item => (
+                   <div key={item.label} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                         <div className={`w-8 h-8 rounded-lg ${item.bg} ${item.color} flex items-center justify-center`}>
+                            {item.icon}
+                         </div>
+                         <span className="text-[10px] font-bold text-slate-500">{item.label}</span>
+                      </div>
+                      <span className="text-[11px] font-black text-[#0A1140]">{item.val}</span>
+                   </div>
+                 ))}
+              </div>
+           </div>
+
+           {/* Quick Tools */}
+           <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+              <h3 className="text-[12px] font-black text-[#0A1140] mb-5">Quick Tools</h3>
+              <div className="space-y-3">
+                 {[
+                   { icon: <FileDown size={14} />, label: "Upload BOQ Document", sub: "PDF, Word" },
+                   { icon: <Plus size={14} />, label: "Create New RFQ", sub: "Draft" },
+                   { icon: <Building size={14} />, label: "Add New Supplier", sub: "List" },
+                 ].map(item => (
+                   <button key={item.label} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors text-left group">
+                      <div className="flex items-center gap-3">
+                         <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center">
+                            {item.icon}
+                         </div>
+                         <div className="min-w-0">
+                            <p className="text-[10px] font-black text-[#0A1140]">{item.label}</p>
+                            <p className="text-[8px] font-bold text-slate-400">{item.sub}</p>
+                         </div>
+                      </div>
+                      <ChevronRight size={14} className="text-slate-300 group-hover:text-[#1D4ED8]" />
                    </button>
                  ))}
               </div>
            </div>
 
-           {/* Support Card */}
-           <div className="rounded-[2rem] bg-[#1900ff] p-8 text-white relative overflow-hidden">
-              <div className="absolute top-[-10%] left-[-10%] size-32 bg-white/10 rounded-full blur-2xl" />
-              <div className="relative z-10">
-                 <h4 className="font-black text-lg mb-2">Need assistance?</h4>
-                 <p className="text-white/60 text-[13px] font-medium leading-relaxed mb-8">
-                    Our dedicated procurement managers are available 24/7 to help with complex BOMs or tracking.
-                 </p>
-                 <Link href="/contact-quote" className="flex items-center gap-3 text-sm font-bold hover:gap-4 transition-all">
-                    Talk to an Expert <ExternalLink className="size-4" />
-                 </Link>
+           {/* Recent Documents */}
+           <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-5">
+                 <h3 className="text-[12px] font-black text-[#0A1140]">Recent Documents</h3>
+                 <button className="text-[9px] font-black text-[#FF5C00] uppercase">View All</button>
+              </div>
+              <div className="space-y-3">
+                 {[
+                   { icon: <FileText size={14} />, label: "BoQ_Material.pdf", sub: "1.2 MB", color: "text-amber-500" },
+                   { icon: <FileText size={14} />, label: "Invoice_056.pdf", sub: "850 KB", color: "text-rose-500" },
+                 ].map(item => (
+                   <div key={item.label} className="flex items-center justify-between group cursor-pointer">
+                      <div className="flex items-center gap-3">
+                         <div className={`w-8 h-8 rounded-lg bg-slate-50 ${item.color} flex items-center justify-center`}>
+                            {item.icon}
+                         </div>
+                         <div>
+                            <p className="text-[10px] font-black text-[#0A1140] group-hover:text-[#1D4ED8] transition-colors">{item.label}</p>
+                            <p className="text-[8px] font-bold text-slate-400">{item.sub}</p>
+                         </div>
+                      </div>
+                      <ChevronRight size={14} className="text-slate-300" />
+                   </div>
+                 ))}
               </div>
            </div>
 

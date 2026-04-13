@@ -1,7 +1,7 @@
-import ProfileDashboard from "@/components/account/profile-dashboard";
+import AccountDashboardClient from "./account-dashboard-client";
 
 export default function AccountPage() {
   return (
-    <ProfileDashboard />
+    <AccountDashboardClient />
   );
 }

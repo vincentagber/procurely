@@ -22,6 +22,14 @@ if (
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
 
+  // Add Authorization header if token exists in localStorage
+  if (typeof window !== "undefined") {
+    const token = window.localStorage.getItem("procurely-auth-token");
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+  }
+
   if (init?.body) {
     headers.set("Content-Type", "application/json");
   }
