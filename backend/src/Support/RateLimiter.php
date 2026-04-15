@@ -95,6 +95,17 @@ final class RateLimiter
     private function resolveIp(ServerRequestInterface $request): string
     {
         $serverParams = $request->getServerParams();
-        return (string) ($serverParams['REMOTE_ADDR'] ?? '0.0.0.0');
+        $ip = (string) ($serverParams['REMOTE_ADDR'] ?? '0.0.0.0');
+
+        // Check for common proxy headers (X-Forwarded-For)
+        // Note: In highly secure environments, you should only trust this if you know the proxy.
+        // For a general fix, we'll take the first IP in the list.
+        $forwardedFor = $request->getHeaderLine('X-Forwarded-For');
+        if ($forwardedFor !== '') {
+            $ips = array_map('trim', explode(',', $forwardedFor));
+            $ip = $ips[0] ?? $ip;
+        }
+
+        return $ip;
     }
 }

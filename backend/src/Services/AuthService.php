@@ -191,10 +191,6 @@ final class AuthService
             'message' => 'If this email is registered, reset instructions have been sent.',
         ];
 
-        if ($this->debugMode) {
-            $response['_debugResetToken'] = $rawToken;
-        }
-
         return $response;
     }
 

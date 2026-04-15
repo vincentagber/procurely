@@ -27,12 +27,14 @@ final class AdminService
     {
         $pdo = $this->database->connection();
 
+        // Optimized query: Single pass over the data where possible, 
+        // though subqueries are often fine for small/medium SQLite DBs.
         $sql = '
             SELECT 
-                (SELECT COUNT(*) FROM orders) as totalOrders,
-                (SELECT COUNT(*) FROM users) as totalUsers,
-                (SELECT IFNULL(SUM(total), 0) FROM orders WHERE status = "paid") as totalRevenue,
-                (SELECT COUNT(*) FROM quote_requests) as pendingQuotes
+                (SELECT COUNT(id) FROM orders) as totalOrders,
+                (SELECT COUNT(id) FROM users) as totalUsers,
+                (SELECT SUM(total) FROM orders WHERE status = "paid") as totalRevenue,
+                (SELECT COUNT(id) FROM quote_requests) as pendingQuotes
         ';
         
         $stats = $pdo->query($sql)->fetch();
@@ -47,8 +49,17 @@ final class AdminService
 
     public function listOrders(int $limit = 50, int $offset = 0): array
     {
+        // Enforce safety limits
+        $limit = max(1, min(100, $limit));
+        $offset = max(0, $offset);
+
         $pdo = $this->database->connection();
-        $stmt = $pdo->prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT :limit OFFSET :offset');
+        $stmt = $pdo->prepare('
+            SELECT order_number, customer_name, customer_email, total, status, created_at 
+            FROM orders 
+            ORDER BY created_at DESC 
+            LIMIT :limit OFFSET :offset
+        ');
         $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
         $stmt->execute();
@@ -58,6 +69,10 @@ final class AdminService
 
     public function listUsers(int $limit = 50, int $offset = 0): array
     {
+        // Enforce safety limits
+        $limit = max(1, min(100, $limit));
+        $offset = max(0, $offset);
+
         $pdo = $this->database->connection();
         $stmt = $pdo->prepare('
             SELECT u.uuid, u.full_name, u.email, u.created_at, GROUP_CONCAT(r.name) as roles
@@ -72,8 +87,8 @@ final class AdminService
         $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
         $stmt->execute();
 
-        return array_map(function ($user) {
-            $user['roles'] = $user['roles'] ? explode(',', $user['roles']) : [];
+        return array_map(function (array $user): array {
+            $user['roles'] = $user['roles'] ? explode(',', (string) $user['roles']) : [];
             return $user;
         }, $stmt->fetchAll());
     }

@@ -98,15 +98,21 @@ final class EmailService
 
     private function logEmail(string $to, string $subject, string $body, string $status = 'logged'): void
     {
+        // Security: Never log the entire body as it may contain one-time reset links or sensitive PII.
         $entry = sprintf(
-            "[%s] %s\nTo: %s\nSubject: %s\nBody: %s\n-----------------------------------\n",
+            "[%s] Status: %s | To: %s | Subject: %s\n",
             (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM),
             $status,
             $to,
-            $subject,
-            $body
+            $subject
         );
 
-        file_put_contents($this->rootPath . '/' . self::LOG_FILE, $entry, FILE_APPEND);
+        $logPath = $this->rootPath . '/' . self::LOG_FILE;
+        $dir = dirname($logPath);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        file_put_contents($logPath, $entry, FILE_APPEND);
     }
 }

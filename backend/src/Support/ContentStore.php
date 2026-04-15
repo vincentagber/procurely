@@ -22,19 +22,24 @@ final class ContentStore
 
     public function all(): array
     {
+        if ($this->content !== null) {
+            $this->content['products'] = $this->products();
+            return $this->content;
+        }
+
         if (!file_exists($this->contentPath)) {
-            return [
-                'products' => $this->products(),
+            $this->content = [
+                'products' => [],
                 'site' => ['name' => 'Procurely', 'logoDark' => '', 'logoLight' => ''],
                 'navigation' => ['primaryLinks' => [], 'socialLinks' => [], 'accountLinks' => []],
                 'footer' => ['address' => [], 'accountLinks' => [], 'quickLinks' => []],
             ];
+        } else {
+            $this->content = json_decode(file_get_contents($this->contentPath), true) ?: [];
         }
 
-        $content = json_decode(file_get_contents($this->contentPath), true) ?: [];
-        $content['products'] = $this->products();
-
-        return $content;
+        $this->content['products'] = $this->products();
+        return $this->content;
     }
 
     public function products(): array

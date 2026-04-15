@@ -97,7 +97,16 @@ final class CatalogService
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
 
-        return array_map([$this->contentStore, 'normalizeProduct'], $stmt->fetchAll());
+        $results = array_map([$this->contentStore, 'normalizeProduct'], $stmt->fetchAll());
+
+        // Post-process relevance sorting in PHP for better precision than simple SQL LIKE
+        if ($sort === 'relevance' && $query !== '') {
+            usort($results, function (array $a, array $b) use ($query) {
+                return $this->scoreProduct($b, $query) <=> $this->scoreProduct($a, $query);
+            });
+        }
+
+        return $results;
     }
 
     public function productBySlug(string $slug): array
