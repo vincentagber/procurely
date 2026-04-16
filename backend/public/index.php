@@ -36,8 +36,8 @@ if (!str_starts_with($databasePath, DIRECTORY_SEPARATOR)) {
     $databasePath = $rootPath . '/' . ltrim($databasePath, '/');
 }
 
-$contentStore = new ContentStore(dirname($rootPath) . '/shared/content/procurely.json');
 $database = new Database($databasePath);
+$contentStore = new ContentStore(dirname($rootPath) . '/shared/content/procurely.json', $database);
 $catalogService = new CatalogService($database, $contentStore);
 $emailService = new \Procurely\Api\Support\EmailService($rootPath);
 $authService = new AuthService($database, $emailService, $debug);

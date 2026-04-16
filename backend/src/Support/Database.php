@@ -102,8 +102,7 @@ final class Database
         $onConflict = $isMysql ? 'ON CONFLICT(key) DO UPDATE SET hits = hits + 1, reset_at = $now' : 'ON CONFLICT(key) DO UPDATE SET hits = hits + 1, reset_at = excluded.reset_at';
         $now = $isMysql ? 'NOW()' : "datetime('now')";
 
-        $pdo->exec(
-            <<<SQL
+        $sql = <<<SQL
             CREATE TABLE IF NOT EXISTS users (
               id $pk,
               uuid VARCHAR(36) NOT NULL UNIQUE,
@@ -332,7 +331,6 @@ final class Database
               UNIQUE(wishlist_token, product_id)
             );
 
-            -- Indexes
             CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
             CREATE INDEX IF NOT EXISTS idx_users_uuid ON users (uuid);
             CREATE INDEX IF NOT EXISTS idx_users_created_at ON users (created_at);
@@ -366,7 +364,6 @@ final class Database
             CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
             CREATE INDEX IF NOT EXISTS idx_orders_cart_token ON orders (cart_token);
 
-            -- Insert default roles and permissions if not exist
             $insertIgnore INTO roles (name, description, created_at) VALUES 
             ('admin', 'Full system access', $now),
             ('customer', 'Standard customer access', $now);
@@ -385,16 +382,27 @@ final class Database
             ('order.update', 'Update orders', $now),
             ('order.delete', 'Delete orders', $now);
 
-            -- Assign permissions to admin role
             $insertIgnore INTO role_permissions (role_id, permission_id, assigned_at)
             SELECT r.id, p.id, $now FROM roles r, permissions p WHERE r.name = 'admin';
 
-            -- Assign basic permissions to customer role
             $insertIgnore INTO role_permissions (role_id, permission_id, assigned_at)
             SELECT r.id, p.id, $now FROM roles r, permissions p 
             WHERE r.name = 'customer' AND p.name IN ('product.read', 'order.create', 'order.read');
-            SQL
-        );
+SQL;
+
+        $statements = array_filter(array_map('trim', explode(';', $sql)));
+        foreach ($statements as $stmt) {
+            try {
+                if ($stmt === '') continue;
+                $pdo->exec($stmt);
+            } catch (\PDOException $e) {
+                throw new \RuntimeException(
+                    "Database migration failed on statement:\n$stmt\nError: " . $e->getMessage(),
+                    (int) $e->getCode(),
+                    $e
+                );
+            }
+        }
     }
 }
 

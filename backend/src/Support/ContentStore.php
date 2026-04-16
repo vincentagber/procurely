@@ -16,8 +16,7 @@ final class ContentStore
         private readonly string $contentPath,
         ?Database $database = null
     ) {
-        // Fallback for cases where database is not explicitly passed yet
-        $this->database = $database ?? new Database($_ENV['DATABASE_PATH'] ?? 'storage/procurely.sqlite');
+        $this->database = $database ?? new Database(dirname($this->contentPath, 3) . '/backend/' . ($_ENV['DATABASE_PATH'] ?? 'storage/procurely.sqlite'));
     }
 
     public function all(): array

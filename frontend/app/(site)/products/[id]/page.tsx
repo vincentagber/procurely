@@ -6,12 +6,13 @@ import { ProductActions } from "./product-actions";
 import { TestimonialSection } from "@/components/home/testimonial-section";
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export default async function ProductPage({ params }: Props) {
+  const { id } = await params;
   const content = await getProcurelyContent();
-  const product = content.products.find(p => p.id === params.id) || content.products[0];
+  const product = content.products.find(p => p.id === id) || content.products[0];
 
   if (!product) {
     notFound();
