@@ -6,8 +6,7 @@ import type { ApiEnvelope, Product, SiteContent } from "@/lib/types";
 
 const localContentPath = path.join(
   process.cwd(),
-  "..",
-  "shared",
+  "lib",
   "content",
   "procurely.json",
 );
