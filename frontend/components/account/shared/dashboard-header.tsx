@@ -56,7 +56,7 @@ export function DashboardHeader() {
               {user?.fullName ? user.fullName.split(" ")[0] : "User"}
             </p>
             <p className="text-[10px] font-bold text-[#1D4ED8] uppercase tracking-widest">
-              {user?.role || "Global Partner"}
+              {user?.roles?.[0] || "Global Partner"}
             </p>
           </div>
           <div className="h-10 w-10 bg-[#0A1140] rounded-xl overflow-hidden border border-slate-200 shadow-sm shrink-0 flex items-center justify-center text-white font-black text-sm uppercase">
