@@ -90,10 +90,14 @@ final class ContentStore
         $pdo = $this->database->connection();
         $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
 
-        $stmt = $pdo->prepare(
-            'INSERT OR REPLACE INTO products (id, slug, name, short_description, category, price, image, badge, featured, homepage_slot, created_at, updated_at) 
-             VALUES (:id, :slug, :name, :short_description, :category, :price, :image, :badge, :featured, :homepage_slot, :created_at, :updated_at)'
-        );
+        $isMysql = ($_ENV['DB_DRIVER'] ?? 'sqlite') === 'mysql';
+        $sql = $isMysql 
+            ? 'REPLACE INTO products (id, slug, name, short_description, category, price, image, badge, featured, homepage_slot, created_at, updated_at) 
+               VALUES (:id, :slug, :name, :short_description, :category, :price, :image, :badge, :featured, :homepage_slot, :created_at, :updated_at)'
+            : 'INSERT OR REPLACE INTO products (id, slug, name, short_description, category, price, image, badge, featured, homepage_slot, created_at, updated_at) 
+               VALUES (:id, :slug, :name, :short_description, :category, :price, :image, :badge, :featured, :homepage_slot, :created_at, :updated_at)';
+
+        $stmt = $pdo->prepare($sql);
 
         $stmt->execute([
             'id' => (string) ($product['id'] ?? \Ramsey\Uuid\Uuid::uuid7()->toString()),

@@ -6,7 +6,6 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use Dotenv\Dotenv;
 use Procurely\Api\Support\Database;
-use Procurely\Api\Support\ContentStore;
 
 $rootPath = dirname(__DIR__);
 if (file_exists($rootPath . '/.env')) {
@@ -20,6 +19,7 @@ if (!str_starts_with($databasePath, DIRECTORY_SEPARATOR)) {
 
 $db = new Database($databasePath);
 $pdo = $db->connection();
+$isMysql = ($_ENV['DB_DRIVER'] ?? 'sqlite') === 'mysql';
 
 $jsonPath = dirname($rootPath) . '/shared/content/procurely.json';
 if (!file_exists($jsonPath)) {
@@ -30,14 +30,22 @@ if (!file_exists($jsonPath)) {
 $content = json_decode(file_get_contents($jsonPath), true);
 $products = $content['products'] ?? [];
 
-echo "Migrating " . count($products) . " products to SQLite...\n";
+echo "Migrating " . count($products) . " products to " . ($_ENV['DB_DRIVER'] ?? 'sqlite') . "...\n";
 
 $pdo->beginTransaction();
 
 try {
-    $stmt = $pdo->prepare('INSERT OR REPLACE INTO products (id, slug, name, short_description, category, price, image, badge, featured, homepage_slot, created_at, updated_at) VALUES (:id, :slug, :name, :short_description, :category, :price, :image, :badge, :featured, :homepage_slot, :created_at, :updated_at)');
+    $insertProductSql = $isMysql 
+        ? 'REPLACE INTO products (id, slug, name, short_description, category, price, image, badge, featured, homepage_slot, created_at, updated_at) VALUES (:id, :slug, :name, :short_description, :category, :price, :image, :badge, :featured, :homepage_slot, :created_at, :updated_at)'
+        : 'INSERT OR REPLACE INTO products (id, slug, name, short_description, category, price, image, badge, featured, homepage_slot, created_at, updated_at) VALUES (:id, :slug, :name, :short_description, :category, :price, :image, :badge, :featured, :homepage_slot, :created_at, :updated_at)';
     
-    $invStmt = $pdo->prepare('INSERT OR IGNORE INTO inventory (product_id, stock_level, updated_at) VALUES (:product_id, 100, :updated_at)');
+    $stmt = $pdo->prepare($insertProductSql);
+    
+    $insertInvSql = $isMysql 
+        ? 'INSERT IGNORE INTO inventory (product_id, stock_level, updated_at) VALUES (:product_id, 100, :updated_at)'
+        : 'INSERT OR IGNORE INTO inventory (product_id, stock_level, updated_at) VALUES (:product_id, 100, :updated_at)';
+        
+    $invStmt = $pdo->prepare($insertInvSql);
     
     $now = (new DateTimeImmutable())->format(DateTimeImmutable::ATOM);
 
@@ -64,18 +72,60 @@ try {
     }
 
     // Seed Admin & Customer if not exists
-    $passwordHash = password_hash('Apassword123!', PASSWORD_BCRYPT, ['cost' => 12]);
-    $pdo->prepare('INSERT OR IGNORE INTO users (uuid, full_name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, "admin", ?)')
-        ->execute(['admin-user-id', 'Admin User', 'admin@useprocurely.com', $passwordHash, $now]);
+    $passwordHash = password_hash('Apassword123!', PASSWORD_ARGON2ID);
+    
+    $insertUserSql = $isMysql 
+        ? 'INSERT IGNORE INTO users (uuid, full_name, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
+        : 'INSERT OR IGNORE INTO users (uuid, full_name, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)';
 
-    $custHash = password_hash('Cpassword123!', PASSWORD_BCRYPT, ['cost' => 12]);
-    $pdo->prepare('INSERT OR IGNORE INTO users (uuid, full_name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, "user", ?)')
-        ->execute(['customer-user-id', 'Sample Customer', 'customer@useprocurely.com', $custHash, $now]);
+    $userStmt = $pdo->prepare($insertUserSql);
+    
+    // Admin
+    $userStmt->execute(['admin-user-id', 'Admin User', 'admin@useprocurely.com', $passwordHash, $now, $now]);
+    $adminId = $pdo->lastInsertId();
+    if (!$adminId) {
+        $st = $pdo->prepare('SELECT id FROM users WHERE email = ?');
+        $st->execute(['admin@useprocurely.com']);
+        $adminId = $st->fetchColumn();
+    }
+
+    // Customer
+    $userStmt->execute(['customer-user-id', 'Sample Customer', 'customer@useprocurely.com', $passwordHash, $now, $now]);
+    $customerId = $pdo->lastInsertId();
+    if (!$customerId) {
+        $st = $pdo->prepare('SELECT id FROM users WHERE email = ?');
+        $st->execute(['customer@useprocurely.com']);
+        $customerId = $st->fetchColumn();
+    }
+
+    // Assign Roles
+    $insertRoleSql = $isMysql 
+        ? 'INSERT IGNORE INTO user_roles (user_id, role_id, assigned_at) VALUES (?, ?, ?)'
+        : 'INSERT OR IGNORE INTO user_roles (user_id, role_id, assigned_at) VALUES (?, ?, ?)';
+    
+    $roleStmt = $pdo->prepare($insertRoleSql);
+    
+    // Get role IDs
+    $st = $pdo->prepare('SELECT id FROM roles WHERE name = ?');
+    $st->execute(['admin']);
+    $adminRoleId = $st->fetchColumn();
+    
+    $st->execute(['customer']);
+    $customerRoleId = $st->fetchColumn();
+
+    if ($adminId && $adminRoleId) {
+        $roleStmt->execute([$adminId, $adminRoleId, $now]);
+    }
+    if ($customerId && $customerRoleId) {
+        $roleStmt->execute([$customerId, $customerRoleId, $now]);
+    }
 
     $pdo->commit();
     echo "Migration completed successfully!\n";
 } catch (Exception $e) {
-    $pdo->rollBack();
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     echo "Migration failed: " . $e->getMessage() . "\n";
     exit(1);
 }

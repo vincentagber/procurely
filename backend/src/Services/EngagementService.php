@@ -47,9 +47,12 @@ final class EngagementService
     {
         $email = Input::email($payload, 'email', 'email address');
 
-        $statement = $this->database->connection()->prepare(
-            'INSERT OR IGNORE INTO newsletter_subscribers (email, created_at) VALUES (:email, :created_at)'
-        );
+        $isMysql = ($_ENV['DB_DRIVER'] ?? 'sqlite') === 'mysql';
+        $sql = $isMysql 
+            ? 'INSERT IGNORE INTO newsletter_subscribers (email, created_at) VALUES (:email, :created_at)'
+            : 'INSERT OR IGNORE INTO newsletter_subscribers (email, created_at) VALUES (:email, :created_at)';
+
+        $statement = $this->database->connection()->prepare($sql);
         $statement->execute([
             'email' => $email,
             'created_at' => (new DateTimeImmutable())->format(DateTimeImmutable::ATOM),

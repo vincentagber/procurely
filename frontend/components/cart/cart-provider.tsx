@@ -60,11 +60,15 @@ export type CartProviderProps = {
 function calculateCartTotals(items: Cart["items"]) {
   const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
   const serviceFee = subtotal >= 100000 ? 0 : subtotal > 0 ? 3500 : 0;
+  const vat = Math.round(subtotal * 0.075);
+  const shippingFee = subtotal > 0 ? 20000 : 0;
 
   return {
     subtotal,
+    vat,
+    shippingFee,
     serviceFee,
-    total: subtotal + serviceFee,
+    total: subtotal + vat + shippingFee + serviceFee,
   };
 }
 
@@ -88,6 +92,8 @@ function buildEmptyCart(cartToken: string): Cart {
     cartToken,
     items: [],
     subtotal: 0,
+    vat: 0,
+    shippingFee: 0,
     serviceFee: 0,
     total: 0,
   };
@@ -335,6 +341,8 @@ export function CartProvider({
         phone: payload.phone,
         address: payload.address,
         subtotal: activeCart.subtotal,
+        vat: activeCart.vat,
+        shippingFee: activeCart.shippingFee,
         serviceFee: activeCart.serviceFee,
         total: activeCart.total,
         createdAt: new Date().toISOString(),
@@ -359,6 +367,9 @@ export function CartProvider({
       setLoading(true);
       setError(null);
       const order = await api.checkout({ ...payload, cartToken });
+      startTransition(() => {
+        setLastOrder(order);
+      });
       return order;
     } catch (nextError) {
       setError(

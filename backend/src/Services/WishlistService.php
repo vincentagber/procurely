@@ -52,7 +52,12 @@ final class WishlistService
         $pdo = $this->database->connection();
         $createdAt = (new DateTimeImmutable())->format(DateTimeImmutable::ATOM);
 
-        $stmt = $pdo->prepare('INSERT OR IGNORE INTO wishlist_items (wishlist_token, product_id, created_at) VALUES (:token, :product_id, :created_at)');
+        $isMysql = ($_ENV['DB_DRIVER'] ?? 'sqlite') === 'mysql';
+        $sql = $isMysql 
+            ? 'INSERT IGNORE INTO wishlist_items (wishlist_token, product_id, created_at) VALUES (:token, :product_id, :created_at)'
+            : 'INSERT OR IGNORE INTO wishlist_items (wishlist_token, product_id, created_at) VALUES (:token, :product_id, :created_at)';
+
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([
             'token' => $token,
             'product_id' => $productId,

@@ -56,7 +56,7 @@ final class OrderService
             $existing = $checkExisting->fetch();
 
             if ($existing !== false) {
-                return $this->findByOrderNumber((string) $existing['order_number']);
+                return $this->findByOrderNumber((string) $existing['order_number'], '', '', true);
             }
 
             // 2. Inventory Validation & Deduction
