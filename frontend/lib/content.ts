@@ -17,13 +17,19 @@ const serverApiBase =
   "http://127.0.0.1:8000";
 
 export const readLocalContent = async (): Promise<SiteContent> => {
-  const raw = await readFile(localContentPath, "utf8");
-  return JSON.parse(raw) as SiteContent;
+  try {
+    const raw = await readFile(localContentPath, "utf8");
+    return JSON.parse(raw) as SiteContent;
+  } catch (err) {
+    console.error("[readLocalContent] Error reading file at:", localContentPath, err);
+    throw err;
+  }
 };
 
 export const getProcurelyContent = async (): Promise<SiteContent> => {
   // Always try API first for real-time MySQL data
   try {
+    console.log("[getProcurelyContent] Attempting to fetch from API:", serverApiBase);
     const response = await fetch(`${serverApiBase}/api/homepage`, {
       cache: "no-store",
       next: { revalidate: 0 },
@@ -31,18 +37,26 @@ export const getProcurelyContent = async (): Promise<SiteContent> => {
     });
 
     if (!response.ok) {
-      throw new Error("Homepage API request failed.");
+      throw new Error(`Homepage API request failed with status: ${response.status}`);
     }
 
     const payload = (await response.json()) as ApiEnvelope<SiteContent>;
     return payload.data;
   } catch (err) {
+    console.warn("[getProcurelyContent] API fetch failed, falling back to local content.", err);
     // Fallback to local content only if API fails
     try {
       const local = await readLocalContent();
       return local;
-    } catch {
-      throw new Error("Unable to load site content from API or local storage.");
+    } catch (fallbackErr) {
+      console.error("[getProcurelyContent] Critical: Both API and local fallback failed.", fallbackErr);
+      // Last resort: return basic structure to prevent complete crash
+      return {
+        site: { name: "Procurely", tagline: "Infrastructure Made Simple", primaryColor: "#1D4ED8", logoDark: "", logoLight: "" },
+        navigation: { primaryLinks: [], socialLinks: [], accountLinks: [] },
+        footer: { address: [], accountLinks: [], quickLinks: [] },
+        products: [],
+      } as any;
     }
   }
 };
