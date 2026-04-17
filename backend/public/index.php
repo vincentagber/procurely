@@ -67,20 +67,20 @@ $app->get('/', static function (ServerRequestInterface $request, ResponseInterfa
 });
 
 // ─── Catalog ───────────────────────────────────────────────────────────────────
-$app->get('/api/homepage', static function (ServerRequestInterface $request, ResponseInterface $response) use ($catalogService): ResponseInterface {
+$app->get('/homepage', static function (ServerRequestInterface $request, ResponseInterface $response) use ($catalogService): ResponseInterface {
     return JsonResponder::success($response, $catalogService->homepage());
 });
 
-$app->get('/api/products', static function (ServerRequestInterface $request, ResponseInterface $response) use ($catalogService): ResponseInterface {
+$app->get('/products', static function (ServerRequestInterface $request, ResponseInterface $response) use ($catalogService): ResponseInterface {
     return JsonResponder::success($response, $catalogService->listProducts(RequestData::query($request)));
 })->add($searchRateLimit);
 
-$app->get('/api/products/{slug}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($catalogService): ResponseInterface {
+$app->get('/products/{slug}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($catalogService): ResponseInterface {
     return JsonResponder::success($response, $catalogService->productBySlug((string) ($args['slug'] ?? '')));
 });
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
-$app->post('/api/auth/register', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
+$app->post('/auth/register', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
     $data = $authService->register(RequestData::body($request));
     $token = $data['token'] ?? '';
     
@@ -89,7 +89,7 @@ $app->post('/api/auth/register', static function (ServerRequestInterface $reques
     return JsonResponder::success($response->withHeader('Set-Cookie', $cookie), $data, 201);
 })->add($authRateLimit);
 
-$app->post('/api/auth/login', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
+$app->post('/auth/login', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
     $data = $authService->login(RequestData::body($request));
     $token = $data['token'] ?? '';
     
@@ -98,11 +98,11 @@ $app->post('/api/auth/login', static function (ServerRequestInterface $request, 
     return JsonResponder::success($response->withHeader('Set-Cookie', $cookie), $data);
 })->add($authRateLimit);
 
-$app->post('/api/auth/forgot-password', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
+$app->post('/auth/forgot-password', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
     return JsonResponder::success($response, $authService->forgotPassword(RequestData::body($request)));
 })->add($authRateLimit);
 
-$app->post('/api/auth/logout', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService, $database): ResponseInterface {
+$app->post('/auth/logout', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService, $database): ResponseInterface {
     // Clear the cookie immediately — browser must evict token regardless of server-side outcome
     $clearCookie = 'procurely_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax; Secure';
     $response = $response->withHeader('Set-Cookie', $clearCookie);
@@ -126,7 +126,7 @@ $app->post('/api/auth/logout', static function (ServerRequestInterface $request,
     return JsonResponder::success($response, $result);
 });
 
-$app->get('/api/auth/me', static function (ServerRequestInterface $request, ResponseInterface $response): ResponseInterface {
+$app->get('/auth/me', static function (ServerRequestInterface $request, ResponseInterface $response): ResponseInterface {
     $user = $request->getAttribute('user');
     if (!$user) {
         throw new ApiException('Authentication required.', 401);
@@ -144,7 +144,7 @@ $app->get('/api/auth/me', static function (ServerRequestInterface $request, Resp
     ]);
 })->add($authRateLimit);
 
-$app->patch('/api/auth/profile', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
+$app->patch('/auth/profile', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
     $user = $request->getAttribute('user');
     if (!$user) {
         throw new ApiException('Authentication required.', 401);
@@ -160,7 +160,7 @@ $app->patch('/api/auth/profile', static function (ServerRequestInterface $reques
 })->add($authRateLimit);
 
 // ─── Notifications ─────────────────────────────────────────────────────────────
-$app->get('/api/notifications', static function (ServerRequestInterface $request, ResponseInterface $response) use ($notificationService): ResponseInterface {
+$app->get('/notifications', static function (ServerRequestInterface $request, ResponseInterface $response) use ($notificationService): ResponseInterface {
     $user = $request->getAttribute('user');
     if (!$user) {
         throw new ApiException('Authentication required.', 401);
@@ -169,7 +169,7 @@ $app->get('/api/notifications', static function (ServerRequestInterface $request
     return JsonResponder::success($response, $notificationService->getUserNotifications((int) $user['id']));
 });
 
-$app->patch('/api/notifications/{id}/read', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($notificationService): ResponseInterface {
+$app->patch('/notifications/{id}/read', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($notificationService): ResponseInterface {
     $user = $request->getAttribute('user');
     if (!$user) {
         throw new ApiException('Authentication required.', 401);
@@ -180,42 +180,42 @@ $app->patch('/api/notifications/{id}/read', static function (ServerRequestInterf
 });
 
 // ─── Account & Company ────────────────────────────────────────────────────────
-$app->get('/api/account/company', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
+$app->get('/account/company', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
     $user = $request->getAttribute('user');
     if (!$user) throw new ApiException('Authentication required.', 401);
 
     return JsonResponder::success($response, $accountService->getCompanyInfo($user['uuid']));
 });
 
-$app->patch('/api/account/company', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
+$app->patch('/account/company', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
     $user = $request->getAttribute('user');
     if (!$user) throw new ApiException('Authentication required.', 401);
 
     return JsonResponder::success($response, $accountService->updateCompany($user['uuid'], RequestData::body($request)));
 });
 
-$app->get('/api/account/addresses', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
+$app->get('/account/addresses', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
     $user = $request->getAttribute('user');
     if (!$user) throw new ApiException('Authentication required.', 401);
 
     return JsonResponder::success($response, $accountService->getAddresses($user['uuid']));
 });
 
-$app->post('/api/account/addresses', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
+$app->post('/account/addresses', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
     $user = $request->getAttribute('user');
     if (!$user) throw new ApiException('Authentication required.', 401);
 
     return JsonResponder::success($response, $accountService->addAddress($user['uuid'], RequestData::body($request)));
 });
 
-$app->delete('/api/account/addresses/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($accountService): ResponseInterface {
+$app->delete('/account/addresses/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($accountService): ResponseInterface {
     $user = $request->getAttribute('user');
     if (!$user) throw new ApiException('Authentication required.', 401);
 
     return JsonResponder::success($response, $accountService->deleteAddress($user['uuid'], (int) $args['id']));
 });
 
-$app->get('/api/account/payment-methods', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
+$app->get('/account/payment-methods', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
     $user = $request->getAttribute('user');
     if (!$user) throw new ApiException('Authentication required.', 401);
 
@@ -223,40 +223,40 @@ $app->get('/api/account/payment-methods', static function (ServerRequestInterfac
 });
 
 // ─── Cart ──────────────────────────────────────────────────────────────────────
-$app->get('/api/cart/{token}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($cartService): ResponseInterface {
+$app->get('/cart/{token}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($cartService): ResponseInterface {
     return JsonResponder::success($response, $cartService->getCart((string) ($args['token'] ?? '')));
 });
 
-$app->post('/api/cart/items', static function (ServerRequestInterface $request, ResponseInterface $response) use ($cartService): ResponseInterface {
+$app->post('/cart/items', static function (ServerRequestInterface $request, ResponseInterface $response) use ($cartService): ResponseInterface {
     return JsonResponder::success($response, $cartService->addItem(RequestData::body($request)), 201);
 });
 
-$app->patch('/api/cart/items/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($cartService): ResponseInterface {
+$app->patch('/cart/items/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($cartService): ResponseInterface {
     return JsonResponder::success($response, $cartService->updateItem((int) ($args['id'] ?? 0), RequestData::body($request)));
 });
 
-$app->delete('/api/cart/items/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($cartService): ResponseInterface {
+$app->delete('/cart/items/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($cartService): ResponseInterface {
     $token = (string) (RequestData::query($request)['token'] ?? '');
 
     return JsonResponder::success($response, $cartService->removeItem((int) ($args['id'] ?? 0), $token));
 });
 
 // ─── Wishlist ──────────────────────────────────────────────────────────────────
-$app->get('/api/wishlist/{token}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($wishlistService): ResponseInterface {
+$app->get('/wishlist/{token}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($wishlistService): ResponseInterface {
     return JsonResponder::success($response, $wishlistService->getWishlist((string) ($args['token'] ?? '')));
 });
 
-$app->post('/api/wishlist/items', static function (ServerRequestInterface $request, ResponseInterface $response) use ($wishlistService): ResponseInterface {
+$app->post('/wishlist/items', static function (ServerRequestInterface $request, ResponseInterface $response) use ($wishlistService): ResponseInterface {
     return JsonResponder::success($response, $wishlistService->addItem(RequestData::body($request)), 201);
 });
 
-$app->delete('/api/wishlist/items/{productId}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($wishlistService): ResponseInterface {
+$app->delete('/wishlist/items/{productId}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($wishlistService): ResponseInterface {
     $token = (string) (RequestData::query($request)['token'] ?? '');
     return JsonResponder::success($response, $wishlistService->removeItem((string) ($args['productId'] ?? ''), $token));
 });
 
 // ─── Orders ────────────────────────────────────────────────────────────────────
-$app->post('/api/checkout', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService, $authService): ResponseInterface {
+$app->post('/checkout', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService, $authService): ResponseInterface {
     $authHeader = $request->getHeaderLine('Authorization');
     $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
     $userId = null;
@@ -271,7 +271,7 @@ $app->post('/api/checkout', static function (ServerRequestInterface $request, Re
     return JsonResponder::success($response, $orderService->checkout(RequestData::body($request), $userId), 201);
 })->add($orderRateLimit);
 
-$app->post('/api/orders', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService, $authService): ResponseInterface {
+$app->post('/orders', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService, $authService): ResponseInterface {
     $authHeader = $request->getHeaderLine('Authorization');
     $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
     $userId = null;
@@ -287,7 +287,7 @@ $app->post('/api/orders', static function (ServerRequestInterface $request, Resp
 })->add($orderRateLimit);
 
 // ─── Wallet ────────────────────────────────────────────────────────────────────
-$app->post('/api/wallet/fund', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService): ResponseInterface {
+$app->post('/wallet/fund', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService): ResponseInterface {
     $user = $request->getAttribute('user');
     if (!$user) {
         throw new ApiException('Authentication required.', 401);
@@ -304,7 +304,7 @@ $app->post('/api/wallet/fund', static function (ServerRequestInterface $request,
 })->add($orderRateLimit);
 
 // ─── Payments ──────────────────────────────────────────────────────────────────
-$app->post('/api/payments/create-intent', static function (ServerRequestInterface $request, ResponseInterface $response) use ($paymentProcessor): ResponseInterface {
+$app->post('/payments/create-intent', static function (ServerRequestInterface $request, ResponseInterface $response) use ($paymentProcessor): ResponseInterface {
     $data = RequestData::body($request);
     $orderNumber = $data['orderNumber'] ?? '';
     $amount = (int) ($data['amount'] ?? 0);
@@ -316,7 +316,7 @@ $app->post('/api/payments/create-intent', static function (ServerRequestInterfac
     return JsonResponder::success($response, $paymentProcessor->createPaymentIntent($orderNumber, $amount));
 });
 
-$app->post('/api/payments/confirm-intent', static function (ServerRequestInterface $request, ResponseInterface $response) use ($paymentProcessor): ResponseInterface {
+$app->post('/payments/confirm-intent', static function (ServerRequestInterface $request, ResponseInterface $response) use ($paymentProcessor): ResponseInterface {
     $data = RequestData::body($request);
     $paymentIntentId = $data['paymentIntentId'] ?? '';
 
@@ -328,7 +328,7 @@ $app->post('/api/payments/confirm-intent', static function (ServerRequestInterfa
     return JsonResponder::success($response, ['success' => $success]);
 });
 
-$app->post('/api/webhooks/stripe', static function (ServerRequestInterface $request, ResponseInterface $response) use ($paymentProcessor, $orderService): ResponseInterface {
+$app->post('/webhooks/stripe', static function (ServerRequestInterface $request, ResponseInterface $response) use ($paymentProcessor, $orderService): ResponseInterface {
     $payload = (string) $request->getBody();
     $signature = $request->getHeaderLine('stripe-signature');
 
@@ -346,7 +346,7 @@ $app->post('/api/webhooks/stripe', static function (ServerRequestInterface $requ
     return $response->withStatus(200);
 });
 
-$app->post('/api/webhooks/paystack', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService): ResponseInterface {
+$app->post('/webhooks/paystack', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService): ResponseInterface {
     $payload = (string) $request->getBody();
     $signature = $request->getHeaderLine('x-paystack-signature');
     $paystack = new \Procurely\Api\Support\Paystack();
@@ -359,7 +359,7 @@ $app->post('/api/webhooks/paystack', static function (ServerRequestInterface $re
     return JsonResponder::success($response, $orderService->handleWebhook($data));
 });
 
-$app->get('/api/orders/{orderNumber}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($orderService, $authService): ResponseInterface {
+$app->get('/orders/{orderNumber}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($orderService, $authService): ResponseInterface {
     $cartToken = (string) (RequestData::query($request)['cartToken'] ?? '');
     $email = (string) (RequestData::query($request)['email'] ?? '');
     
@@ -382,7 +382,7 @@ $app->get('/api/orders/{orderNumber}', static function (ServerRequestInterface $
     ));
 });
 
-$app->get('/api/account/orders', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService, $authService): ResponseInterface {
+$app->get('/account/orders', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService, $authService): ResponseInterface {
     $authHeader = $request->getHeaderLine('Authorization');
     $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
 
@@ -415,21 +415,21 @@ $adminMiddleware = function (ServerRequestInterface $request, $handler) use ($au
     return $handler->handle($request);
 };
 
-$app->get('/api/admin/stats', static function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService): ResponseInterface {
+$app->get('/admin/stats', static function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService): ResponseInterface {
     return JsonResponder::success($response, $adminService->getStats());
 })->add($adminMiddleware);
 
-$app->get('/api/admin/orders', static function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService): ResponseInterface {
+$app->get('/admin/orders', static function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService): ResponseInterface {
     $params = RequestData::query($request);
     return JsonResponder::success($response, $adminService->listOrders((int) ($params['limit'] ?? 50), (int) ($params['offset'] ?? 0)));
 })->add($adminMiddleware);
 
-$app->get('/api/admin/users', static function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService): ResponseInterface {
+$app->get('/admin/users', static function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService): ResponseInterface {
     $params = RequestData::query($request);
     return JsonResponder::success($response, $adminService->listUsers((int) ($params['limit'] ?? 50), (int) ($params['offset'] ?? 0)));
 })->add($adminMiddleware);
 
-$app->delete('/api/admin/users/{uuid}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService, $authService): ResponseInterface {
+$app->delete('/admin/users/{uuid}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService, $authService): ResponseInterface {
     $authHeader = $request->getHeaderLine('Authorization');
     $token = substr($authHeader, 7);
     $admin = $authService->resolveToken($token);
@@ -440,14 +440,14 @@ $app->delete('/api/admin/users/{uuid}', static function (ServerRequestInterface 
     ));
 })->add($adminMiddleware);
 
-$app->patch('/api/admin/orders/{orderNumber}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService): ResponseInterface {
+$app->patch('/admin/orders/{orderNumber}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService): ResponseInterface {
     $body = RequestData::body($request);
     $status = (string) ($body['status'] ?? '');
     return JsonResponder::success($response, $adminService->updateOrderStatus((string) ($args['orderNumber'] ?? ''), $status));
 })->add($adminMiddleware);
 
 // ─── Admin Products ──────────────────────────────────────────────────────────
-$app->group('/api/admin', function (\Slim\Routing\RouteCollectorProxy $group) use ($adminService) {
+$app->group('/admin', function (\Slim\Routing\RouteCollectorProxy $group) use ($adminService) {
     $group->get('/products', function (ServerRequestInterface $request, ResponseInterface $response) use ($adminService) {
         return JsonResponder::success($response, $adminService->listProducts());
     });
@@ -475,22 +475,22 @@ $app->group('/api/admin', function (\Slim\Routing\RouteCollectorProxy $group) us
     });
 })->add($adminMiddleware);
 
-$app->put('/api/admin/products/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService): ResponseInterface {
+$app->put('/admin/products/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService): ResponseInterface {
     $body = RequestData::body($request);
     $body['id'] = (string) ($args['id'] ?? '');
     return JsonResponder::success($response, $adminService->saveProduct($body));
 })->add($adminMiddleware);
 
-$app->delete('/api/admin/products/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService): ResponseInterface {
+$app->delete('/admin/products/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService): ResponseInterface {
     return JsonResponder::success($response, $adminService->deleteProduct((string) ($args['id'] ?? '')));
 })->add($adminMiddleware);
 
 // ─── Engagement ────────────────────────────────────────────────────────────────
-$app->post('/api/quotes', static function (ServerRequestInterface $request, ResponseInterface $response) use ($engagementService): ResponseInterface {
+$app->post('/quotes', static function (ServerRequestInterface $request, ResponseInterface $response) use ($engagementService): ResponseInterface {
     return JsonResponder::success($response, $engagementService->requestQuote(RequestData::body($request)), 201);
 })->add($orderRateLimit);
 
-$app->post('/api/newsletter', static function (ServerRequestInterface $request, ResponseInterface $response) use ($engagementService): ResponseInterface {
+$app->post('/newsletter', static function (ServerRequestInterface $request, ResponseInterface $response) use ($engagementService): ResponseInterface {
     return JsonResponder::success($response, $engagementService->subscribe(RequestData::body($request)), 201);
 })->add($authRateLimit);
 

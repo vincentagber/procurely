@@ -390,6 +390,42 @@ final class Database
             WHERE r.name = 'customer' AND p.name IN ('product.read', 'order.create', 'order.read');
 SQL;
 
+        // MySQL doesn't support CREATE INDEX IF NOT EXISTS directly.
+        $indexes = [
+            'idx_users_email' => 'CREATE INDEX idx_users_email ON users (email)',
+            'idx_users_uuid' => 'CREATE INDEX idx_users_uuid ON users (uuid)',
+            'idx_users_created_at' => 'CREATE INDEX idx_users_created_at ON users (created_at)',
+            'idx_roles_name' => 'CREATE INDEX idx_roles_name ON roles (name)',
+            'idx_permissions_name' => 'CREATE INDEX idx_permissions_name ON permissions (name)',
+            'idx_user_roles_user_id' => 'CREATE INDEX idx_user_roles_user_id ON user_roles (user_id)',
+            'idx_user_roles_role_id' => 'CREATE INDEX idx_user_roles_role_id ON user_roles (role_id)',
+            'idx_role_permissions_role_id' => 'CREATE INDEX idx_role_permissions_role_id ON role_permissions (role_id)',
+            'idx_role_permissions_permission_id' => 'CREATE INDEX idx_role_permissions_permission_id ON role_permissions (permission_id)',
+            'idx_user_sessions_user_id' => 'CREATE INDEX idx_user_sessions_user_id ON user_sessions (user_id)',
+            'idx_user_sessions_token_hash' => 'CREATE INDEX idx_user_sessions_token_hash ON user_sessions (session_token_hash)',
+            'idx_user_sessions_expires_at' => 'CREATE INDEX idx_user_sessions_expires_at ON user_sessions (expires_at)',
+            'idx_audit_logs_user_id' => 'CREATE INDEX idx_audit_logs_user_id ON audit_logs (user_id)',
+            'idx_audit_logs_action' => 'CREATE INDEX idx_audit_logs_action ON audit_logs (action)',
+            'idx_audit_logs_resource' => 'CREATE INDEX idx_audit_logs_resource ON audit_logs (resource)',
+            'idx_audit_logs_created_at' => 'CREATE INDEX idx_audit_logs_created_at ON audit_logs (created_at)',
+            'idx_notifications_user_id' => 'CREATE INDEX idx_notifications_user_id ON notifications (user_id)',
+            'idx_notifications_type' => 'CREATE INDEX idx_notifications_type ON notifications (type)',
+            'idx_notifications_read_at' => 'CREATE INDEX idx_notifications_read_at ON notifications (read_at)',
+            'idx_notifications_created_at' => 'CREATE INDEX idx_notifications_created_at ON notifications (created_at)',
+            'idx_password_reset_user_id' => 'CREATE INDEX idx_password_reset_user_id ON password_reset_requests (user_id)',
+            'idx_password_reset_token_hash' => 'CREATE INDEX idx_password_reset_token_hash ON password_reset_requests (token_hash)',
+            'idx_password_reset_expires_at' => 'CREATE INDEX idx_password_reset_expires_at ON password_reset_requests (expires_at)',
+            'idx_rate_limits_reset_at' => 'CREATE INDEX idx_rate_limits_reset_at ON rate_limits (reset_at)',
+            'idx_products_category' => 'CREATE INDEX idx_products_category ON products (category)',
+            'idx_products_featured' => 'CREATE INDEX idx_products_featured ON products (featured)',
+            'idx_products_slot' => 'CREATE INDEX idx_products_slot ON products (homepage_slot)',
+            'idx_orders_user_id' => 'CREATE INDEX idx_orders_user_id ON orders (user_id)',
+            'idx_cart_items_cart_token' => 'CREATE INDEX idx_cart_items_cart_token ON cart_items (cart_token)',
+            'idx_order_items_order_id' => 'CREATE INDEX idx_order_items_order_id ON order_items (order_id)',
+            'idx_orders_status' => 'CREATE INDEX idx_orders_status ON orders (status)',
+            'idx_orders_cart_token' => 'CREATE INDEX idx_orders_cart_token ON orders (cart_token)',
+        ];
+
         $statements = array_filter(array_map('trim', explode(';', $sql)));
         foreach ($statements as $stmt) {
             try {
@@ -401,6 +437,22 @@ SQL;
                     (int) $e->getCode(),
                     $e
                 );
+            }
+        }
+
+        foreach ($indexes as $name => $createSql) {
+            try {
+                if ($isMysql) {
+                    $st = $pdo->prepare("SELECT COUNT(1) FROM information_schema.statistics WHERE table_schema = DATABASE() AND index_name = ?");
+                    $st->execute([$name]);
+                    if ((int)$st->fetchColumn() === 0) {
+                        $pdo->exec($createSql);
+                    }
+                } else {
+                    $pdo->exec(str_replace('CREATE INDEX', 'CREATE INDEX IF NOT EXISTS', $createSql));
+                }
+            } catch (\PDOException) {
+                // Silent fail for indexes if they already exist
             }
         }
     }

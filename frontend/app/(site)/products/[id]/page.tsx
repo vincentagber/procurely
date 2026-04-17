@@ -9,6 +9,13 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
+export async function generateStaticParams() {
+  const content = await getProcurelyContent();
+  return content.products.map((product) => ({
+    id: product.id,
+  }));
+}
+
 export default async function ProductPage({ params }: Props) {
   const { id } = await params;
   const content = await getProcurelyContent();

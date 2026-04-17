@@ -33,14 +33,14 @@ export const metadata: Metadata = {
   }
 };
 
-import { getServerUser } from "@/lib/api-server";
-
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getServerUser();
+  // SSR Auth check is disabled for static export (cPanel/Vercel static)
+  // The client-side AuthProvider will handle user fetching.
+  const user = null;
 
   return (
     <html lang="en" suppressHydrationWarning>

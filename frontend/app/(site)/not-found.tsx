@@ -1,15 +1,12 @@
 import Link from "next/link";
 import { Search, Home, ArrowRight, PackageX } from "lucide-react";
 import { getProcurelyContent } from "@/lib/content";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
 
 export default async function NotFound() {
   const content = await getProcurelyContent();
 
   return (
     <>
-      <SiteHeader navigation={content.navigation} site={content.site} />
       <main className="relative min-h-[80vh] flex items-center justify-center bg-[#f6f7fd] overflow-hidden px-4 sm:px-6 pt-10 pb-20">
         {/* Decorative Orbs */}
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#1900ff]/5 blur-[120px] pointer-events-none"></div>
@@ -62,7 +59,6 @@ export default async function NotFound() {
           </div>
         </div>
       </main>
-      <SiteFooter footer={content.footer} site={content.site} />
     </>
   );
 }
