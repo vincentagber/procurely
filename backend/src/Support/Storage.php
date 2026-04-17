@@ -11,7 +11,7 @@ final class Storage
 
     public function __construct(string $rootPath)
     {
-        $this->uploadPath = $rootPath . '/backend/public/uploads';
+        $this->uploadPath = $_ENV['UPLOAD_PATH'] ?? ($rootPath . '/public/uploads');
         $this->publicPath = '/uploads';
 
         if (!is_dir($this->uploadPath)) {
