@@ -24,13 +24,15 @@ export function SiteFooter({ footer, site }: SiteFooterProps) {
       <div className="container-shell py-14 sm:py-16">
         <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[1.15fr_1fr_1fr_1fr_1fr]">
           <div>
-            <Image
-              alt={site.name}
-              className="h-auto w-[133px]"
-              height={29}
-              src={site.logoLight}
-              width={133}
-            />
+            <div className="flex items-center gap-4">
+              <Image
+                alt={site.name}
+                className="h-auto w-[133px]"
+                height={29}
+                src={site.logoLight}
+                width={133}
+              />
+            </div>
             <p className="mt-6 text-lg font-semibold">{footer.subscribeTitle}</p>
             <p className="mt-4 text-[1.5rem] font-semibold leading-tight sm:text-[1.75rem]">
               {footer.subscribePromo}
@@ -81,7 +83,7 @@ export function SiteFooter({ footer, site }: SiteFooterProps) {
           </div>
 
           <div>
-            <p className="text-lg font-semibold">{site.tagline}</p>
+            <p className="text-lg font-semibold">Support</p>
             <div className="mt-6 space-y-3 text-white/80">
               {footer.address.map((line) => (
                 <p key={line}>{line}</p>
@@ -114,17 +116,24 @@ export function SiteFooter({ footer, site }: SiteFooterProps) {
           </div>
 
           <div>
-            <p className="text-lg font-semibold">
-              Scan to Connect with us via Whatsapp
-            </p>
-            <div className="mt-6">
+            <p className="text-lg font-semibold mb-2">Download App</p>
+            <p className="text-[12px] font-bold text-white/60 mb-6">Save $3 with App New User Only</p>
+            <div className="flex items-center gap-4">
               <Image
-                alt="Procurely Whatsapp QR code"
-                className="h-auto w-[96px] rounded-[12px] bg-white p-2"
+                alt="Procurely App QR code"
+                className="size-[96px] rounded-[12px] bg-white p-2"
                 height={83}
                 src={footer.qrImage}
                 width={82}
               />
+              <div className="flex flex-col gap-2">
+                <Link href="#" className="hover:opacity-80 transition-opacity">
+                   <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" className="h-8" />
+                </Link>
+                <Link href="#" className="hover:opacity-80 transition-opacity">
+                   <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" className="h-8" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>

@@ -24,7 +24,7 @@ final class AccountService
         $stmt->execute(['uuid' => $userUuid]);
         $info = $stmt->fetch();
 
-        return $info !== false ? $info : null;
+        return $info !== false ? (array) $info : [];
     }
 
     public function updateCompany(string $userUuid, array $payload): array

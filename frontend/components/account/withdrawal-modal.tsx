@@ -1,27 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Wallet } from "lucide-react";
+import React, { useState, FormEvent, MouseEvent } from "react";
+import { X, Lock, Landmark } from "lucide-react";
 
-interface FundWalletModalProps {
+interface WithdrawalModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (amount: number) => void;
-  isLoading: boolean;
+  isLoading?: boolean;
 }
 
-export function FundWalletModal({
+export function WithdrawalModal({
   isOpen,
   onClose,
   onConfirm,
-  isLoading,
-}: FundWalletModalProps) {
+  isLoading = false,
+}: WithdrawalModalProps) {
   const [amount, setAmount] = useState<string>("100,000");
-  const [paymentMethod, setPaymentMethod] = useState<"bank" | "card">("card");
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const numAmount = parseFloat(amount.replace(/,/g, ""));
     if (isNaN(numAmount) || numAmount <= 0) {
@@ -31,7 +30,7 @@ export function FundWalletModal({
     onConfirm(numAmount);
   };
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
+  const handleBackdropClick = (e: MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
@@ -45,7 +44,7 @@ export function FundWalletModal({
       aria-modal="true"
     >
       <div 
-        className="relative flex flex-col bg-[#FFFFFF] rounded-[16px] w-[400px] h-[514px] p-6 lg:p-7 overflow-hidden z-10"
+        className="relative flex flex-col bg-[#FFFFFF] rounded-[16px] w-[400px] h-[550px] p-6 lg:p-7 overflow-hidden z-10"
         style={{
           boxShadow: '0px 8px 8px -4px #0000000A, 0px 20px 24px -4px #0000001A'
         }}
@@ -53,7 +52,13 @@ export function FundWalletModal({
         {/* Top bar */}
         <div className="flex justify-between items-start mb-5">
           <div className="w-[52px] h-[52px] bg-[#F9F5FF] rounded-full flex items-center justify-center">
-            <Wallet size={24} className="text-[#3F2B96]" strokeWidth={2} />
+            {/* Custom Withdraw Icon approximation */}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3F2B96" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 8V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2" />
+              <path d="M12 4v12" />
+              <path d="m8 12 4 4 4-4" />
+              <path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
+            </svg>
           </div>
           <button 
             onClick={onClose}
@@ -66,12 +71,14 @@ export function FundWalletModal({
 
         {/* Titles */}
         <div className="mb-4">
-          <h3 className="text-xl font-bold text-gray-900 mb-1 tracking-tight">Top Up Wallet</h3>
-          <p className="text-[0.875rem] text-gray-500 font-medium">Enter the amount you want to add to your wallet.</p>
+          <h3 className="text-xl font-bold text-gray-900 mb-1 tracking-tight">Withdrawal</h3>
+          <p className="text-[0.875rem] text-gray-500 font-medium pr-2">
+            Enter the amount you want to withdraw from your wallet.
+          </p>
         </div>
 
         {/* Current Balance Box */}
-        <div className="border border-gray-200 rounded-[12px] p-4 mb-5">
+        <div className="border border-gray-200 rounded-[12px] p-4 mb-4">
           <p className="text-[0.813rem] font-medium text-gray-500 mb-0.5">Current Balance</p>
           <div className="text-[2rem] leading-none font-bold text-[#10A958] tracking-tight">
             N50,000
@@ -79,7 +86,7 @@ export function FundWalletModal({
         </div>
 
         {/* Amount Input */}
-        <div className="mb-5">
+        <div className="mb-4">
           <label className="block text-[0.875rem] font-bold text-[#374151] mb-2">Amount</label>
           <div className="flex items-center h-11 border border-gray-300 rounded-[8px] px-3 focus-within:border-gray-400 focus-within:ring-1 focus-within:ring-gray-400 transition-shadow">
             <span className="text-gray-600 font-medium text-[0.938rem] mt-px">
@@ -95,26 +102,22 @@ export function FundWalletModal({
           </div>
         </div>
 
-        {/* Radio Methods */}
-        <div className="flex flex-col gap-3.5 mt-2">
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <div className={`w-[22px] h-[22px] rounded-full border-[6.5px] flex items-center justify-center ${paymentMethod === 'bank' ? 'border-primary-blue bg-white' : 'border-[#E2E8F0] bg-transparent'}`}>
-            </div>
-            <span className="text-[0.938rem] font-medium text-gray-500 group-hover:text-gray-700">Bank Transfer</span>
-            <input type="radio" className="hidden" checked={paymentMethod === 'bank'} onChange={() => setPaymentMethod('bank')} />
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <div className={`w-[22px] h-[22px] rounded-full border-[6.5px] flex items-center justify-center ${paymentMethod === 'card' ? 'border-primary-blue bg-white' : 'border-[#E2E8F0] bg-transparent'}`}>
-            </div>
-            <span className="text-[0.938rem] font-medium text-gray-500 group-hover:text-gray-700">Card Payment</span>
-            <input type="radio" className="hidden" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
-          </label>
+        {/* Destination Bank Output (Label uses 'Amount' exactly as shown in screenshot) */}
+        <div className="mb-2">
+          <label className="block text-[0.875rem] font-bold text-[#374151] mb-2">Amount</label>
+          <div className="flex items-center h-11 border border-gray-300 rounded-[8px] px-3">
+            <Landmark size={18} className="text-[#374151]" strokeWidth={2.5} />
+            <span className="text-gray-300 font-light mx-2">|</span>
+            <span className="flex-1 font-medium text-gray-800 text-[0.938rem] truncate">
+              Gibson Bank - 123 456 7890
+            </span>
+          </div>
         </div>
 
         <div className="flex-1" />
 
         {/* Buttons */}
-        <div className="flex gap-3 mt-6">
+        <div className="flex gap-3 mb-5 mt-4">
           <button 
             onClick={onClose}
             type="button"
@@ -127,8 +130,14 @@ export function FundWalletModal({
             disabled={isLoading}
             className="flex-1 h-11 bg-[#090C35] text-white rounded-[8px] text-[0.938rem] font-bold hover:bg-[#070a2a] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Processing..." : "Fund Wallet"}
+            {isLoading ? "Processing..." : "Withdraw"}
           </button>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-center gap-1.5 text-gray-500 mt-auto">
+          <Lock size={14} strokeWidth={2.5} />
+          <span className="text-[0.75rem] font-medium">Your payment is secure and encrypted.</span>
         </div>
 
       </div>

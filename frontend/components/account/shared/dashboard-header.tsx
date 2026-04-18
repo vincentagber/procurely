@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Bell, Menu, Search, X } from "lucide-react";
+import { Bell, Menu, Search, X, Settings, ChevronDown } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useSidebar } from "./sidebar-context";
 
@@ -10,58 +10,56 @@ export function DashboardHeader() {
   const { isOpen, toggle } = useSidebar();
 
   return (
-    <header className="bg-white border-b border-slate-100 h-20 px-6 lg:px-12 flex items-center justify-between sticky top-0 z-30">
-
-      {/* ── Mobile: hamburger + brand ─────────────────────────────── */}
-      <div className="flex items-center gap-3 lg:hidden">
-        <button
-          onClick={toggle}
-          aria-label="Toggle navigation"
-          className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl text-slate-600 transition-colors"
-        >
-          {isOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
-        <h2 className="text-xl font-black text-[#0A1140]">
-          Procurely<span className="text-[10px] align-super">™</span>
-        </h2>
+    <header 
+      className="bg-white flex items-center justify-between sticky top-0 z-30"
+      style={{
+        maxWidth: '1158px',
+        width: '100%',
+        height: '61px',
+        paddingLeft: '10px'
+      }}
+    >
+      {/* Welcome Message */}
+      <div className="flex flex-col">
+        <h1 className="text-[20px] font-black text-[#0001FF] leading-none mb-1">Hello {user?.fullName?.split(' ')[0] || 'Olusegun'}!</h1>
+        <p className="text-[12px] font-bold text-slate-400">Welcome back, lets manage your procurement.</p>
       </div>
 
-      {/* ── Desktop: search bar ───────────────────────────────────── */}
-      <div className="flex-1 max-w-xl hidden lg:block">
-        <div className="relative">
-          <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-            size={18}
-          />
-          <input
-            type="text"
-            placeholder="Search for materials, suppliers, or orders..."
-            className="w-full h-11 pl-12 pr-4 bg-slate-50 border-none rounded-2xl text-sm font-medium focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+      {/* Right Actions Cluster */}
+      <div className="flex items-center gap-4">
+        {/* Search Bar - Rounded Pill */}
+        <div className="relative w-[340px]">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input 
+            type="text" 
+            placeholder="Search anything here..." 
+            className="w-full h-11 pl-12 pr-4 bg-white border border-slate-200 rounded-full text-[13px] font-medium text-slate-700 focus:ring-1 focus:ring-blue-100 outline-none transition-all shadow-sm"
           />
         </div>
-      </div>
 
-      {/* ── Right: bell + avatar ─────────────────────────────────── */}
-      <div className="flex items-center gap-4 lg:gap-8">
-        <div className="relative cursor-pointer group">
-          <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all">
+        {/* Action Icons */}
+        <div className="flex items-center gap-3">
+          <button className="relative w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-[#0C1457] hover:border-slate-300 transition-all shadow-sm">
             <Bell size={20} />
-          </div>
-          <div className="absolute top-2 right-2 w-2 h-2 bg-orange-600 rounded-full border-2 border-white" />
+            <div className="absolute top-2 right-2 w-2 h-2 bg-[#FF4A17] rounded-full border border-white" />
+          </button>
+          <button className="relative w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-[#0C1457] hover:border-slate-300 transition-all shadow-sm">
+            <Settings size={20} />
+            <div className="absolute top-2 right-2 w-2 h-2 bg-[#FF4A17] rounded-full border border-white" />
+          </button>
         </div>
 
-        <div className="flex items-center gap-3 pl-4 border-l border-slate-100">
-          <div className="text-right hidden sm:block">
-            <p className="text-[13px] font-black text-[#0A1140] leading-none mb-1">
-              {user?.fullName ? user.fullName.split(" ")[0] : "User"}
-            </p>
-            <p className="text-[10px] font-bold text-[#1D4ED8] uppercase tracking-widest">
-              {user?.roles?.[0] || "Global Partner"}
-            </p>
+        {/* Profile / Language Dropdown Pill */}
+        <div className="flex items-center gap-3 pl-2 pr-4 h-11 bg-white border border-slate-200 rounded-full shadow-sm hover:border-slate-300 transition-all cursor-pointer">
+          <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-50">
+            <img 
+               src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100&h=100" 
+               alt="User" 
+               className="w-full h-full object-cover" 
+            />
           </div>
-          <div className="h-10 w-10 bg-[#0A1140] rounded-xl overflow-hidden border border-slate-200 shadow-sm shrink-0 flex items-center justify-center text-white font-black text-sm uppercase">
-            {user?.fullName?.charAt(0) || "U"}
-          </div>
+          <span className="text-[12px] font-black text-[#0C1457]">Eng (NG)</span>
+          <ChevronDown size={14} className="text-[#0C1457]" />
         </div>
       </div>
     </header>

@@ -24,6 +24,9 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
+import { SuccessModal } from "@/components/account/success-modal";
+import { AuthenticatorModal } from "@/components/account/authenticator-modal";
+import { ChangePasswordModal } from "@/components/account/change-password-modal";
 
 export default function SettingsClient() {
    const router = useRouter();
@@ -31,6 +34,12 @@ export default function SettingsClient() {
   const [hasMounted, setHasMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("Profile Information");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [successModal, setSuccessModal] = useState<{ isOpen: boolean; title?: string; message: string }>({
+    isOpen: false,
+    message: ""
+  });
 
   // Form States
   const [profileData, setProfileData] = useState({
@@ -99,7 +108,10 @@ export default function SettingsClient() {
     try {
       await api.updateProfile(profileData);
       await refreshUser();
-      alert("Profile updated successfully!");
+      setSuccessModal({
+        isOpen: true,
+        message: "Your profile information has been successfully updated."
+      });
     } catch (err) {
       alert("Failed to update profile.");
     } finally {
@@ -111,9 +123,46 @@ export default function SettingsClient() {
     setIsUpdating(true);
     try {
       await api.updateCompany(companyData);
-      alert("Company details updated successfully!");
+      setSuccessModal({
+        isOpen: true,
+        message: "Your company information has been successfully updated."
+      });
     } catch (err) {
       alert("Failed to update company details.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleEnable2FA = async (code: string) => {
+    setIsUpdating(true);
+    try {
+      // Simulation of 2FA enablement
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsAuthModalOpen(false);
+      setSuccessModal({
+        isOpen: true,
+        message: "Two-factor authentication has been successfully enabled on your account."
+      });
+    } catch (err) {
+      alert("Failed to enable 2FA.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleChangePassword = async (data: any) => {
+    setIsUpdating(true);
+    try {
+      // Simulation of password change
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsPasswordModalOpen(false);
+      setSuccessModal({
+        isOpen: true,
+        message: "Your password has been successfully changed."
+      });
+    } catch (err) {
+      alert("Failed to change password.");
     } finally {
       setIsUpdating(false);
     }
@@ -156,27 +205,48 @@ export default function SettingsClient() {
           <span className="text-[#1D4ED8]">{activeTab}</span>
        </div>
 
-       {/* Header Section */}
-       <div className="space-y-2 mb-8">
-          <h1 className="text-3xl lg:text-4xl font-extrabold text-[#0A1140] tracking-tight">
-             {activeTab === "Delivery Address" ? "Delivery Addresses" 
-                : activeTab === "Notifications" ? "Notifications" : activeTab}
-          </h1>
-          <p className="text-[13px] font-medium text-slate-500">
-             {activeTab === "Company Details" 
-                ? "Manage your company information and billing details" 
-                : activeTab === "Delivery Address"
-                ? "Manage your locations for delivery and shipping"
-                : activeTab === "Payment Methods"
-                ? "Manage your saved bank accounts and cards"
-                : activeTab === "Notifications"
-                ? "Manage your communication preferences"
-                : "Manage your profile, company details, and system preferences"}
-          </p>
-       </div>
+        {/* Header Section */}
+        <div className="space-y-2 mb-8">
+           <h1 className="text-3xl lg:text-4xl font-extrabold text-[#0A1140] tracking-tight">
+              {activeTab === "Delivery Address" ? "Delivery Addresses" 
+                 : activeTab === "Notifications" ? "Notifications" : activeTab}
+           </h1>
+           <p className="text-[13px] font-medium text-slate-500">
+              {activeTab === "Company Details" 
+                 ? "Manage your company information and billing details" 
+                 : activeTab === "Delivery Address"
+                 ? "Manage your locations for delivery and shipping"
+                 : activeTab === "Payment Methods"
+                 ? "Manage your saved bank accounts and cards"
+                 : activeTab === "Notifications"
+                 ? "Manage your communication preferences"
+                 : "Manage your profile, company details, and system preferences"}
+           </p>
+        </div>
 
-       {/* Form Card */}
-       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <SuccessModal
+          isOpen={successModal.isOpen}
+          title={successModal.title}
+          message={successModal.message}
+          onClose={() => setSuccessModal(prev => ({ ...prev, isOpen: false }))}
+        />
+
+        <AuthenticatorModal 
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onEnable={handleEnable2FA}
+          isLoading={isUpdating}
+        />
+
+        <ChangePasswordModal
+          isOpen={isPasswordModalOpen}
+          onClose={() => setIsPasswordModalOpen(false)}
+          onConfirm={handleChangePassword}
+          isLoading={isUpdating}
+        />
+
+        {/* Form Card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           
           {/* Settings Tabs */}
           <div className="flex overflow-x-auto border-b border-slate-100 px-6 scrollbar-hide">
@@ -262,7 +332,12 @@ export default function SettingsClient() {
                       <div className="bg-slate-50/50 border border-slate-200 rounded-2xl p-6">
                          <div className="flex items-center justify-between xl:flex-row flex-col xl:items-center items-start gap-4 mb-4">
                             <span className="text-[13px] font-bold text-[#0A1140]">Enable Two-Factor Authentication</span>
-                            <button className="text-[12px] font-bold text-[#1D4ED8] hover:underline whitespace-nowrap">Set Up</button>
+                            <button 
+                              onClick={() => setIsAuthModalOpen(true)}
+                              className="text-[12px] font-bold text-[#1D4ED8] hover:underline whitespace-nowrap"
+                            >
+                              Set Up
+                            </button>
                          </div>
                          <div className="flex items-center gap-3 bg-white border border-slate-200 p-3 rounded-xl shadow-sm">
                             <div className="w-5 h-5 rounded-full bg-[#1D4ED8] flex items-center justify-center shrink-0">
@@ -280,7 +355,10 @@ export default function SettingsClient() {
                          <div className="relative flex items-center bg-white border border-slate-200 rounded-xl shadow-sm p-1.5 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
                             <Lock size={16} className="text-slate-400 absolute left-4" />
                             <input type="password" placeholder="Password" className="h-10 w-full bg-transparent pl-12 pr-4 text-[13px] font-medium text-[#0A1140] outline-none" defaultValue="********" />
-                            <button className="h-10 px-5 bg-[#0A1140] hover:bg-[#13184f] text-white rounded-lg text-[12px] font-bold shadow-md transition-colors shrink-0 whitespace-nowrap">
+                            <button 
+                              onClick={() => setIsPasswordModalOpen(true)}
+                              className="h-10 px-5 bg-[#0A1140] hover:bg-[#13184f] text-white rounded-lg text-[12px] font-bold shadow-md transition-colors shrink-0 whitespace-nowrap"
+                            >
                                Change Password
                             </button>
                          </div>

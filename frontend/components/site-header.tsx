@@ -46,16 +46,16 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
       {/* Top Bar - Dark Blue */}
       <div className="bg-[#000099] text-white">
         <div className="container-shell mx-auto flex h-[38px] items-center justify-between px-4">
-          <div className="flex items-center gap-5">
-            <InstagramIcon className="size-[15px] opacity-90 transition hover:opacity-100" />
-            <FacebookIcon className="size-[15px] opacity-90 transition hover:opacity-100" />
-            <LinkedinIcon className="size-[15px] opacity-90 transition hover:opacity-100" />
+          <div className="flex items-center gap-4">
+            <ThreadsIcon className="size-3.5 opacity-90 transition hover:opacity-100" />
+            <FacebookIcon className="size-3.5 opacity-90 transition hover:opacity-100" />
             <YoutubeIcon />
+            <LinkedinIcon className="size-3.5 opacity-90 transition hover:opacity-100" />
             <PinterestIcon />
             <TikTokIcon />
           </div>
-          <div className="flex items-center gap-2.5 text-[11px] font-bold tracking-wider">
-            <UserRound className="size-4" strokeWidth={2.5} />
+          <div className="flex items-center gap-2.5 text-[12px] font-medium tracking-tight">
+            <UserRound className="size-4" strokeWidth={1.5} />
             {user ? (
                <Link href="/account" className="hover:text-white/80">Account: {user.fullName.split(' ')[0]}</Link>
             ) : (
@@ -69,18 +69,13 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
       <div className="bg-[#E7E8EE] h-[81px] flex items-center">
         <div className="container-shell mx-auto flex items-center justify-between px-4 w-full">
           <Link href="/" className="shrink-0">
-            <Image
-              alt={site.name}
-              height={32}
-              priority
-              src={site.logoDark}
-              width={140}
-              className="h-auto w-[160px] object-contain"
-            />
+            <h2 className="text-[28px] font-bold text-[#0C1457] tracking-tighter">
+              Procurely<span className="text-[12px] align-super ml-0.5">™</span>
+            </h2>
           </Link>
 
           <form
-            className="hidden lg:flex relative h-[48px] w-full max-w-[620px] items-center overflow-hidden rounded-full bg-white shadow-sm"
+            className="hidden lg:flex relative h-[48px] w-full max-w-[550px] items-center overflow-hidden rounded-full bg-white"
             onSubmit={(event) => {
               event.preventDefault();
               const nextQuery = query.trim();
@@ -91,58 +86,51 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
             }}
           >
             <input
-              className="h-full w-full bg-transparent px-8 text-[14px] text-slate-800 outline-none placeholder:text-slate-400"
+              className="h-full w-full bg-transparent px-8 text-[14px] text-slate-800 outline-none placeholder:text-slate-400 font-medium"
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search product..."
               value={query}
             />
             <button
               aria-label="Search"
-              className="absolute right-0 top-0 flex h-full w-[64px] items-center justify-center bg-[#0A1140] text-white transition hover:bg-[#1D4ED8]"
+              className="absolute right-0 top-0 flex h-full w-[48px] items-center justify-center bg-[#0C1457] text-white transition hover:bg-primary-blue rounded-r-full"
               type="submit"
             >
               <Search className="size-5" />
             </button>
           </form>
 
-          <div className="flex items-center gap-6">
-            <Link href="/wishlist" className="relative p-1 text-[#0A1140] transition hover:scale-105 hover:text-[#1D4ED8]">
-              <Heart className="size-[26px]" strokeWidth={1.5} />
-              {wishlistCount > 0 && (
-                <span className="absolute -right-1.5 -top-1 flex size-4 items-center justify-center rounded-full bg-[#ef5350] text-[9px] font-bold text-white">
-                  {wishlistCount}
-                </span>
-              )}
+          <div className="flex items-center gap-8">
+            <Link href="/wishlist" className="relative p-1 text-[#0C1457] transition hover:scale-105">
+              <Heart className="size-[28px]" strokeWidth={2} />
+              <span className="absolute -right-2 -top-1 flex size-[18px] items-center justify-center rounded-full bg-[#FF4242] text-[10px] font-bold text-white">
+                4
+              </span>
             </Link>
-            <Link href="/account" className="p-1 text-[#0A1140] transition hover:scale-105 hover:text-[#1D4ED8]">
-              <UserRound className="size-[26px]" strokeWidth={1.5} />
+            <Link href="/account" className="p-1 text-[#0C1457] transition hover:scale-105">
+              <UserRound className="size-[28px]" strokeWidth={2} />
             </Link>
-            <button onClick={openCart} className="relative p-1 text-[#0A1140] transition hover:scale-105 hover:text-[#1D4ED8]">
-              <ShoppingBag className="size-[26px]" strokeWidth={1.5} />
-              {cartCount > 0 && (
-                <span className="absolute -right-1.5 -top-1 flex size-4 items-center justify-center rounded-full bg-[#1D4ED8] text-[9px] font-bold text-white">
-                  {cartCount}
-                </span>
-              )}
+            <button onClick={openCart} className="p-1 text-[#0C1457] transition hover:scale-105">
+              <ShoppingBag className="size-[28px]" strokeWidth={2} />
             </button>
             <button className="lg:hidden" onClick={() => setMenuOpen(!menuOpen)}>
-              <Menu className="size-[26px] text-[#0A1140]" />
+              <Menu className="size-[28px] text-[#0C1457]" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Bottom Bar - White */}
-      <div className="bg-white h-[60px] flex items-center shadow-sm relative z-20">
+      <div className="bg-white h-[60px] flex items-center relative z-20">
         <div className="container-shell mx-auto flex items-center justify-between px-4 w-full">
-          <nav className="hidden items-center gap-10 text-[14.5px] font-bold text-[#0A1140] lg:flex">
+          <nav className="hidden items-center gap-12 text-[15px] font-bold text-[#0C1457] lg:flex pl-4">
             {navigation.primaryLinks.map((link) => {
               const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
               return (
                 <Link
                   key={link.label}
                   href={link.href}
-                  className={cn("transition hover:text-[#1D4ED8]", isActive && "text-[#1D4ED8]")}
+                  className={cn("transition hover:text-primary-blue", isActive && "text-primary-blue")}
                 >
                   {link.label}
                 </Link>
@@ -152,7 +140,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
 
           <Link
             href="/contact-quote"
-            className="flex h-[42px] min-w-[200px] items-center justify-center rounded-[6px] bg-[#0000FF] px-8 text-[14px] font-bold text-white shadow-sm transition active:scale-[0.98] hover:bg-blue-800"
+            className="flex h-[44px] min-w-[220px] items-center justify-center rounded-[8px] bg-[#0001FF] px-8 text-[15px] font-bold text-white transition active:scale-[0.98] hover:bg-blue-800"
           >
             Submit BOQ / Contact
           </Link>
@@ -225,6 +213,16 @@ function YoutubeIcon() {
   return (
     <svg className="size-[15px] fill-white opacity-90 transition hover:opacity-100" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
       <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    </svg>
+  );
+}
+
+function ThreadsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+      <path d="M12 12.5c0 1.381 -0.56 2.5 -1.25 2.5s-1.25 -1.119 -1.25 -2.5s0.56 -2.5 1.25 -2.5s1.25 1.119 1.25 2.5z" />
+      <path d="M12 7c2.761 0 5 2.239 5 5s-2.239 5 -5 5s-5 -2.239 -5 -5s2.239 -5 5 -5z" />
     </svg>
   );
 }

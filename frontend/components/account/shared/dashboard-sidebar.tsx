@@ -36,13 +36,13 @@ export function DashboardSidebar() {
   };
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-[#0A1140]">
-      {/* Brand & User Card - Compacted Static Top */}
-      <div className="shrink-0">
-        <div className="px-8 pt-6 pb-2 flex items-center justify-between">
+    <div className="flex flex-col h-full bg-[#0C1457] pt-[17.47px] pr-[8.73px] pl-4">
+      {/* Brand & User Card */}
+      <div className="shrink-0 mb-8">
+        <div className="flex items-center justify-between mb-10 pl-2">
           <Link href="/" className="group">
-            <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-1 group-hover:text-blue-400 transition-colors">
-              Procurely<span className="text-[10px] align-super">™</span>
+            <h2 className="text-2xl font-bold text-white tracking-tight flex items-center">
+              Procurely<span className="text-[12px] align-super ml-0.5">™</span>
             </h2>
           </Link>
           <button onClick={close} className="lg:hidden p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors">
@@ -50,58 +50,62 @@ export function DashboardSidebar() {
           </button>
         </div>
 
-        <div className="mx-6 my-4 p-3 bg-white/5 rounded-xl flex items-center gap-3 border border-white/10">
-          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#1D4ED8] bg-slate-800 shrink-0">
-            <img src="/api/placeholder/100/100" className="w-full h-full object-cover" alt="User" />
+        <div className="flex items-center gap-3 pl-2">
+          <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-primary-blue bg-slate-800 shrink-0 shadow-lg">
+            <img 
+              src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=100&auto=format&fit=crop" 
+              className="w-full h-full object-cover" 
+              alt="User" 
+            />
           </div>
           <div className="min-w-0">
-            <p className="font-black text-[12px] leading-tight text-white truncate">
-              {user?.fullName || "Olusegun Akapo"}
+            <p className="font-bold text-[15px] leading-tight text-white mb-0.5">
+              Olusegun <br /> <span className="text-white">Akapo</span>
             </p>
-            <p className="text-[8px] text-white/40 font-black uppercase tracking-widest truncate mt-0.5">
+            <p className="text-[10px] text-white/60 font-medium">
               Procurement Manager
             </p>
           </div>
         </div>
-      </div>
 
-      {/* Nav - Tight Middle */}
-      <div className="px-6 flex-1 overflow-y-auto scrollbar-hide py-1">
-        <div className="text-[9px] font-black tracking-[0.2em] text-white/40 mb-4 px-2">
+        <div className="mt-8 mb-8 border-t border-white/10 w-full" />
+
+        <div className="text-[11px] font-bold tracking-wider text-white mb-4 pl-2">
           MAIN MENU
         </div>
-        <nav className="space-y-2">
+      </div>
+
+      {/* Nav */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
+        <nav className="flex flex-col" style={{ gap: '13.1px' }}>
           {menuItems.map((item) => {
             const active = isLinkActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all h-[44px] shadow-sm ${
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-[12px] transition-all h-[44px] ${
                   active
-                    ? "bg-[#1D4ED8] text-white font-black shadow-blue-900/40"
-                    : "bg-white text-slate-500 hover:bg-slate-50 font-bold border border-slate-100"
+                    ? "bg-[#0001FF] text-white font-bold"
+                    : "bg-white text-[#0C1457] hover:bg-gray-50 font-bold"
                 }`}
               >
-                <span className={`shrink-0 ${active ? "text-white" : "text-[#1D4ED8]"}`}>
-                  <item.icon size={16} />
+                <span className="shrink-0">
+                  <item.icon size={18} />
                 </span>
-                <span className="text-[11px] tracking-tight truncate">{item.label}</span>
+                <span className="text-[13px] tracking-tight truncate">{item.label}</span>
               </Link>
             );
           })}
-        </nav>
-      </div>
 
-      {/* Logout - Compact Bottom */}
-      <div className="px-6 pb-6 pt-4 shrink-0">
-        <button
-          onClick={logout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all h-[44px] bg-white text-slate-500 hover:bg-rose-50 hover:text-rose-500 font-bold border border-slate-100 shadow-sm"
-        >
-          <LogOut size={16} className="text-[#1D4ED8]" />
-          <span className="text-[11px] tracking-tight">Logout</span>
-        </button>
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-[12px] transition-all h-[44px] bg-white text-[#0C1457] hover:bg-gray-50 font-bold mt-auto"
+          >
+            <LogOut size={18} />
+            <span className="text-[13px] tracking-tight">Logout</span>
+          </button>
+        </nav>
       </div>
     </div>
   );
@@ -109,8 +113,8 @@ export function DashboardSidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="w-[280px] flex-shrink-0 hidden lg:flex flex-col sticky top-20 h-[calc(100vh-80px-30px)] z-10">
-        <div className="h-full rounded-[2.5rem] overflow-hidden shadow-2xl">
+      <aside className="w-[211px] flex-shrink-0 hidden lg:flex flex-col sticky top-0 h-screen z-10 p-0">
+        <div className="h-full rounded-r-[6.19px] overflow-hidden shadow-2xl">
           {sidebarContent}
         </div>
       </aside>
@@ -121,7 +125,7 @@ export function DashboardSidebar() {
       )}
       <aside
         className={`
-          fixed top-0 left-0 h-full w-[300px] z-50 overflow-hidden
+          fixed top-0 left-0 h-full w-[211px] z-50 overflow-hidden
           transition-transform duration-300 ease-in-out lg:hidden
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
         `}
