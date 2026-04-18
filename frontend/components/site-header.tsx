@@ -44,8 +44,8 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
   return (
     <header className="w-full">
       {/* Top Bar - Dark Blue */}
-      <div className="bg-[#0A1140] text-white">
-        <div className="container-shell mx-auto flex h-[42px] items-center justify-between px-4">
+      <div className="bg-[#000099] text-white">
+        <div className="container-shell mx-auto flex h-[38px] items-center justify-between px-4">
           <div className="flex items-center gap-5">
             <InstagramIcon className="size-[15px] opacity-90 transition hover:opacity-100" />
             <FacebookIcon className="size-[15px] opacity-90 transition hover:opacity-100" />
@@ -54,7 +54,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
             <PinterestIcon />
             <TikTokIcon />
           </div>
-          <div className="flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-wider">
+          <div className="flex items-center gap-2.5 text-[11px] font-bold tracking-wider">
             <UserRound className="size-4" strokeWidth={2.5} />
             {user ? (
                <Link href="/account" className="hover:text-white/80">Account: {user.fullName.split(' ')[0]}</Link>
@@ -66,8 +66,8 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
       </div>
 
       {/* Middle Bar - Light Grayish */}
-      <div className="bg-[#ebedf5] py-4">
-        <div className="container-shell mx-auto flex items-center justify-between px-4">
+      <div className="bg-[#E7E8EE] h-[81px] flex items-center">
+        <div className="container-shell mx-auto flex items-center justify-between px-4 w-full">
           <Link href="/" className="shrink-0">
             <Image
               alt={site.name}
@@ -80,7 +80,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
           </Link>
 
           <form
-            className="hidden lg:flex relative h-[52px] w-full max-w-[620px] items-center overflow-hidden rounded-full bg-white shadow-sm"
+            className="hidden lg:flex relative h-[48px] w-full max-w-[620px] items-center overflow-hidden rounded-full bg-white shadow-sm"
             onSubmit={(event) => {
               event.preventDefault();
               const nextQuery = query.trim();
@@ -91,7 +91,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
             }}
           >
             <input
-              className="h-full w-full bg-transparent px-8 text-[15px] text-slate-800 outline-none placeholder:text-slate-400"
+              className="h-full w-full bg-transparent px-8 text-[14px] text-slate-800 outline-none placeholder:text-slate-400"
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search product..."
               value={query}
@@ -107,35 +107,35 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
 
           <div className="flex items-center gap-6">
             <Link href="/wishlist" className="relative p-1 text-[#0A1140] transition hover:scale-105 hover:text-[#1D4ED8]">
-              <Heart className="size-7" strokeWidth={1.5} />
+              <Heart className="size-[26px]" strokeWidth={1.5} />
               {wishlistCount > 0 && (
-                <span className="absolute -right-1.5 -top-1 flex size-5 items-center justify-center rounded-full bg-[#ef5350] text-[10px] font-bold text-white">
+                <span className="absolute -right-1.5 -top-1 flex size-4 items-center justify-center rounded-full bg-[#ef5350] text-[9px] font-bold text-white">
                   {wishlistCount}
                 </span>
               )}
             </Link>
             <Link href="/account" className="p-1 text-[#0A1140] transition hover:scale-105 hover:text-[#1D4ED8]">
-              <UserRound className="size-7" strokeWidth={1.5} />
+              <UserRound className="size-[26px]" strokeWidth={1.5} />
             </Link>
             <button onClick={openCart} className="relative p-1 text-[#0A1140] transition hover:scale-105 hover:text-[#1D4ED8]">
-              <ShoppingBag className="size-7" strokeWidth={1.5} />
+              <ShoppingBag className="size-[26px]" strokeWidth={1.5} />
               {cartCount > 0 && (
-                <span className="absolute -right-1.5 -top-1 flex size-5 items-center justify-center rounded-full bg-[#1D4ED8] text-[10px] font-bold text-white">
+                <span className="absolute -right-1.5 -top-1 flex size-4 items-center justify-center rounded-full bg-[#1D4ED8] text-[9px] font-bold text-white">
                   {cartCount}
                 </span>
               )}
             </button>
             <button className="lg:hidden" onClick={() => setMenuOpen(!menuOpen)}>
-              <Menu className="size-7 text-[#0A1140]" />
+              <Menu className="size-[26px] text-[#0A1140]" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Bottom Bar - White */}
-      <div className="bg-white py-4 shadow-sm">
-        <div className="container-shell mx-auto flex items-center justify-between px-4">
-          <nav className="hidden items-center gap-10 text-[15.5px] font-bold text-[#0A1140] lg:flex">
+      <div className="bg-white h-[60px] flex items-center shadow-sm relative z-20">
+        <div className="container-shell mx-auto flex items-center justify-between px-4 w-full">
+          <nav className="hidden items-center gap-10 text-[14.5px] font-bold text-[#0A1140] lg:flex">
             {navigation.primaryLinks.map((link) => {
               const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
               return (
@@ -152,7 +152,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
 
           <Link
             href="/contact-quote"
-            className="flex h-[56px] min-w-[200px] items-center justify-center rounded-[12px] bg-[#1D4ED8] px-10 text-[15.5px] font-bold text-white shadow-lg shadow-blue-500/10 transition active:scale-[0.98] hover:bg-blue-800"
+            className="flex h-[42px] min-w-[200px] items-center justify-center rounded-[6px] bg-[#0000FF] px-8 text-[14px] font-bold text-white shadow-sm transition active:scale-[0.98] hover:bg-blue-800"
           >
             Submit BOQ / Contact
           </Link>

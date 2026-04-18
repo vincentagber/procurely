@@ -40,7 +40,7 @@ export default async function ProductPage({ params }: Props) {
 
            {/* Product Details */}
            <div className="w-full lg:w-1/2 flex flex-col justify-center">
-              <span className="text-[#ff6f4d] font-bold text-sm tracking-widest uppercase mb-4">{product.category}</span>
+
               <h1 className="text-4xl sm:text-5xl font-extrabold text-[#13184f] mb-6 leading-tight">{product.name}</h1>
               
               <div className="text-4xl font-black text-[#1900ff] mb-8">

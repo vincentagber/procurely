@@ -39,7 +39,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       >
         <div className="relative rounded-[16px] bg-[#f8f9fa] p-6 h-[260px] flex items-center justify-center transition-all duration-300 group-hover:bg-[#f1f3f6]">
           {product.badge ? (
-            <span className="absolute left-4 top-4 z-20 inline-flex h-[22px] items-center rounded bg-[#e8ecf4] px-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            <span className="absolute left-4 top-4 z-20 inline-flex h-[22px] items-center rounded-full bg-[#1D4ED8] px-2.5 text-[11px] font-bold lowercase tracking-wider text-white">
               {product.badge}
             </span>
           ) : null}
@@ -71,7 +71,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         </div>
 
         <div className="mt-4 flex flex-1 flex-col">
-          <p className="text-[11px] font-medium uppercase tracking-widest text-[#a1a1aa] mb-1">{product.category}</p>
+
           <Link href={`/products/${product.id}`} className="block group-hover:opacity-80 transition">
             <h3 className="text-[15px] font-bold leading-snug text-[#13184f]">
               {product.name}

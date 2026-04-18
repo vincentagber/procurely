@@ -32,13 +32,15 @@ export function ProductSection({
   return (
     <section className="container-shell py-12 md:py-16" id={id}>
       <div className="flex items-start justify-between gap-4">
-        <SectionHeading
-          actionHref="#explore-products"
-          actionLabel={topActionLabel}
-          accent={accent}
-          eyebrow={eyebrow}
-          lead={lead}
-        />
+        <div className="flex-1 min-w-0 w-full">
+          <SectionHeading
+            actionHref="#explore-products"
+            actionLabel={topActionLabel}
+            accent={accent}
+            eyebrow={eyebrow}
+            lead={lead}
+          />
+        </div>
 
         {showCarouselControls ? (
           <div className="hidden gap-3 pt-14 md:flex">

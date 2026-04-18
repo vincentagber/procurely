@@ -94,7 +94,7 @@ function ProductCard({ product }: { product: any }) {
 
          {/* Content Area */}
          <div className="flex-1 flex flex-col px-1">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 whitespace-nowrap truncate">{product.category}</p>
+
             <h3 className="text-[15px] font-extrabold text-[#0A1140] leading-snug mb-1.5">{product.name}</h3>
             <p className="text-[12px] font-medium text-slate-500 mb-5 line-clamp-2">{product.desc}</p>
             
