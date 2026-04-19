@@ -9,10 +9,13 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
+export const dynamic = "force-static";
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   const content = await getProcurelyContent();
   return content.products.map((product) => ({
-    id: product.id,
+    id: String(product.id),
   }));
 }
 

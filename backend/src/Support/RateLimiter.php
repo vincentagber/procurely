@@ -41,19 +41,19 @@ final class RateLimiter
                     $pdo->exec('DELETE FROM rate_limits WHERE reset_at < ' . $now);
                 }
 
-                $stmt = $pdo->prepare('SELECT hits, reset_at FROM rate_limits WHERE key = :key LIMIT 1');
+                $stmt = $pdo->prepare('SELECT hits, reset_at FROM rate_limits WHERE `key` = :key LIMIT 1');
                 $stmt->execute(['key' => $key]);
                 $row = $stmt->fetch();
 
                 if ($row === false) {
-                    $insert = $pdo->prepare('INSERT INTO rate_limits (key, hits, reset_at) VALUES (:key, 1, :reset_at)');
+                    $insert = $pdo->prepare('INSERT INTO rate_limits (`key`, hits, reset_at) VALUES (:key, 1, :reset_at)');
                     $insert->execute(['key' => $key, 'reset_at' => $resetAt]);
                     $hits = 1;
                     $currentResetAt = $resetAt;
                 } else {
                     $hits = (int) $row['hits'] + 1;
                     $currentResetAt = (int) $row['reset_at'];
-                    $update = $pdo->prepare('UPDATE rate_limits SET hits = :hits WHERE key = :key');
+                    $update = $pdo->prepare('UPDATE rate_limits SET hits = :hits WHERE `key` = :key');
                     $update->execute(['hits' => $hits, 'key' => $key]);
                 }
 

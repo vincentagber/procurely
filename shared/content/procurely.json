@@ -67,7 +67,7 @@
     }
   },
   "hero": {
-    "title": "PROCUREMENT FOR DEVELOPERS",
+    "title": "PROCUREMENT FOR DEVELOPERS. DONE RIGHT",
     "description": "BOQ-based procurement, online ordering, structured credit, and reliable delivery.",
     "ctaLabel": "Buy Now",
     "ctaHref": "/materials",
@@ -101,7 +101,7 @@
         "description": "Upload your BOQ and let us handle complex matching.",
         "ctaLabel": "Start Procuring",
         "href": "/contact-quote",
-        "cardImage": "/assets/design/product-rebar-rack.png",
+        "cardImage": "/assets/design/category-warehouse-v2.png",
         "variant": "wide"
       },
       {

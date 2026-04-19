@@ -58,7 +58,10 @@ final class Database
             }
 
             $dsn = sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', $host, $port, $name);
-            $this->connection = new PDO($dsn, $user, $pass);
+            $this->connection = new PDO($dsn, $user, $pass, [
+                PDO::ATTR_TIMEOUT => 5, // 5 seconds connection timeout
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            ]);
         } else {
             $directory = dirname($this->databasePath);
             if (!is_dir($directory)) {
@@ -78,13 +81,12 @@ final class Database
 
         $isMysql = $driver === 'mysql';
 
-        // Ensure schema is created / updated even when the DB file was initialized
-        // in an earlier version. CREATE TABLE IF NOT EXISTS is safe and will
-        // prevent one-off migration issues for existing databases.
-        $this->migrate($this->connection, $driver);
+        // Migration check moved to initialization block below
+        
 
         $initFlag = dirname($this->databasePath) . '/.initialized';
         if (!file_exists($initFlag)) {
+          $this->migrate($this->connection, $driver);
           file_put_contents($initFlag, date('Y-m-d H:i:s'));
         }
         
@@ -99,7 +101,9 @@ final class Database
         $text = $isMysql ? 'LONGTEXT' : 'TEXT';
         $dateTime = $isMysql ? 'DATETIME' : 'TEXT';
         $insertIgnore = $isMysql ? 'INSERT IGNORE' : 'INSERT OR IGNORE';
-        $onConflict = $isMysql ? 'ON CONFLICT(key) DO UPDATE SET hits = hits + 1, reset_at = $now' : 'ON CONFLICT(key) DO UPDATE SET hits = hits + 1, reset_at = excluded.reset_at';
+        $onConflict = $isMysql 
+            ? 'ON DUPLICATE KEY UPDATE hits = hits + 1, reset_at = VALUES(reset_at)' 
+            : 'ON CONFLICT(`key`) DO UPDATE SET hits = hits + 1, reset_at = excluded.reset_at';
         $now = $isMysql ? 'NOW()' : "datetime('now')";
 
         $sql = <<<SQL

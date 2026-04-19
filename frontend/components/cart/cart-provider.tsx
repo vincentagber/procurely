@@ -50,42 +50,10 @@ function writeCartToken(token: string): void {
 
 export type CartProviderProps = {
   children: ReactNode;
-  hydrateFromApi?: boolean;
-  catalog?: Product[];
   initialCart?: Cart | null;
   initialCartToken?: string | null;
   initialLastOrder?: Order | null;
 };
-
-function calculateCartTotals(items: Cart["items"]) {
-  const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
-  const serviceFee = subtotal >= 100000 ? 0 : subtotal > 0 ? 3500 : 0;
-  const vat = Math.round(subtotal * 0.075);
-  const shippingFee = subtotal > 0 ? 20000 : 0;
-
-  return {
-    subtotal,
-    vat,
-    shippingFee,
-    serviceFee,
-    total: subtotal + vat + shippingFee + serviceFee,
-  };
-}
-
-function buildCartItem(
-  product: Product,
-  quantity: number,
-  id: number,
-  cartToken: string,
-) {
-  return {
-    id,
-    cartToken,
-    quantity,
-    lineTotal: product.price * quantity,
-    product,
-  };
-}
 
 function buildEmptyCart(cartToken: string): Cart {
   return {
@@ -101,8 +69,6 @@ function buildEmptyCart(cartToken: string): Cart {
 
 export function CartProvider({
   children,
-  hydrateFromApi = true,
-  catalog = [],
   initialCart = null,
   initialCartToken = null,
   initialLastOrder = null,
@@ -113,6 +79,7 @@ export function CartProvider({
     initialCartToken ? initialCart ?? buildEmptyCart(initialCartToken) : initialCart,
   );
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastOrder, setLastOrder] = useState<Order | null>(initialLastOrder);
 
@@ -134,13 +101,7 @@ export function CartProvider({
   }
 
   useEffect(() => {
-    if (!hydrateFromApi) {
-      const nextToken = initialCartToken || "storybook-cart";
-      setCartToken(nextToken);
-      setCart((current) => current ?? initialCart ?? buildEmptyCart(nextToken));
-      return;
-    }
-
+    setMounted(true);
     // MEDIUM-11: Use sessionStorage (see above). Generate a new UUID if none exists.
     const storedToken = readCartToken();
     const nextToken = storedToken || window.crypto.randomUUID();
@@ -170,50 +131,10 @@ export function CartProvider({
       channel?.close();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrateFromApi, initialCart, initialCartToken]);
+  }, [initialCart, initialCartToken]);
 
   async function addItem(productId: string, quantity = 1) {
     if (!cartToken) {
-      return;
-    }
-
-    if (!hydrateFromApi) {
-      const product = catalog.find((item) => item.id === productId);
-
-      if (!product) {
-        setError("Unable to add item to cart.");
-        return;
-      }
-
-      startTransition(() => {
-        setCart((current) => {
-          const base = current ?? buildEmptyCart(cartToken);
-          const existing = base.items.find((item) => item.product.id === productId);
-          const nextItems = existing
-            ? base.items.map((item) =>
-                item.id === existing.id
-                  ? buildCartItem(product, item.quantity + quantity, item.id, cartToken)
-                  : item,
-              )
-            : [
-                ...base.items,
-                buildCartItem(
-                  product,
-                  quantity,
-                  Math.max(0, ...base.items.map((item) => item.id)) + 1,
-                  cartToken,
-                ),
-              ];
-
-          return {
-            cartToken,
-            items: nextItems,
-            ...calculateCartTotals(nextItems),
-          };
-        });
-      });
-      setError(null);
-      openCart();
       return;
     }
 
@@ -241,27 +162,6 @@ export function CartProvider({
       return;
     }
 
-    if (!hydrateFromApi) {
-      startTransition(() => {
-        setCart((current) => {
-          const base = current ?? buildEmptyCart(cartToken);
-          const nextItems = base.items.map((item) =>
-            item.id === id
-              ? buildCartItem(item.product, Math.max(1, quantity), item.id, cartToken)
-              : item,
-          );
-
-          return {
-            cartToken,
-            items: nextItems,
-            ...calculateCartTotals(nextItems),
-          };
-        });
-      });
-      setError(null);
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
@@ -282,23 +182,6 @@ export function CartProvider({
 
   async function removeItem(id: number) {
     if (!cartToken) {
-      return;
-    }
-
-    if (!hydrateFromApi) {
-      startTransition(() => {
-        setCart((current) => {
-          const base = current ?? buildEmptyCart(cartToken);
-          const nextItems = base.items.filter((item) => item.id !== id);
-
-          return {
-            cartToken,
-            items: nextItems,
-            ...calculateCartTotals(nextItems),
-          };
-        });
-      });
-      setError(null);
       return;
     }
 
@@ -323,44 +206,6 @@ export function CartProvider({
   async function checkout(payload: CheckoutPayload): Promise<Order | undefined> {
     if (!cartToken) {
       return;
-    }
-
-    if (!hydrateFromApi) {
-      const activeCart = cart ?? buildEmptyCart(cartToken);
-
-      if (activeCart.items.length === 0) {
-        setError("Cart is empty.");
-        return;
-      }
-
-      const order: Order = {
-        orderNumber: `PR-SB-${String(Math.floor(Math.random() * 100000)).padStart(5, "0")}`,
-        status: "processing",
-        customerName: payload.customerName,
-        customerEmail: payload.customerEmail,
-        phone: payload.phone,
-        address: payload.address,
-        subtotal: activeCart.subtotal,
-        vat: activeCart.vat,
-        shippingFee: activeCart.shippingFee,
-        serviceFee: activeCart.serviceFee,
-        total: activeCart.total,
-        createdAt: new Date().toISOString(),
-        items: activeCart.items.map((item) => ({
-          productId: item.product.id,
-          productName: item.product.name,
-          unitPrice: item.product.price,
-          quantity: item.quantity,
-          lineTotal: item.lineTotal,
-        })),
-      };
-
-      startTransition(() => {
-        setLastOrder(order);
-        setCart(buildEmptyCart(cartToken));
-      });
-      setError(null);
-      return order;
     }
 
     try {
@@ -388,10 +233,6 @@ export function CartProvider({
       return;
     }
 
-    if (!hydrateFromApi) {
-      return;
-    }
-
     await hydrateCart(cartToken);
   }
 
@@ -403,7 +244,7 @@ export function CartProvider({
   const value: CartContextValue = {
     cart,
     cartToken,
-    loading,
+    loading: mounted ? loading : false,
     error,
     lastOrder,
     addItem,

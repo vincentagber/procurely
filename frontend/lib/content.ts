@@ -1,15 +1,6 @@
 import { cache } from "react";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-
 import type { ApiEnvelope, Product, SiteContent } from "@/lib/types";
-
-const localContentPath = path.join(
-  process.cwd(),
-  "lib",
-  "content",
-  "procurely.json",
-);
+import contentFallback from "./content/procurely.json";
 
 const serverApiBase =
   process.env.API_BASE_URL ??
@@ -17,23 +8,33 @@ const serverApiBase =
   "http://127.0.0.1:8000";
 
 export const readLocalContent = async (): Promise<SiteContent> => {
-  try {
-    const raw = await readFile(localContentPath, "utf8");
-    return JSON.parse(raw) as SiteContent;
-  } catch (err) {
-    console.error("[readLocalContent] Error reading file at:", localContentPath, err);
-    throw err;
-  }
+  return contentFallback as SiteContent;
 };
 
 export const getProcurelyContent = async (): Promise<SiteContent> => {
-  // Always try API first for real-time MySQL data
+  // PHASE is set by Next.js during build. we also check for production NODE_ENV
+  const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
+                      process.env.PHASE === 'phase-production-build' ||
+                      process.env.NODE_ENV === 'production';
+  
+  // During static export build, we should prefer local content to ensure stability
+  if (isBuildTime) {
+     try {
+       const local = await readLocalContent();
+       if (local && local.products && local.products.length > 0) {
+         return local;
+       }
+     } catch (err) {
+       console.warn("[getProcurelyContent] Build-time local content read failed.", err);
+     }
+  }
+
+  // Always try API first for real-time MySQL data in development or if API_BASE_URL is set
   try {
-    console.log("[getProcurelyContent] Attempting to fetch from API:", serverApiBase);
     const response = await fetch(`${serverApiBase}/api/homepage`, {
-      cache: "no-store",
-      next: { revalidate: 0 },
-      signal: AbortSignal.timeout(10000),
+      cache: isBuildTime ? "force-cache" : "no-store",
+      next: isBuildTime ? { revalidate: 3600 } : { revalidate: 0 },
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!response.ok) {
@@ -43,14 +44,15 @@ export const getProcurelyContent = async (): Promise<SiteContent> => {
     const payload = (await response.json()) as ApiEnvelope<SiteContent>;
     return payload.data;
   } catch (err) {
-    console.warn("[getProcurelyContent] API fetch failed, falling back to local content.", err);
-    // Fallback to local content only if API fails
+    if (!isBuildTime) {
+      console.warn("[getProcurelyContent] API fetch failed, falling back to local content.", err);
+    }
+    // Fallback to local content
     try {
       const local = await readLocalContent();
       return local;
     } catch (fallbackErr) {
       console.error("[getProcurelyContent] Critical: Both API and local fallback failed.", fallbackErr);
-      // Last resort: return basic structure to prevent complete crash
       return {
         site: { name: "Procurely", tagline: "Infrastructure Made Simple", primaryColor: "#1D4ED8", logoDark: "", logoLight: "" },
         navigation: { primaryLinks: [], socialLinks: [], accountLinks: [] },

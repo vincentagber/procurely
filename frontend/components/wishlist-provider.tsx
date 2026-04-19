@@ -45,23 +45,42 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const [wishlistToken, setWishlistToken] = useState<string | null>(null);
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function hydrateWishlist(token: string) {
     try {
       setLoading(true);
+      // Attempt to load from storage first for instant UI response
+      if (typeof window !== "undefined") {
+        const cached = window.localStorage.getItem(`wishlist_cache_${token}`);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            setWishlist(parsed);
+          } catch {}
+        }
+      }
+
       const nextWishlist = await api.getWishlist(token);
+      
+      // Update cache
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(`wishlist_cache_${token}`, JSON.stringify(nextWishlist));
+      }
+      
       startTransition(() => {
         setWishlist(nextWishlist);
       });
     } catch (err) {
-      console.error("Failed to hydrate wishlist", err);
+      console.warn("Failed to hydrate wishlist from API, using cache if available", err);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
+    setMounted(true);
     const storedToken = readWishlistToken();
     const nextToken = storedToken || window.crypto.randomUUID();
     writeWishlistToken(nextToken);
@@ -121,7 +140,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const value: WishlistContextValue = {
     wishlist,
     wishlistToken,
-    loading,
+    loading: mounted ? loading : false,
     error,
     addItem,
     removeItem,

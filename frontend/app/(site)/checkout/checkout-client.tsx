@@ -57,9 +57,9 @@ export function CheckoutPageClient() {
       // 2. Initialize Paystack
       // @ts-ignore
       const handler = window.PaystackPop.setup({
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_mock_key',
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email: formData.email,
-        amount: total * 100, // Paystack expects amount in kobo/cents
+        amount: order.total * 100, // Paystack expects amount in kobo/cents
         currency: isNgn ? 'NGN' : 'USD',
         ref: order.orderNumber,
         callback: function(response: any) {

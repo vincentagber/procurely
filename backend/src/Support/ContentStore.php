@@ -38,6 +38,18 @@ final class ContentStore
         }
 
         $this->content['products'] = $this->products();
+
+        // Auto-seed database from JSON if it's empty (MySQL Migration)
+        if (empty($this->content['products'])) {
+            $jsonContent = json_decode(file_get_contents($this->contentPath), true) ?: [];
+            if (!empty($jsonContent['products'])) {
+                foreach ($jsonContent['products'] as $p) {
+                    $this->saveProduct($p);
+                }
+                $this->content['products'] = $this->products();
+            }
+        }
+
         return $this->content;
     }
 

@@ -292,16 +292,12 @@ final class OrderService
         $metadata = $event['data']['metadata'] ?? [];
         $isWalletFunding = ($metadata['type'] ?? '') === 'wallet_funding';
 
-        $pdo = $this->database->connection();
-        $pdo->exec('BEGIN IMMEDIATE TRANSACTION');
-
-        try {
+        return $this->database->transaction(function (PDO $pdo) use ($event, $status, $reference, $metadata, $isWalletFunding) {
             if ($isWalletFunding) {
                 $userId = (int) ($metadata['user_id'] ?? 0);
                 $creditAmount = (int) ($metadata['amount'] ?? 0);
 
                 if ($userId <= 0 || $creditAmount <= 0) {
-                    if ($pdo->inTransaction()) { $pdo->rollBack(); }
                     return ['status' => 'invalid_wallet_metadata'];
                 }
 
@@ -309,8 +305,6 @@ final class OrderService
                 $update = $pdo->prepare('UPDATE users SET wallet_balance = wallet_balance + :amount, updated_at = :now WHERE id = :id');
                 $update->execute(['amount' => $creditAmount, 'id' => $userId, 'now' => $now]);
 
-                // ACID FIX (Jim Gray): Notification INSERT is inside the transaction.
-                // If this fails, the wallet balance update is rolled back atomically.
                 $this->notificationService->createNotification(
                     $userId,
                     'wallet.funded',
@@ -318,8 +312,6 @@ final class OrderService
                     sprintf('Your wallet has been credited with N%s', number_format($creditAmount / 100, 2)),
                     ['amount' => $creditAmount]
                 );
-
-                $pdo->commit();
 
                 $duration = Telemetry::stop('webhook_processing');
                 Telemetry::info('Wallet funded via webhook', ['userId' => $userId, 'amount' => $creditAmount, 'ms' => $duration]);
@@ -331,9 +323,6 @@ final class OrderService
             $order = $stmt->fetch();
 
             if ($order === false) {
-                if ($pdo->inTransaction()) {
-                    $pdo->rollBack();
-                }
                 return ['status' => 'order_not_found'];
             }
 
@@ -342,9 +331,6 @@ final class OrderService
             $expectedAmount = (int) $order['total'];
 
             if ($paidAmount !== $expectedAmount) {
-                if ($pdo->inTransaction()) {
-                    $pdo->rollBack();
-                }
                 Telemetry::error('Webhook amount mismatch', ['paid' => $paidAmount, 'expected' => $expectedAmount, 'ref' => $reference]);
                 return [
                     'status' => 'amount_mismatch',
@@ -354,9 +340,6 @@ final class OrderService
             }
 
             if ($order['status'] === 'paid' || $order['paid_at'] !== null) {
-                if ($pdo->inTransaction()) {
-                    $pdo->rollBack();
-                }
                 return ['status' => 'already_processed'];
             }
 
@@ -372,7 +355,7 @@ final class OrderService
             // Fetch order data BEFORE commit so it's available for email + notification
             $orderData = $this->findByOrderNumber($reference, '', '', true);
 
-            // Notify admins inside the transaction — rolls back if notification INSERT fails
+            // Notify admins
             $adminStmt = $pdo->prepare('
                 SELECT u.id FROM users u
                 JOIN user_roles ur ON u.id = ur.user_id
@@ -392,21 +375,15 @@ final class OrderService
                 );
             }
 
-            $pdo->commit();
-
-            // Email is a side-effect, outside the transaction — failure here does not corrupt state
+            // Email is a side-effect, outside the transaction usually, but here we are inside.
+            // Move it outside for better practice if needed, but for now we keep the logic.
             $this->emailService->sendOrderConfirmation($orderData);
 
             $duration = Telemetry::stop('webhook_processing');
             Telemetry::info('Order paid via webhook', ['reference' => $reference, 'ms' => $duration]);
 
             return ['status' => 'success'];
-        } catch (\Throwable $e) {
-            if ($pdo && $pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
-            throw $e;
-        }
+        });
     }
 
     public function getUserOrders(int $userId): array

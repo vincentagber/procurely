@@ -21,18 +21,11 @@ const iconMap: Record<string, string> = {
 
 const heroShellClassName =
   "mx-auto w-full max-w-[1440px] px-5 sm:px-6 lg:px-8 xl:px-10";
-
 export function HeroSection({ hero, features }: HeroSectionProps) {
   const normalizedTitle = hero.title.toUpperCase();
   const titleSegments = normalizedTitle.split("DEVELOPERS.");
-  const firstLine =
-    titleSegments.length > 1 ? titleSegments[0].trim() : normalizedTitle;
-  const trailingLine =
-    titleSegments.length > 1 ? titleSegments[1].trim() : "";
-  const descriptionTail = "and reliable delivery.";
-  const descriptionLead = hero.description.endsWith(descriptionTail)
-    ? hero.description.slice(0, -descriptionTail.length).trim()
-    : hero.description;
+  const firstLine = titleSegments.length > 1 ? titleSegments[0].trim() : normalizedTitle;
+  const trailingLine = titleSegments.length > 1 ? titleSegments[1].trim() : "";
 
   return (
     <section id="how-it-works" className="w-full bg-white">
@@ -41,26 +34,33 @@ export function HeroSection({ hero, features }: HeroSectionProps) {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${hero.backgroundImage})` }}
         />
-        
+
         <div className="absolute inset-0 w-full max-w-[1440px] mx-auto">
-          <Reveal 
-            className="absolute top-1/2 -translate-y-1/2 left-5 xl:top-[103px] xl:translate-y-0 xl:left-[164px] w-[90%] max-w-[517px] xl:h-[228px] flex flex-col gap-[10px] z-10" 
+          <Reveal
+            className="absolute top-1/2 -translate-y-1/2 left-5 xl:top-[103px] xl:translate-y-0 xl:left-[164px] w-[90%] max-w-[550px] xl:h-[228px] flex flex-col gap-[10px] z-10"
             distance={44}
           >
-            <h1 className="flex flex-col gap-0 uppercase text-white w-full">
-              <span className="block font-black text-3xl sm:text-4xl md:text-[54px] leading-[1.05] tracking-tighter">
+            <h1 className="flex flex-col gap-0 uppercase text-white w-full font-display">
+              <span
+                className="block font-bold tracking-tight"
+                style={{ fontSize: '66.11px', lineHeight: '66.79px' }}
+              >
                 {firstLine}
               </span>
-              {trailingLine ? (
-                <span className="flex items-center gap-x-[12px] leading-[1.05] mt-1">
-                  <span className="font-black text-4xl sm:text-5xl md:text-[54px] tracking-tighter text-white">
-                    DEVELOPERS.
-                  </span>
-                  <span className="font-light text-3xl sm:text-4xl md:text-[54px] tracking-tight text-white opacity-90">
-                    {trailingLine}
-                  </span>
+              <span
+                className="flex items-baseline gap-x-[15px] mt-[-4px]"
+                style={{ fontSize: '66.11px', lineHeight: '66.79px' }}
+              >
+                <span className="font-bold tracking-tight text-white whitespace-nowrap">
+                  DEVELOPERS.
                 </span>
-              ) : null}
+                <span
+                  className="font-normal tracking-tight text-white/95 whitespace-nowrap"
+                  style={{ fontSize: '50px', lineHeight: '66.79px', fontWeight: 400 }}
+                >
+                  {trailingLine}
+                </span>
+              </span>
             </h1>
             <p className="max-w-[480px] text-[13px] leading-[1.6] text-white opacity-90 font-medium whitespace-pre-line">
               {hero.description}

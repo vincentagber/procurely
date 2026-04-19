@@ -14,11 +14,11 @@ final class Paystack
         
         $isDebug = filter_var($_ENV['APP_DEBUG'] ?? 'false', FILTER_VALIDATE_BOOL);
         
-        if ($key === '' && !$isDebug) {
-            throw new \RuntimeException('PAYSTACK_SECRET_KEY is required in production.');
+        if ($key === '') {
+            throw new \RuntimeException('PAYSTACK_SECRET_KEY is required.');
         }
 
-        $this->secretKey = $key ?: 'sk_test_procurely_mock_key';
+        $this->secretKey = $key;
     }
 
     public function isValidSignature(string $payload, string $signature): bool

@@ -16,10 +16,12 @@ export default async function MaterialsPage() {
   return (
     <div className="bg-[#f6f7fd]">
       {/* Breadcrumb Header */}
-      <div className="container-shell mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <p className="text-sm font-bold tracking-wide text-slate-400">
-          Home <span className="mx-3 text-slate-300">/</span> Pages <span className="mx-3 text-slate-300">/</span> <span className="text-[#13184f]">Materials</span>
-        </p>
+      <div className="container-shell mx-auto px-4 pt-10 pb-4 sm:px-6 lg:px-8">
+        <div className="w-full rounded-[10px] bg-[#F9FAFB] px-6 py-4">
+          <p className="text-[14px] font-bold tracking-tight text-[#98A2B3]">
+            Home <span className="mx-2 text-[#98A2B3]">/</span> pages <span className="mx-2 text-[#98A2B3]">/</span> <span className="text-[#04071E]">Materials</span>
+          </p>
+        </div>
       </div>
 
       <Suspense fallback={<div className="container-shell mx-auto px-4 py-32 text-center text-[#13184f] font-bold text-2xl">Loading catalog...</div>}>

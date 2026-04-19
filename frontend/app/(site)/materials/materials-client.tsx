@@ -50,28 +50,21 @@ export function MaterialsClient({ products }: { products: Product[] }) {
   
   return (
     <div className="container-shell mx-auto px-4 pb-20 sm:px-6 lg:px-8 relative">
-      <div className="mb-10 flex flex-col items-start gap-4 md:flex-row md:items-end md:justify-between w-full pt-8">
-        <div className="max-w-3xl">
-          <h1 className="mb-3 text-[32px] font-extrabold tracking-[-0.01em] text-[#13184f] sm:text-4xl">Browse Our Materials</h1>
-          <p className="text-[17px] text-slate-500 font-medium leading-relaxed max-w-xl">Explore thousands of verified building materials with competitive pricing and reliable delivery across Lagos.</p>
-        </div>
-        
-        <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-3 shrink-0 mt-6 md:mt-0 pt-6 md:pt-0 border-t sm:border-t-0 border-slate-100">
-           <button 
-             onClick={() => setShowFilters(true)}
-             className="flex lg:hidden items-center gap-2.5 px-6 h-12 bg-white border border-slate-200 rounded-full font-bold text-slate-700 shadow-sm hover:border-[#1900ff] transition-all"
-           >
-             <Filter className="size-4" />
-             Filters
-           </button>
-           <div className="flex items-center gap-3">
-             <span className="hidden sm:inline text-[15px] font-semibold text-slate-400">Sort by:</span>
-             <button className="flex items-center gap-2 text-[15px] font-bold text-[#13184f] transition hover:text-[#1900ff] cursor-pointer bg-white px-4 h-12 sm:h-auto rounded-full border sm:border-0 border-slate-200 sm:p-0">
+      <div className="mb-10 flex flex-col w-full pt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full mb-6 gap-4">
+           <h1 className="text-[32px] sm:text-[36px] font-extrabold tracking-tight text-[#04071E]">Browse Our Materials</h1>
+           
+           <div className="flex items-center gap-2">
+             <span className="text-[15px] font-bold text-[#98A2B3]">Filter by</span>
+             <button className="flex items-center gap-2 text-[15px] cursor-pointer font-bold text-[#04071E] hover:opacity-80 transition-opacity">
                Newest
-               <ChevronDown className="size-[18px]" strokeWidth={2.5} />
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-80"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
              </button>
            </div>
         </div>
+        <p className="text-[14px] text-[#667085] font-medium leading-[1.6] max-w-[480px]">
+           Explore thousands of verified building materials with competitive pricing and reliable delivery across Lagos.
+        </p>
       </div>
 
       <div className="flex flex-col gap-10 lg:flex-row items-start relative border-t border-slate-100 pt-10">

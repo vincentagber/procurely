@@ -5,47 +5,98 @@ declare(strict_types=1);
 namespace Procurely\Api\Support;
 
 /**
- * Simulated Payment Processor with Circuit Breaker implementation.
+ * Functional Paystack Payment Processor with Circuit Breaker.
+ * This implementation connects to the live Paystack API and handles 
+ * real transactions, eliminating all mock behaviors.
  */
 final class PaymentProcessor implements PaymentProcessorInterface
 {
-    private const FAILURE_THRESHOLD = 3;
-    private const RECOVERY_TIMEOUT_SECONDS = 30;
+    private const FAILURE_THRESHOLD = 5;
+    private const RECOVERY_TIMEOUT_SECONDS = 60;
+    
+    private string $secretKey;
 
     public function __construct(
         private readonly Database $database
     ) {
+        $this->secretKey = $_ENV['PAYSTACK_SECRET_KEY'] ?? '';
+        if ($this->secretKey === '') {
+            throw new \RuntimeException('Critical: PAYSTACK_SECRET_KEY environment variable is missing.');
+        }
     }
 
     /**
-     * Simulate a payment capture with circuit breaker.
+     * Create a real Paystack payment transaction.
      */
-    public function capture(string $orderNumber, int $amountCents): bool
+    public function createPaymentIntent(string $orderNumber, int $amountCents, string $customerEmail = '', string $currency = 'NGN'): array
     {
         if ($this->isCircuitOpen()) {
-            throw new ApiException('Payment gateway is currently unavailable. Please try again later.', 503);
+            throw new ApiException('Payment gateway is currently experiencing high latency. Please retry in 60 seconds.', 503);
         }
 
+        $url = "https://api.paystack.co/transaction/initialize";
+        $fields = [
+            'reference' => $orderNumber,
+            'amount' => $amountCents, // Paystack amount is in kobo (Subunit)
+            'currency' => strtoupper($currency),
+            'email' => $customerEmail ?: 'info@useprocurely.com',
+            'metadata' => [
+                'order_number' => $orderNumber,
+                'source' => 'Procurely E-commerce'
+            ]
+        ];
+
         try {
-            // Simulate external network latency with 1s timeout
-            // In real code: $ch = curl_init(); curl_setopt($ch, CURLOPT_TIMEOUT, 2); ...
+            $response = $this->postRequest($url, $fields);
             
-            // Simulation: 10% chance of a "hang" or "failure"
-            if (random_int(1, 100) > 90) {
-                throw new \RuntimeException('Gateway Timeout');
+            if (!($response['status'] ?? false)) {
+                throw new \RuntimeException($response['message'] ?? 'Paystack initialization failed.');
             }
 
-            return true;
+            return [
+                'authorization_url' => $response['data']['authorization_url'],
+                'access_code' => $response['data']['access_code'],
+                'reference' => $response['data']['reference'],
+                // Maintain compatibility with existing intent-based UI
+                'client_secret' => $response['data']['access_code'],
+                'payment_intent_id' => $response['data']['reference']
+            ];
         } catch (\Throwable $e) {
             $this->recordFailure();
-            throw new ApiException('Payment processing failed. Please retry.', 502);
+            throw new ApiException('Failed to reach payment gateway: ' . $e->getMessage(), 502);
         }
     }
 
+    /**
+     * Confirm/Verify a Paystack transaction status.
+     */
+    public function confirmPaymentIntent(string $paymentIntentId): bool
+    {
+        $url = "https://api.paystack.co/transaction/verify/" . rawurlencode($paymentIntentId);
+
+        try {
+            $response = $this->getRequest($url);
+            return ($response['status'] ?? false) && ($response['data']['status'] ?? '') === 'success';
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Capture method - for Paystack, this validates the final success state.
+     */
+    public function capture(string $orderNumber, int $amountCents, string $customerEmail = ''): bool
+    {
+        return $this->confirmPaymentIntent($orderNumber);
+    }
+
+    /**
+     * Circuit Breaker Logic
+     */
     private function isCircuitOpen(): bool
     {
         $pdo = $this->database->connection();
-        $stmt = $pdo->prepare('SELECT hits, reset_at FROM rate_limits WHERE key = "cb:payment" LIMIT 1');
+        $stmt = $pdo->prepare('SELECT hits, reset_at FROM rate_limits WHERE `key` = "cb:payment" LIMIT 1');
         $stmt->execute();
         $row = $stmt->fetch();
 
@@ -58,10 +109,9 @@ final class PaymentProcessor implements PaymentProcessorInterface
 
         if ($failures >= self::FAILURE_THRESHOLD) {
             if (time() - $lastFailure < self::RECOVERY_TIMEOUT_SECONDS) {
-                return true; // Circuit is TRIPped
+                return true; 
             }
-            // Half-open: reset failures to 0 to allow trial
-            $pdo->exec('DELETE FROM rate_limits WHERE key = "cb:payment"');
+            $pdo->exec('DELETE FROM rate_limits WHERE `key` = "cb:payment"');
         }
 
         return false;
@@ -70,26 +120,58 @@ final class PaymentProcessor implements PaymentProcessorInterface
     private function recordFailure(): void
     {
         $pdo = $this->database->connection();
+        $isMysql = ($_ENV['DB_DRIVER'] ?? 'sqlite') === 'mysql';
         $key = "cb:payment";
         $now = time();
 
-        $pdo->exec("INSERT INTO rate_limits (key, hits, reset_at) 
-                    VALUES ('$key', 1, $now) 
-                    ON CONFLICT(key) DO UPDATE SET hits = hits + 1, reset_at = $now");
+        if ($isMysql) {
+            $sql = "INSERT INTO rate_limits (`key`, hits, reset_at) 
+                    VALUES (:key, 1, :now) 
+                    ON DUPLICATE KEY UPDATE hits = hits + 1, reset_at = VALUES(reset_at)";
+        } else {
+            $sql = "INSERT INTO rate_limits (`key`, hits, reset_at) 
+                    VALUES (:key, 1, :now) 
+                    ON CONFLICT(`key`) DO UPDATE SET hits = hits + 1, reset_at = excluded.reset_at";
+        }
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['key' => $key, 'now' => $now]);
     }
 
-    public function createPaymentIntent(string $orderNumber, int $amountCents, string $currency = 'usd'): array
+    private function postRequest(string $url, array $fields): array
     {
-        // Mock implementation
-        return [
-            'client_secret' => 'pi_mock_' . uniqid() . '_secret_mock',
-            'payment_intent_id' => 'pi_mock_' . uniqid(),
-        ];
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Authorization: Bearer " . $this->secretKey,
+            "Content-Type: application/json"
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+        $result = curl_exec($ch);
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        return json_decode($result ?: '{}', true);
     }
 
-    public function confirmPaymentIntent(string $paymentIntentId): bool
+    private function getRequest(string $url): array
     {
-        // Mock implementation - simulate success
-        return true;
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Authorization: Bearer " . $this->secretKey,
+            "Content-Type: application/json"
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+        $result = curl_exec($ch);
+        curl_close($ch);
+
+        return json_decode($result ?: '{}', true);
     }
 }
