@@ -49,7 +49,7 @@ final class AuthService
             throw new ApiException('An account with this email already exists.', 409);
         }
 
-        $createdAt = (new DateTimeImmutable())->format(DateTimeImmutable::ATOM);
+        $createdAt = (new DateTimeImmutable())->format('Y-m-d H:i:s');
         $uuid = Uuid::uuid7()->toString();
         $statement = $pdo->prepare(
             'INSERT INTO users (uuid, full_name, email, password_hash, wallet_balance, created_at, updated_at) VALUES (:uuid, :full_name, :email, :password_hash, 0, :created_at, :updated_at)'
@@ -128,7 +128,7 @@ final class AuthService
 
         $token = $this->issueToken($pdo, (int) $user['id']);
 
-        $roles = $user['roles'] ? explode(',', $user['roles']) : [];
+        $roles = !empty($user['roles']) ? explode(',', (string)$user['roles']) : [];
         $permissions = $this->getUserPermissions($pdo, (int) $user['id']);
 
         return [
@@ -163,7 +163,7 @@ final class AuthService
         $rawToken = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $rawToken);
         $now = new DateTimeImmutable();
-        $expiresAt = $now->modify(sprintf('+%d minutes', self::RESET_TOKEN_TTL_MINUTES))->format(DateTimeImmutable::ATOM);
+        $expiresAt = $now->modify(sprintf('+%d minutes', self::RESET_TOKEN_TTL_MINUTES))->format('Y-m-d H:i:s');
 
         $cleanup = $pdo->prepare('DELETE FROM password_reset_requests WHERE user_id = :user_id');
         $cleanup->execute(['user_id' => $user['id']]);
@@ -175,7 +175,7 @@ final class AuthService
             'user_id' => $user['id'],
             'token_hash' => $tokenHash,
             'expires_at' => $expiresAt,
-            'created_at' => $now->format(DateTimeImmutable::ATOM),
+            'created_at' => $now->format('Y-m-d H:i:s'),
         ]);
 
         // Send reset email
@@ -220,7 +220,7 @@ final class AuthService
             throw new ApiException('This email is already in use by another account.', 409, ['field' => 'email']);
         }
 
-        $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         $stmt = $pdo->prepare('UPDATE users SET full_name = :full_name, email = :email, phone = :phone, whatsapp = :whatsapp, updated_at = :now WHERE id = :id');
         $stmt->execute([
             'full_name' => $fullName,
@@ -274,7 +274,7 @@ final class AuthService
     public function resolveToken(string $bearerToken): ?array
     {
         $tokenHash = hash('sha256', $bearerToken);
-        $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         
         $pdo = $this->database->connection();
         $statement = $pdo->prepare(
@@ -291,7 +291,7 @@ final class AuthService
         $user = $statement->fetch();
 
         if ($user) {
-            $user['roles'] = $user['roles'] ? explode(',', $user['roles']) : [];
+            $user['roles'] = !empty($user['roles']) ? explode(',', (string)$user['roles']) : [];
             $user['permissions'] = $this->getUserPermissions($pdo, (int) $user['id']);
         }
 
@@ -303,8 +303,8 @@ final class AuthService
         $token = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $token);
         $now = new \DateTimeImmutable();
-        $createdAt = $now->format(\DateTimeImmutable::ATOM);
-        $expiresAt = $now->modify('+30 days')->format(\DateTimeImmutable::ATOM);
+        $createdAt = $now->format('Y-m-d H:i:s');
+        $expiresAt = $now->modify('+30 days')->format('Y-m-d H:i:s');
 
         $statement = $pdo->prepare('INSERT INTO user_sessions (user_id, session_token_hash, expires_at, created_at, last_activity) VALUES (:user_id, :token_hash, :expires_at, :created_at, :last_activity)');
         $statement->execute([

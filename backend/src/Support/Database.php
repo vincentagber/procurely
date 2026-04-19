@@ -84,10 +84,19 @@ final class Database
         // Migration check moved to initialization block below
         
 
-        $initFlag = dirname($this->databasePath) . '/.initialized';
-        if (!file_exists($initFlag)) {
+        // Self-healing migration: check if the core users table exists
+        $shouldMigrate = false;
+        try {
+            $this->connection->query("SELECT 1 FROM users LIMIT 1");
+        } catch (\PDOException) {
+            $shouldMigrate = true;
+        }
+
+        if ($shouldMigrate) {
           $this->migrate($this->connection, $driver);
-          file_put_contents($initFlag, date('Y-m-d H:i:s'));
+          // Still update the local flag for dual-check
+          $initFlag = dirname($this->databasePath) . '/.initialized';
+          @file_put_contents($initFlag, date('Y-m-d H:i:s'));
         }
         
         return $this->connection;

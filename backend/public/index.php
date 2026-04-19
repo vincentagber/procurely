@@ -71,7 +71,7 @@ $adminMiddleware = function (ServerRequestInterface $request, $handler) use ($au
     }
 
     $user = $authService->resolveToken($token);
-    if (!$user || $user['role'] !== 'admin') {
+    if (!$user || !isset($user['roles']) || !in_array('admin', (array)$user['roles'], true)) {
         throw new ApiException('Forbidden: Admin access only.', 403);
     }
 
@@ -468,6 +468,18 @@ $errorMiddleware->setDefaultErrorHandler(
             'line' => $exception->getLine(),
             'trace' => $exception->getTraceAsString(),
         ] : [];
+
+        // Log the error to a file for debugging
+        $logMessage = sprintf(
+            "[%s] %s: %s in %s:%d\n%s\n",
+            date('Y-m-d H:i:s'),
+            $exception::class,
+            $exception->getMessage(),
+            $exception->getFile(),
+            $exception->getLine(),
+            $exception->getTraceAsString()
+        );
+        @file_put_contents(dirname(__DIR__) . '/storage/logs/error.log', $logMessage, FILE_APPEND);
 
         return JsonResponder::error($response, 'Unexpected server error.', 500, $details);
     }

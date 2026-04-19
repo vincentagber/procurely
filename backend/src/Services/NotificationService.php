@@ -31,7 +31,7 @@ final class NotificationService
     public function markAsRead(int $userId, int $notificationId): void
     {
         $pdo = $this->database->connection();
-        $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         
         $stmt = $pdo->prepare('
             UPDATE notifications
@@ -48,7 +48,7 @@ final class NotificationService
     public function createNotification(int $userId, string $type, string $title, ?string $message = null, ?array $data = null): void
     {
         $pdo = $this->database->connection();
-        $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         
         $stmt = $pdo->prepare('
             INSERT INTO notifications (user_id, type, title, message, data, created_at)

@@ -62,7 +62,7 @@ final class OrderService
             // 2. Inventory Validation & Deduction
             $checkStock = $pdo->prepare('SELECT stock_level FROM inventory WHERE product_id = :product_id LIMIT 1');
             $deductStock = $pdo->prepare('UPDATE inventory SET stock_level = stock_level - :qty, updated_at = :now WHERE product_id = :product_id AND stock_level >= :qty');
-            $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+            $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
 
             foreach ($cart['items'] as $item) {
                 $productId = (string) $item['product']['id'];
@@ -81,7 +81,7 @@ final class OrderService
 
             // 3. Persist Order Root
             $orderNumber = sprintf('PR-%s', strtoupper(substr(bin2hex(random_bytes(6)), 0, 10)));
-            $createdAt = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+            $createdAt = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
             
             $insertOrder = $pdo->prepare('
                 INSERT INTO orders (user_id, order_number, cart_token, customer_name, customer_email, phone, address, subtotal, vat, shipping_fee, service_fee, total, status, created_at)
@@ -301,7 +301,7 @@ final class OrderService
                     return ['status' => 'invalid_wallet_metadata'];
                 }
 
-                $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+                $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
                 $update = $pdo->prepare('UPDATE users SET wallet_balance = wallet_balance + :amount, updated_at = :now WHERE id = :id');
                 $update->execute(['amount' => $creditAmount, 'id' => $userId, 'now' => $now]);
 
@@ -343,7 +343,7 @@ final class OrderService
                 return ['status' => 'already_processed'];
             }
 
-            $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+            $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
             $update = $pdo->prepare('UPDATE orders SET status = "paid", paid_at = :paid_at WHERE order_number = :reference');
             $update->execute(['paid_at' => $now, 'reference' => $reference]);
 

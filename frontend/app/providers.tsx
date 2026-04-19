@@ -12,8 +12,7 @@ import { UiProvider } from "@/components/ui/ui-provider";
 import { WishlistProvider } from "@/components/wishlist-provider";
 
 import { AuthProvider } from "@/components/auth/auth-provider";
-
-
+import { NotificationProvider } from "@/components/notifications/notification-provider";
 
 type ProvidersProps = {
   children: ReactNode;
@@ -29,13 +28,15 @@ export function Providers({
   return (
     <UiProvider>
       <AuthProvider initialUser={initialUser}>
-        <CartProvider>
-          <WishlistProvider>
-            {children}
-            {withDrawers ? <CartDrawer /> : null}
-            {withDrawers ? <QuoteDrawer /> : null}
-          </WishlistProvider>
-        </CartProvider>
+        <NotificationProvider>
+          <CartProvider>
+            <WishlistProvider>
+              {children}
+              {withDrawers ? <CartDrawer /> : null}
+              {withDrawers ? <QuoteDrawer /> : null}
+            </WishlistProvider>
+          </CartProvider>
+        </NotificationProvider>
       </AuthProvider>
     </UiProvider>
   );

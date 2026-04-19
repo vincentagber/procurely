@@ -35,7 +35,7 @@ final class EngagementService
             'phone' => $phone,
             'project_location' => $projectLocation,
             'boq_notes' => $boqNotes,
-            'created_at' => (new DateTimeImmutable())->format(DateTimeImmutable::ATOM),
+            'created_at' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
 
         return [
@@ -55,7 +55,7 @@ final class EngagementService
         $statement = $this->database->connection()->prepare($sql);
         $statement->execute([
             'email' => $email,
-            'created_at' => (new DateTimeImmutable())->format(DateTimeImmutable::ATOM),
+            'created_at' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
 
         return [

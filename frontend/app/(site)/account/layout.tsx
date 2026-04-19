@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useRouter } from "next/navigation";
 import { DashboardSidebar } from "@/components/account/shared/dashboard-sidebar";
+import { DashboardHeader } from "@/components/account/shared/dashboard-header";
 import { SidebarProvider } from "@/components/account/shared/sidebar-context";
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
@@ -30,12 +31,12 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
    return (
     <SidebarProvider>
       <div className="min-h-screen bg-[#F8F9FA] text-slate-800 font-sans flex flex-col">
-        {/* We use the SiteHeader from the parent (site) layout as shown in Figma */}
+        <DashboardHeader />
 
-        <div className="flex-1 flex justify-center px-4 xl:px-6 mt-8">
-          <div className="w-full max-w-[1440px] flex gap-4 min-w-0 mb-[30px]">
+        <div className="flex-1 flex justify-center px-4 xl:px-6">
+          <div className="w-full max-w-[1440px] flex gap-4 min-w-0">
             <DashboardSidebar />
-            <main className="flex-1 min-w-0 pb-[80px]">
+            <main className="flex-1 min-w-0 pb-[80px] mt-8">
               {children}
             </main>
           </div>
