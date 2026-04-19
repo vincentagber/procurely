@@ -16,6 +16,7 @@ const bebasNeue = Bebas_Neue({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://procurely.com"),
   title: "Procurely | Building Materials Procurement",
   description: "Procurement marketplace for BOQ-driven sourcing, verified materials, and structured checkout. The best construction materials platform.",
   keywords: "procurement, construction materials, BoQ, architecture, sourcing, marketplace",
@@ -44,7 +45,10 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${bebasNeue.variable} min-h-screen bg-white antialiased`}>
+      <body
+        className={`${inter.variable} ${bebasNeue.variable} min-h-screen bg-white antialiased`}
+        suppressHydrationWarning
+      >
         <Providers initialUser={user}>{children}</Providers>
         {/* Paystack Inline Script */}
         <script src="https://js.paystack.co/v1/inline.js" async />

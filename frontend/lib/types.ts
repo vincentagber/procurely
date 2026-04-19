@@ -66,6 +66,10 @@ export type SiteContent = {
     title: string;
     items: Testimonial[];
   };
+  modernTestimonials: {
+    title: string;
+    items: Testimonial[];
+  };
   footer: {
     subscribeTitle: string;
     subscribePromo: string;

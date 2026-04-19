@@ -59,8 +59,10 @@ export function AuthProvider({
   };
 
   useEffect(() => {
-    // On mount: only fetch if SSR gave us nothing (no initialUser)
-    if (!initialUser) {
+    // On mount: only fetch if SSR gave us nothing AND we have a token hint
+    const hasTokenHint = typeof window !== "undefined" && !!window.localStorage.getItem("procurely-auth-token");
+    
+    if (!initialUser && hasTokenHint) {
       refreshUser(true);
     } else {
       setLoading(false);

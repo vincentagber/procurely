@@ -45,11 +45,12 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval needed for Next.js turbopack/hmr development
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.paystack.co",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://*",
-              "connect-src 'self' http://127.0.0.1:8000 http://localhost:8000 api.useprocurely.com https://*",
+              "connect-src 'self' http://127.0.0.1:8000 http://localhost:8000 api.useprocurely.com https://* https://js.paystack.co",
+              "frame-src 'self' https://js.paystack.co",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

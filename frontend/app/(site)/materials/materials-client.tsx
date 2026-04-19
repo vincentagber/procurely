@@ -96,19 +96,36 @@ export function MaterialsClient({ products }: { products: Product[] }) {
              </button>
           </div>
 
-          <div className="space-y-8 h-[calc(100vh-160px)] lg:h-auto overflow-y-auto pr-2 lg:pr-0 lg:overflow-visible">
-            <div className="border border-slate-200 bg-white rounded-2xl p-7 shadow-[0_2px_10px_rgb(0,0,0,0.01)]">
-               <h3 className="mb-6 text-xl font-bold text-[#13184f]">Materials</h3>
-               <ul className="space-y-4">
+          <div className="space-y-6 h-[calc(100vh-160px)] lg:h-auto overflow-y-auto pr-2 lg:pr-0 lg:overflow-visible">
+            {/* Materials Filter */}
+            <div 
+              className="flex flex-col bg-white shadow-sm"
+              style={{
+                width: '100%',
+                maxWidth: '319px',
+                height: '296.58px',
+                gap: '13.41px',
+                paddingTop: '13.41px',
+                paddingRight: '20.12px',
+                paddingBottom: '13.41px',
+                paddingLeft: '20.12px',
+                borderRadius: '8.38px',
+                borderWidth: '0.84px',
+                borderColor: '#ECEFF2',
+                borderStyle: 'solid'
+              }}
+            >
+               <h3 className="m-0 text-[18px] font-bold leading-tight text-[#344054] shrink-0">Materials</h3>
+               <ul className="flex flex-col m-0 p-0 flex-grow justify-between">
                   {categories.map((item, idx) => {
                      const isActive = activeCategory === item;
                      return (
                        <li key={idx}>
-                          <label className="flex cursor-pointer items-center gap-4 group" onClick={() => { setActiveCategory(item); setLimit(12); if(window.innerWidth < 1024) setShowFilters(false); }}>
-                             <div className={`flex size-[18px] shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors duration-200 ${isActive ? 'border-[#1900ff] bg-white' : 'border-slate-300 bg-white group-hover:border-[#1900ff]'}`}>
-                                {isActive && <div className="size-[8px] rounded-full bg-[#1900ff]"></div>}
+                          <label className="flex cursor-pointer items-center gap-3.5 group" onClick={() => { setActiveCategory(item); setLimit(12); if(window.innerWidth < 1024) setShowFilters(false); }}>
+                             <div className={`flex size-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px] transition-colors duration-200 ${isActive ? 'border-[#344054] bg-[#344054]' : 'border-slate-200 bg-white group-hover:border-slate-300'}`}>
+                                {isActive && <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                              </div>
-                             <span className={`text-[14px] font-medium transition-colors select-none ${isActive ? 'text-[#1900ff] font-bold' : 'text-slate-600 group-hover:text-[#13184f]'}`}>{item}</span>
+                             <span className={`text-[14.5px] transition-colors select-none ${isActive ? 'text-[#344054] font-bold' : 'text-[#475467] font-semibold'}`}>{item}</span>
                           </label>
                        </li>
                      );
@@ -116,44 +133,92 @@ export function MaterialsClient({ products }: { products: Product[] }) {
                </ul>
             </div>
 
-            <div className="border border-slate-200 bg-white rounded-2xl p-7 shadow-[0_2px_10px_rgb(0,0,0,0.01)]">
-               <h3 className="mb-6 text-xl font-bold text-[#13184f]">Price Range</h3>
-               <div className="space-y-4">
-                  <div className="relative pt-2 pb-2">
+            {/* Price Filter */}
+            <div 
+              className="flex flex-col bg-white shadow-sm"
+              style={{
+                width: '100%',
+                maxWidth: '319px',
+                height: '105.99px',
+                gap: '13.41px',
+                paddingTop: '13.41px',
+                paddingRight: '20.12px',
+                paddingBottom: '13.41px',
+                paddingLeft: '20.12px',
+                borderRadius: '8.38px',
+                borderWidth: '0.84px',
+                borderColor: '#ECEFF2',
+                borderStyle: 'solid'
+              }}
+            >
+               <h3 className="m-0 text-[18px] font-bold text-[#344054] leading-none shrink-0">Price</h3>
+               <div className="flex flex-col flex-grow justify-between">
+                  <div className="relative w-full pt-1">
+                     <style dangerouslySetInnerHTML={{__html: `
+                       input[type=range]::-webkit-slider-thumb {
+                         -webkit-appearance: none;
+                         height: 14px;
+                         width: 14px;
+                         border-radius: 50%;
+                         background: #344054;
+                         cursor: pointer;
+                         margin-top: -6px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
+                       }
+                       input[type=range]::-webkit-slider-runnable-track {
+                         width: 100%;
+                         height: 2px;
+                         cursor: pointer;
+                         background: #D0D5DD;
+                       }
+                     `}} />
                      <input 
                        type="range" 
-                       min="10000" 
-                       max="100000000" 
+                       min="20000" 
+                       max="800000000" 
                        step="10000"
-                       value={maxPrice}
+                       value={Math.max(20000, maxPrice)}
                        onChange={(e) => setMaxPrice(Number(e.target.value))}
-                       className="w-full accent-[#1900ff] cursor-pointer h-[4px] bg-slate-200 appearance-none rounded-full"
-                       style={{ WebkitAppearance: 'none', appearance: 'none' }}
+                       className="w-full accent-[#344054] cursor-pointer h-[2px] bg-[#D0D5DD] appearance-none"
                      />
                   </div>
-                  <div className="flex items-center justify-between text-[13px] font-bold pt-2 tracking-tight">
-                     <span className="text-slate-500">₦10,000</span>
-                     <span className="text-slate-600">₦{(maxPrice).toLocaleString()}</span>
+                  <div className="flex items-center justify-between text-[14px] font-bold tracking-tight pb-1 mt-1 shrink-0">
+                     <span className="text-[#344054]">N20,000</span>
+                     <span className="text-[#344054]">N800,000,000</span>
                   </div>
                </div>
             </div>
 
-            <div className="flex flex-col overflow-hidden rounded-[24px] bg-[#ff6f4d] p-8 text-white shadow-xl shadow-orange-500/10">
-               <div className="mb-6 opacity-95">
+            {/* Bulk Promo Box */}
+            <div 
+              className="flex flex-col bg-[#FA5F29] border-[#FA5F29] border-solid shadow-sm relative overflow-hidden"
+              style={{
+                width: '100%',
+                maxWidth: '319px',
+                height: '217px',
+                gap: '13.41px',
+                paddingTop: '13.41px',
+                paddingRight: '15px',
+                paddingBottom: '13.41px',
+                paddingLeft: '15px',
+                borderRadius: '8.38px',
+                borderWidth: '0.84px'
+              }}
+            >
+               <div className="shrink-0">
                   <Image
                     alt="Procurely"
-                    className="h-6 w-auto object-contain"
-                    height={24}
-                    src="/assets/design/logo-light.png"
-                    width={100}
+                    className="h-[22px] w-auto object-contain"
+                    height={22}
+                    src="/assets/design/logo-dark.png"
+                    width={110}
                   />
                </div>
-               <h4 className="mb-3 text-[24px] font-black leading-tight tracking-tight text-white group-hover:scale-[1.02] transition-transform">Need Bulk Pricing?</h4>
-               <p className="mb-8 text-[14px] font-medium leading-relaxed text-white/90">Submit your BOQ for custom quotes from verified suppliers.</p>
+               <h4 className="text-[20px] m-0 font-extrabold leading-tight tracking-tight text-white transition-transform">Need Bulk Pricing?</h4>
+               <p className="text-[14px] m-0 font-medium leading-[1.4] text-white">Submit your BOQ for custom quotes from verified suppliers.</p>
                <Link 
                  href="/contact-quote" 
                  onClick={() => setShowFilters(false)} 
-                 className="flex h-12 w-full items-center justify-center rounded-xl bg-[#0b103e] text-[15px] font-bold text-white shadow-lg transition-all hover:bg-[#13184f] active:scale-[0.98] active:shadow-inner"
+                 className="mt-auto flex h-[44px] w-full shrink-0 items-center justify-center rounded-[8px] bg-[#04071E] text-[14px] font-bold text-white shadow-md transition-all hover:bg-black active:scale-[0.98]"
                 >
                   Submit BOQ
                </Link>

@@ -365,6 +365,35 @@
     }
   ],
   "testimonials": {
+    "title": "What Contractors Say",
+    "items": [
+      {
+        "id": "eric-simpson",
+        "name": "Eric Simpson",
+        "role": "Project Manager, Landmark",
+        "quote": "But I must explain to you, how all this mistaken idea of denouncing pleasure and praising pain was born.",
+        "rating": 5,
+        "cardImage": "/assets/design/testimonial-eric.png"
+      },
+      {
+        "id": "simons-cooper",
+        "name": "Simons Cooper",
+        "role": "Interior Designer",
+        "quote": "There was a small mistake in the order. In return, I got the owner enter and I could keep the wrong one for myself.",
+        "rating": 5,
+        "cardImage": "/assets/design/testimonial-simons.png"
+      },
+      {
+        "id": "kaleb-yurs",
+        "name": "Kaleb Yurs",
+        "role": "Independent Contractor",
+        "quote": "These settings don't provide big changes but only some small bit changes in spaces or borders for example.",
+        "rating": 5,
+        "cardImage": "/assets/design/testimonial-kaleb.png"
+      }
+    ]
+  },
+  "modernTestimonials": {
     "title": "Trusted by modern construction teams",
     "items": [
       {
