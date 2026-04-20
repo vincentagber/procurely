@@ -35,6 +35,7 @@ import {
   ShoppingBag
 } from "lucide-react";
 
+import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
 import { useAuth } from "@/components/auth/auth-provider";
 import {
   LineChart,
@@ -123,40 +124,32 @@ export default function AccountDashboardClient() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-[12px] font-bold tracking-wide">
-        <span className="text-slate-400">Home</span>
-        <span className="text-slate-300">/</span>
-        <span className="text-slate-400">pages</span>
-        <span className="text-slate-300">/</span>
-        <span className="text-[#1D4ED8]">my account</span>
-      </div>
-
+    <div className="space-y-10">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-[#0A1140]">Hello {user?.fullName?.split(' ')[0] || 'Olusegun'}!</h1>
-          <p className="text-[12px] font-bold text-slate-400 mt-1">Welcome back. Manage your procurement.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 mt-2">
+        <div 
+          className="flex flex-col"
+          style={{ width: '886px', height: '76.10px', gap: '23.1px' }}
+        >
+          <h1 className="text-4xl font-extrabold text-[#0001FF] tracking-tight m-0 leading-none">Hello {user?.roles?.includes('admin') ? 'Admin' : (user?.fullName?.split(' ')[0] || 'Admin')}!</h1>
+          <p className="text-[14px] font-medium text-slate-400 m-0 leading-tight">Welcome back, lets manage your procurement.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-sm">
-            <Bell size={16} />
-          </button>
-          <button className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-sm">
-            <Settings size={16} />
+        <div className="flex items-center gap-4">
+          <NotificationDropdown />
+          <button className="w-12 h-12 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-sm group hover:bg-slate-50 hover:shadow-md transition-all">
+            <Settings size={20} />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-[673.68px_1fr] gap-[18.32px]">
         {/* Main Content (Left) */}
-        <div className="space-y-6 min-w-0">
+        <div className="space-y-[18px] min-w-0">
           
-          {/* Top Stat Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Top Stat Cards Row */}
+          <div className="flex gap-[10.11px] w-[673.68px]">
             {/* Stat Card 1 */}
-            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between overflow-hidden">
+            <div className="flex-1 h-[84px] bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center justify-between overflow-hidden">
                <div>
                   <div className="flex items-center gap-2 mb-1">
                      <span className="text-2xl font-black text-[#0A1140]">124</span>
@@ -175,17 +168,18 @@ export default function AccountDashboardClient() {
             </div>
 
             {/* Stat Card 2 */}
-            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between overflow-hidden">
+            <div className="flex-1 h-[84px] bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center justify-between overflow-hidden">
                <div>
                   <div className="flex items-center gap-2 mb-1">
                      <span className="text-2xl font-black text-[#0A1140]">30</span>
                      <span className="text-[12px] font-bold text-slate-500">Request</span>
+                     <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">+3 new today</span>
                   </div>
-                  <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">+3 new today</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">+3 new today</p>
                </div>
                <div className="w-24 h-12">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={[{v:20},{v:60},{v:25},{v:50},{v:40},{v:70}]}>
+                    <LineChart data={[{v:20},{v:40},{v:25},{v:50},{v:35},{v:60}]}>
                        <Line type="monotone" dataKey="v" stroke="#10B981" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -193,174 +187,179 @@ export default function AccountDashboardClient() {
             </div>
 
             {/* Stat Card 3 */}
-            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between overflow-hidden">
+            <div className="flex-1 h-[84px] bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center justify-between overflow-hidden">
                <div>
                   <div className="flex items-center gap-2 mb-1">
                      <span className="text-2xl font-black text-[#0A1140]">₦4.2M</span>
-                     <span className="text-[10px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded">-5% o/o</span>
+                     <span className="text-[12px] font-bold text-slate-500">Total savings</span>
+                     <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">-5% c/s</span>
                   </div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total cost savings</p>
                </div>
                <div className="w-24 h-12">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={[{v:40},{v:30},{v:50},{v:20},{v:60},{v:35}]}>
-                       <Line type="monotone" dataKey="v" stroke="#F97316" strokeWidth={2} dot={false} />
+                    <LineChart data={[{v:50},{v:30},{v:45},{v:20},{v:40},{v:35}]}>
+                       <Line type="monotone" dataKey="v" stroke="#F43F5E" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                </div>
             </div>
           </div>
 
-          {/* Spend Overview Chart */}
-          <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
-             <div className="flex items-center justify-between mb-8">
-                <h3 className="text-sm font-black text-[#0A1140]">Procurement Spend Overview</h3>
+          {/* PROCUREMENT SPEND OVERVIEW */}
+          <div className="w-[673.68px] h-[247.79px] bg-white rounded-[6.19px] p-6 border border-slate-100 shadow-sm flex flex-col">
+             <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[14px] font-black text-[#0A1140]">Procurement Spend Overview</h3>
                 <div className="flex items-center gap-2">
                    <div className="flex bg-slate-50 rounded-lg p-1">
-                      <button className="px-3 py-1 text-[10px] font-bold text-slate-400 bg-white shadow-sm rounded-md">7 Days</button>
+                      <button className="px-3 py-1 text-[10px] font-bold text-[#0A1140] bg-white shadow-sm rounded-md">7 Days</button>
                       <button className="px-3 py-1 text-[10px] font-bold text-slate-400">30 Days</button>
                       <button className="px-3 py-1 text-[10px] font-bold text-slate-400">90 Days</button>
                    </div>
                 </div>
              </div>
-             <div className="flex items-center gap-4 mb-6">
-                <div className="flex items-center gap-1.5">
-                   <div className="w-2 h-2 rounded-full bg-[#FF5C00]" />
-                   <span className="text-[10px] font-bold text-slate-500">Orders Placed</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                   <div className="w-2 h-2 rounded-full bg-[#1D4ED8]" />
-                   <span className="text-[10px] font-bold text-slate-500">Payments Made</span>
-                </div>
-             </div>
-             <div className="h-[250px] w-full">
+             
+             <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
                    <AreaChart data={spendData}>
                       <defs>
-                        <linearGradient id="colorValue1" x1="0" y1="0" x2="0" y2="1">
+                        <linearGradient id="colorSpend1" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#FF5C00" stopOpacity={0.1}/>
                           <stop offset="95%" stopColor="#FF5C00" stopOpacity={0}/>
                         </linearGradient>
-                        <linearGradient id="colorValue2" x1="0" y1="0" x2="0" y2="1">
+                        <linearGradient id="colorSpend2" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#1D4ED8" stopOpacity={0.1}/>
                           <stop offset="95%" stopColor="#1D4ED8" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94A3B8'}} dy={10} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94A3B8'}} />
                       <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94A3B8'}} />
                       <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
-                      <Area type="monotone" dataKey="spend1" stroke="#FF5C00" strokeWidth={3} fillOpacity={1} fill="url(#colorValue1)" dot={{ r: 4, fill: '#FF5C00', strokeWidth: 2, stroke: '#fff' }} />
-                      <Area type="monotone" dataKey="spend2" stroke="#1D4ED8" strokeWidth={3} fillOpacity={1} fill="url(#colorValue2)" dot={{ r: 4, fill: '#1D4ED8', strokeWidth: 2, stroke: '#fff' }} />
+                      <Area type="monotone" dataKey="spend1" stroke="#FF5C00" strokeWidth={3} fillOpacity={1} fill="url(#colorSpend1)" dot={{ r: 4, fill: '#FF5C00', strokeWidth: 2, stroke: '#fff' }} />
+                      <Area type="monotone" dataKey="spend2" stroke="#1D4ED8" strokeWidth={3} fillOpacity={1} fill="url(#colorSpend2)" dot={{ r: 4, fill: '#1D4ED8', strokeWidth: 2, stroke: '#fff' }} />
                    </AreaChart>
                 </ResponsiveContainer>
+             </div>
+
+             <div className="flex items-center gap-6 mt-4">
+                <div className="flex items-center gap-2">
+                   <div className="w-2 h-2 rounded-full bg-[#FF5C00]" />
+                   <span className="text-[10px] font-bold text-slate-500">Orders Placed</span>
+                </div>
+                <div className="flex items-center gap-2">
+                   <div className="w-2 h-2 rounded-full bg-[#1D4ED8]" />
+                   <span className="text-[10px] font-bold text-slate-500">Payments Made</span>
+                </div>
              </div>
           </div>
 
           {/* Widget Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
              {/* Material Category Spend */}
-             <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm col-span-1">
-                <div className="flex items-center justify-between mb-4">
-                   <h3 className="text-[11px] font-black text-[#0A1140] whitespace-nowrap">Material Category Spend</h3>
-                   <div className="flex gap-1 bg-slate-50 rounded p-0.5">
-                      <button className="px-1.5 py-0.5 text-[8px] font-bold bg-white rounded shadow-sm">6W</button>
-                      <button className="px-1.5 py-0.5 text-[8px] font-bold text-slate-400">6M</button>
-                   </div>
-                </div>
-                <div className="h-40 w-full relative">
-                   <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                         <Pie
-                           data={categoryData}
-                           cx="50%"
-                           cy="50%"
-                           innerRadius={35}
-                           outerRadius={55}
-                           paddingAngle={5}
-                           dataKey="value"
-                         >
-                            {categoryData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                         </Pie>
-                      </PieChart>
-                   </ResponsiveContainer>
-                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-                      <div className="text-[12px] font-black text-[#0A1140]">82%</div>
-                   </div>
-                </div>
-                <div className="space-y-2 mt-2">
-                   {categoryData.map(item => (
-                     <div key={item.name} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                           <div className="w-2 h-2 rounded-full" style={{backgroundColor: item.color}} />
-                           <span className="text-[9px] font-bold text-slate-500">{item.name}</span>
-                        </div>
-                        <span className="text-[9px] font-black text-[#0A1140]">{item.value}%</span>
-                     </div>
-                   ))}
-                </div>
-             </div>
-
-             {/* Supplier Distribution */}
-             <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm col-span-1">
-                <h3 className="text-[11px] font-black text-[#0A1140] mb-4">Supplier Distribution</h3>
-                <div className="h-40 w-full">
-                   <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={supplierData}>
-                         <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} barSize={12} />
-                         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 8, fontWeight: 'bold', fill: '#94A3B8'}} />
-                      </BarChart>
-                   </ResponsiveContainer>
-                </div>
-             </div>
-
-             {/* Order Activity */}
-             <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm col-span-1">
-                <div className="flex items-center justify-between mb-4">
-                   <h3 className="text-[11px] font-black text-[#0A1140]">Order Activity</h3>
-                   <div className="flex gap-1 bg-slate-50 rounded p-0.5">
-                      <button className="px-1.5 py-0.5 text-[8px] font-bold bg-white rounded shadow-sm">W</button>
-                      <button className="px-1.5 py-0.5 text-[8px] font-bold text-slate-400">M</button>
-                   </div>
-                </div>
-                <div className="h-40 w-full">
-                   <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={activityData}>
-                         <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} barSize={12} />
-                         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 8, fontWeight: 'bold', fill: '#94A3B8'}} />
-                      </BarChart>
-                   </ResponsiveContainer>
-                </div>
-             </div>
-
-             {/* Delivery Performance */}
-             <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm col-span-1">
-                <h3 className="text-[11px] font-black text-[#0A1140] mb-6">Delivery Performance</h3>
-                <div className="flex gap-4 items-end justify-center mb-6 h-16">
-                   <div className="flex flex-col items-center gap-1 w-full">
-                      <div className="w-full bg-[#10B981]/20 rounded-full h-10 relative overflow-hidden">
-                        <div className="absolute bottom-0 w-full bg-[#10B981] h-[33%]" />
+              <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm col-span-1">
+                 <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[13px] font-black text-[#13184F] whitespace-nowrap">Material Category Spend</h3>
+                    <div className="flex gap-1 bg-[#E7E8EE] rounded-lg p-1">
+                       <button className="px-2 py-1 text-[9px] font-bold bg-white rounded shadow-sm">6W</button>
+                       <button className="px-2 py-1 text-[9px] font-bold text-slate-500">6M</button>
+                    </div>
+                 </div>
+                 <div className="h-44 w-full relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                       <PieChart>
+                          <Pie
+                            data={categoryData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={45}
+                            outerRadius={65}
+                            paddingAngle={5}
+                            dataKey="value"
+                            stroke="none"
+                          >
+                             {categoryData.map((entry, index) => (
+                               <Cell key={`cell-${index}`} fill={entry.color} />
+                             ))}
+                          </Pie>
+                       </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                       <div className="text-[16px] font-black text-[#13184F]">82%</div>
+                    </div>
+                 </div>
+                 <div className="space-y-3 mt-4">
+                    {categoryData.map(item => (
+                      <div key={item.name} className="flex items-center justify-between">
+                         <div className="flex items-center gap-2.5">
+                            <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: item.color}} />
+                            <span className="text-[11px] font-bold text-slate-500">{item.name}</span>
+                         </div>
+                         <span className="text-[11px] font-black text-[#13184F]">{item.value}%</span>
                       </div>
-                   </div>
-                   <div className="flex flex-col items-center gap-1 w-full">
-                      <div className="w-full bg-[#FF7D00]/20 rounded-full h-14 relative overflow-hidden">
-                        <div className="absolute bottom-0 w-full bg-[#FF7D00] h-[67%]" />
-                      </div>
-                   </div>
-                </div>
-                <div className="flex items-center justify-center gap-4">
-                   <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-[#10B981]" />
-                      <span className="text-[9px] font-bold text-slate-500">On-Time <span className="text-[#0A1140]">33%</span></span>
-                   </div>
-                   <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-[#FF7D00]" />
-                      <span className="text-[9px] font-bold text-slate-500">Delayed <span className="text-[#0A1140]">67%</span></span>
-                   </div>
-                </div>
-             </div>
+                    ))}
+                 </div>
+              </div>
+
+              {/* Supplier Distribution */}
+              <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm col-span-1">
+                 <h3 className="text-[13px] font-black text-[#13184F] mb-6">Supplier Distribution</h3>
+                 <div className="h-44 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                       <BarChart data={supplierData}>
+                          <Bar dataKey="value" fill="#3B82F6" radius={[6, 6, 0, 0]} barSize={16} />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94A3B8'}} />
+                          <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 'bold', fill: '#94A3B8'}} tickFormatter={(v) => `${v} stars`} width={35} />
+                       </BarChart>
+                    </ResponsiveContainer>
+                 </div>
+              </div>
+
+              {/* Order Activity */}
+              <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm col-span-1">
+                 <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[13px] font-black text-[#13184F]">Order Activity</h3>
+                    <div className="flex gap-1 bg-[#E7E8EE] rounded-lg p-1">
+                       <button className="px-2 py-1 text-[9px] font-bold bg-white rounded shadow-sm">W</button>
+                       <button className="px-2 py-1 text-[9px] font-bold text-slate-500">M</button>
+                    </div>
+                 </div>
+                 <div className="h-44 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                       <BarChart data={activityData}>
+                          <Bar dataKey="value" fill="#3B82F6" radius={[6, 6, 0, 0]} barSize={16} />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94A3B8'}} />
+                       </BarChart>
+                    </ResponsiveContainer>
+                 </div>
+              </div>
+
+              {/* Delivery Performance */}
+              <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm col-span-1">
+                 <h3 className="text-[13px] font-black text-[#13184F] mb-8">Delivery Performance</h3>
+                 <div className="flex gap-6 items-end justify-center mb-8 h-20">
+                    <div className="flex flex-col items-center gap-1 w-full max-w-[24px]">
+                       <div className="w-full bg-[#10B981]/20 rounded-full h-12 relative overflow-hidden">
+                         <div className="absolute bottom-0 w-full bg-[#36D1B2] h-[33%]" />
+                       </div>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 w-full max-w-[24px]">
+                       <div className="w-full bg-[#FF7D00]/20 rounded-full h-16 relative overflow-hidden">
+                         <div className="absolute bottom-0 w-full bg-[#FF9F0A] h-[67%]" />
+                       </div>
+                    </div>
+                 </div>
+                 <div className="flex items-center justify-center gap-5">
+                    <div className="flex items-center gap-2">
+                       <div className="w-2.5 h-2.5 rounded-full bg-[#36D1B2]" />
+                       <span className="text-[10px] font-bold text-slate-500">On-Time <span className="text-[#13184F] font-black">33%</span></span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <div className="w-2.5 h-2.5 rounded-full bg-[#FF9F0A]" />
+                       <span className="text-[10px] font-bold text-slate-500">Delayed <span className="text-[#13184F] font-black">67%</span></span>
+                    </div>
+                 </div>
+              </div>
           </div>
 
           {/* Orders History Table */}
@@ -444,7 +443,9 @@ export default function AccountDashboardClient() {
               <h4 className="text-[14px] font-black text-[#0A1140]">{user?.fullName || 'Olusegun Akapo'}</h4>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Procurement Manager</p>
               
-              <div className="w-full mt-6">
+              <div className="mt-8 mb-8 border-t border-slate-100 w-full" />
+              
+              <div className="w-full">
                  <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] font-bold text-slate-500">Profile Completion</span>
                     <span className="text-[10px] font-black text-[#0A1140]">70</span>
@@ -530,9 +531,8 @@ export default function AccountDashboardClient() {
               </div>
            </div>
 
-        </div>
-
       </div>
     </div>
+  </div>
   );
 }

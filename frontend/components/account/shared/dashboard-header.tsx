@@ -29,14 +29,7 @@ export function DashboardHeader() {
         >
           <Menu size={20} />
         </button>
-        <div>
-          <h1 className="text-[14px] font-black text-[#0A1140] tracking-tight uppercase">{getBreadcrumb()}</h1>
-          <div className="flex items-center gap-1.5 mt-0.5 text-[10px] font-bold text-slate-400">
-            <span>Procurely</span>
-            <span className="w-1 h-1 bg-slate-200 rounded-full" />
-            <span className="text-[#1D4ED8]">Portal V2.0</span>
-          </div>
-        </div>
+
       </div>
 
       <div className="hidden md:flex flex-1 max-w-sm mx-8 relative">

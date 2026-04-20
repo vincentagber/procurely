@@ -68,7 +68,7 @@ export function DashboardSidebar() {
           </div>
         </div>
 
-        <div className="mt-8 mb-8 border-t border-white/10 w-full" />
+        <div className="mt-8 mb-8 border-t border-white/20 w-full" />
 
         <div className="text-[11px] font-bold tracking-wider text-white mb-4 pl-2">
           MAIN MENU

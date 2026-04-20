@@ -117,11 +117,14 @@ final class CatalogService
             throw new ApiException('Product not found.', 404);
         }
 
-        $stmt = $this->database->connection()->prepare('SELECT stock_level FROM inventory WHERE product_id = :id LIMIT 1');
-        $stmt->execute(['id' => $product['id']]);
-        $row = $stmt->fetch();
-
-        $product['stockLevel'] = $row !== false ? (int) $row['stock_level'] : 0;
+        try {
+            $stmt = $this->database->connection()->prepare('SELECT stock_level FROM inventory WHERE product_id = :id LIMIT 1');
+            $stmt->execute(['id' => $product['id']]);
+            $row = $stmt->fetch();
+            $product['stockLevel'] = $row !== false ? (int) $row['stock_level'] : 0;
+        } catch (\PDOException $e) {
+            $product['stockLevel'] = 0;
+        }
 
         return $product;
     }

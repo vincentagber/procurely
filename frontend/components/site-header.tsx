@@ -42,12 +42,12 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
   const wishlistCount = wishlist?.items.length ?? 0;
 
   return (
-    <header className="w-full">
-      {/* Top Bar - Dark Blue */}
-      <div className="bg-[#000099] text-white">
+    <header className="w-full h-[179px] sticky top-0 z-[60] shadow-sm">
+      {/* Top Bar - Dark Blue (38px) */}
+      <div className="bg-[#000099] text-white overflow-hidden">
         <div className="container-shell mx-auto flex h-[38px] items-center justify-between px-4">
           <div className="flex items-center gap-4">
-            <ThreadsIcon className="size-3.5 opacity-90 transition hover:opacity-100" />
+            <InstagramIcon className="size-3.5 opacity-90 transition hover:opacity-100" />
             <FacebookIcon className="size-3.5 opacity-90 transition hover:opacity-100" />
             <YoutubeIcon />
             <LinkedinIcon className="size-3.5 opacity-90 transition hover:opacity-100" />
@@ -57,25 +57,25 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
           <div className="flex items-center gap-2.5 text-[12px] font-medium tracking-tight">
             <UserRound className="size-4" strokeWidth={1.5} />
             {user ? (
-               <Link href="/account" className="hover:text-white/80">Account: {user.fullName.split(' ')[0]}</Link>
+              <Link href="/account" className="hover:text-white/80">Account: {user.fullName.split(' ')[0]}</Link>
             ) : (
-               <Link href="/login" className="hover:text-white/80">Login / Register</Link>
+              <Link href="/login" className="hover:text-white/80">Login / Register</Link>
             )}
           </div>
         </div>
       </div>
 
-      {/* Middle Bar - Light Grayish */}
-      <div className="bg-[#E7E8EE] h-[81px] flex items-center">
+      {/* Middle Bar - light silver (81px) */}
+      <div className="bg-[#E7E8EE] h-[81px] flex items-center border-b border-white/40">
         <div className="container-shell mx-auto flex items-center justify-between px-4 w-full">
-          <Link href="/" className="shrink-0">
-            <h2 className="text-[28px] font-bold text-[#0C1457] tracking-tighter">
+          <Link href="/" className="shrink-0 flex items-center">
+            <h2 className="text-[26px] font-black text-[#0B1457] tracking-tighter">
               Procurely<span className="text-[12px] align-super ml-0.5">™</span>
             </h2>
           </Link>
 
           <form
-            className="hidden lg:flex relative h-[48px] w-full max-w-[550px] items-center overflow-hidden rounded-full bg-white"
+            className="hidden lg:flex relative h-[42px] w-full max-w-[500px] items-center overflow-hidden rounded-full bg-white shadow-inner"
             onSubmit={(event) => {
               event.preventDefault();
               const nextQuery = query.trim();
@@ -86,51 +86,61 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
             }}
           >
             <input
-              className="h-full w-full bg-transparent px-8 text-[14px] text-slate-800 outline-none placeholder:text-slate-400 font-medium"
+              className="h-full w-full bg-transparent px-6 text-[13px] text-slate-800 outline-none placeholder:text-slate-400 font-medium"
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search product..."
               value={query}
             />
             <button
               aria-label="Search"
-              className="absolute right-0 top-0 flex h-full w-[48px] items-center justify-center bg-[#0C1457] text-white transition hover:bg-primary-blue rounded-r-full"
+              className="flex h-full w-[48px] items-center justify-center bg-[#0B1457] text-white transition-colors hover:bg-[#0001FF]"
               type="submit"
             >
-              <Search className="size-5" />
+              <Search className="size-4" />
             </button>
           </form>
 
           <div className="flex items-center gap-8">
-            <Link href="/wishlist" className="relative p-1 text-[#0C1457] transition hover:scale-105">
+            <Link href="/wishlist" className="relative p-1 text-[#0B1457] transition hover:scale-105">
               <Heart className="size-[28px]" strokeWidth={2} />
-              <span className="absolute -right-2 -top-1 flex size-[18px] items-center justify-center rounded-full bg-[#FF4242] text-[10px] font-bold text-white">
-                4
-              </span>
+              {wishlistCount > 0 && (
+                <span className="absolute -right-2 -top-1 flex size-[18px] items-center justify-center rounded-full bg-[#FF4242] text-[10px] font-bold text-white">
+                  {wishlistCount}
+                </span>
+              )}
             </Link>
-            <Link href="/account" className="p-1 text-[#0C1457] transition hover:scale-105">
+            <Link href="/account" className="p-1 text-[#0B1457] transition hover:scale-105">
               <UserRound className="size-[28px]" strokeWidth={2} />
             </Link>
-            <button onClick={openCart} className="p-1 text-[#0C1457] transition hover:scale-105">
+            <button onClick={openCart} className="relative p-1 text-[#0B1457] transition hover:scale-105">
               <ShoppingBag className="size-[28px]" strokeWidth={2} />
+              {cartCount > 0 && (
+                <span className="absolute -right-2 -top-1 flex size-[16px] items-center justify-center rounded-full bg-[#0001FF] text-[8px] font-bold text-white">
+                  {cartCount}
+                </span>
+              )}
             </button>
             <button className="lg:hidden" onClick={() => setMenuOpen(!menuOpen)}>
-              <Menu className="size-[28px] text-[#0C1457]" />
+              <Menu className="size-[28px] text-[#0B1457]" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Bottom Bar - White */}
-      <div className="bg-white h-[60px] flex items-center relative z-20">
+      {/* Bottom Bar - White (60px) */}
+      <div className="bg-white h-[60px] flex items-center">
         <div className="container-shell mx-auto flex items-center justify-between px-4 w-full">
-          <nav className="hidden items-center gap-12 text-[15px] font-bold text-[#0C1457] lg:flex pl-4">
+          <nav className="hidden lg:flex items-center gap-10">
             {navigation.primaryLinks.map((link) => {
               const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
               return (
                 <Link
                   key={link.label}
                   href={link.href}
-                  className={cn("transition hover:text-primary-blue", isActive && "text-primary-blue")}
+                  className={cn(
+                    "text-[14px] font-bold transition-colors hover:text-[#0001FF]",
+                    isActive ? "text-[#0001FF]" : "text-[#13184F]"
+                  )}
                 >
                   {link.label}
                 </Link>
@@ -140,7 +150,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
 
           <Link
             href="/contact-quote"
-            className="flex h-[44px] min-w-[220px] items-center justify-center rounded-[8px] bg-[#0001FF] px-8 text-[15px] font-bold text-white transition active:scale-[0.98] hover:bg-blue-800"
+            className="flex h-[42px] items-center justify-center rounded-[8px] bg-[#0001FF] px-8 text-[14px] font-bold text-white transition active:scale-[0.98] hover:bg-blue-800"
           >
             Submit BOQ / Contact
           </Link>

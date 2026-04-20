@@ -32,6 +32,10 @@ $products = $content['products'] ?? [];
 
 echo "Migrating " . count($products) . " products to " . ($_ENV['DB_DRIVER'] ?? 'sqlite') . "...\n";
 
+if (!$isMysql) {
+    $pdo->exec('PRAGMA foreign_keys = OFF;');
+}
+
 $pdo->beginTransaction();
 
 try {
@@ -43,7 +47,7 @@ try {
     
     $insertInvSql = $isMysql 
         ? 'INSERT IGNORE INTO inventory (product_id, stock_level, updated_at) VALUES (:product_id, 100, :updated_at)'
-        : 'INSERT OR IGNORE INTO inventory (product_id, stock_level, updated_at) VALUES (:product_id, 100, :updated_at)';
+        : 'INSERT OR REPLACE INTO inventory (product_id, stock_level, updated_at) VALUES (:product_id, 100, :updated_at)';
         
     $invStmt = $pdo->prepare($insertInvSql);
     
@@ -80,21 +84,23 @@ try {
 
     $userStmt = $pdo->prepare($insertUserSql);
     
-    // Admin
-    $userStmt->execute(['admin-user-id', 'Admin User', 'admin@useprocurely.com', $passwordHash, $now, $now]);
+    // Admin (using consistent email from seed-admin.php)
+    $adminEmail = 'admin@procurely.com';
+    $userStmt->execute(['admin-user-id', 'Admin User', $adminEmail, $passwordHash, $now, $now]);
     $adminId = $pdo->lastInsertId();
-    if (!$adminId) {
+    if (!$adminId || $adminId === '0' || $adminId === 0) {
         $st = $pdo->prepare('SELECT id FROM users WHERE email = ?');
-        $st->execute(['admin@useprocurely.com']);
+        $st->execute([$adminEmail]);
         $adminId = $st->fetchColumn();
     }
 
     // Customer
-    $userStmt->execute(['customer-user-id', 'Sample Customer', 'customer@useprocurely.com', $passwordHash, $now, $now]);
+    $customerEmail = 'customer@useprocurely.com';
+    $userStmt->execute(['customer-user-id', 'Sample Customer', $customerEmail, $passwordHash, $now, $now]);
     $customerId = $pdo->lastInsertId();
-    if (!$customerId) {
+    if (!$customerId || $customerId === '0' || $customerId === 0) {
         $st = $pdo->prepare('SELECT id FROM users WHERE email = ?');
-        $st->execute(['customer@useprocurely.com']);
+        $st->execute([$customerEmail]);
         $customerId = $st->fetchColumn();
     }
 
@@ -121,10 +127,16 @@ try {
     }
 
     $pdo->commit();
+    if (!$isMysql) {
+        $pdo->exec('PRAGMA foreign_keys = ON;');
+    }
     echo "Migration completed successfully!\n";
 } catch (Exception $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
+    }
+    if (!$isMysql) {
+        $pdo->exec('PRAGMA foreign_keys = ON;');
     }
     echo "Migration failed: " . $e->getMessage() . "\n";
     exit(1);

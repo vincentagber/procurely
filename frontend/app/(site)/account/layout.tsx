@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useRouter } from "next/navigation";
 import { DashboardSidebar } from "@/components/account/shared/dashboard-sidebar";
-import { DashboardHeader } from "@/components/account/shared/dashboard-header";
+
 import { SidebarProvider } from "@/components/account/shared/sidebar-context";
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
@@ -28,15 +28,30 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     );
   }
 
-   return (
+  return (
     <SidebarProvider>
       <div className="min-h-screen bg-[#F8F9FA] text-slate-800 font-sans flex flex-col">
-        <DashboardHeader />
 
-        <div className="flex-1 flex justify-center px-4 xl:px-6">
-          <div className="w-full max-w-[1440px] flex gap-4 min-w-0">
+
+        {/* Breadcrumbs Section */}
+        <div className="flex justify-center pt-8 pb-4">
+          <div
+            className="w-full max-w-[1115px] h-[81px] bg-white rounded-[10px] flex items-center px-[30px] shadow-sm border border-slate-100"
+          >
+            <div className="flex items-center gap-2 text-[14px] font-bold">
+              <span className="text-slate-400">Home</span>
+              <span className="text-slate-300">/</span>
+              <span className="text-slate-400 font-medium">pages</span>
+              <span className="text-slate-300">/</span>
+              <span className="text-[#0A1140] font-black">my account</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 flex justify-center py-4">
+          <div className="w-full max-w-[1115px] flex flex-row gap-[18px] px-4 md:px-0 items-start">
             <DashboardSidebar />
-            <main className="flex-1 min-w-0 pb-[80px] mt-8">
+            <main className="w-[886px] min-w-0 pb-[100px]">
               {children}
             </main>
           </div>

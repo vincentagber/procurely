@@ -37,8 +37,8 @@ export default async function ProductPage({ params }: Props) {
 
         <div className="rounded-[2.5rem] bg-white p-6 sm:p-10 lg:p-14 shadow-sm border border-slate-100 flex flex-col lg:flex-row gap-12 lg:gap-20">
            {/* Image Gallery */}
-            <div className="w-full lg:w-1/2 rounded-[2rem] bg-slate-50 flex items-center justify-center p-6 md:p-12 border border-slate-100 aspect-square md:aspect-auto md:min-h-[500px]">
-              <img src={product.image} alt={product.name} className="max-w-[85%] max-h-full object-contain drop-shadow-2xl hover:scale-105 transition duration-500 ease-out" />
+            <div className="w-full lg:w-1/2 rounded-[2rem] bg-slate-50 flex items-center justify-center border border-slate-100 aspect-square md:aspect-auto md:min-h-[500px] overflow-hidden">
+              <img src={product.image} alt={product.name} className="w-full h-full object-cover hover:scale-105 transition duration-700 ease-out" />
             </div>
 
            {/* Product Details */}

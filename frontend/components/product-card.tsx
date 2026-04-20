@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ShoppingCart } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ShoppingCart, Eye, Heart } from "lucide-react";
 import Link from "next/link";
 
 import { Reveal } from "@/components/ui/reveal";
@@ -18,8 +19,13 @@ type ProductCardProps = {
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const { addItem, loading: cartLoading } = useCart();
   const { isInWishlist, addItem: addToWishlist, removeItem: removeFromWishlist, loading: wishlistLoading } = useWishlist();
+  const [mounted, setMounted] = useState(false);
 
-  const isFavorited = isInWishlist(product.id);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isFavorited = mounted ? isInWishlist(product.id) : false;
 
   const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -37,35 +43,43 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
         whileHover="hover"
       >
-        <div className="relative rounded-[16px] bg-[#f8f9fa] p-6 h-[260px] flex items-center justify-center transition-all duration-300 group-hover:bg-[#f1f3f6]">
+        <div className="relative rounded-[16px] bg-[#f8f9fa] h-[260px] flex items-center justify-center transition-all duration-300 group-hover:bg-[#f1f3f6] overflow-hidden">
           {product.badge ? (
             <span className="absolute left-4 top-4 z-20 inline-flex h-[22px] items-center rounded-full bg-[#1D4ED8] px-2.5 text-[11px] font-bold lowercase tracking-wider text-white">
               {product.badge}
             </span>
           ) : null}
           
-          <button 
-            type="button"
-            onClick={toggleWishlist}
-            disabled={wishlistLoading}
-            className={`absolute right-3 top-3 z-20 flex size-[30px] cursor-pointer items-center justify-center rounded-full border shadow-sm transition hover:scale-110 disabled:opacity-50 ${
-              isFavorited 
-                ? "border-[#ff6f4d] bg-[#ff6f4d] text-white" 
-                : "border-[#ff6f4d]/20 bg-[#fff5f2] text-[#ff6f4d] hover:bg-[#ff6f4d] hover:text-white"
-            }`}
-          >
-            <svg className="size-[14px]" fill={isFavorited ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </button>
+          {/* Floating Actions Stack */}
+          <div className="absolute right-3 top-3 z-30 flex flex-col gap-2">
+            <button 
+              type="button"
+              onClick={toggleWishlist}
+              disabled={mounted ? wishlistLoading : false}
+              className={`flex size-[38px] cursor-pointer items-center justify-center rounded-full border shadow-sm transition-all hover:scale-110 disabled:opacity-50 ${
+                isFavorited 
+                  ? "border-[#ff6f4d] bg-[#ff6f4d] text-white" 
+                  : "border-[#ff6f4d]/10 bg-[#fff5f2] text-[#ff6f4d] hover:bg-[#ff6f4d] hover:text-white"
+              }`}
+            >
+              <Heart size={18} fill={isFavorited ? "currentColor" : "none"} strokeWidth={2.5} />
+            </button>
 
-          <Link href={`/products/${product.id}`} className="block relative z-10 w-full h-full flex items-center justify-center">
+            <Link 
+              href={`/products/${product.id}`}
+              className="flex size-[38px] items-center justify-center rounded-full border border-[#ff6f4d]/10 bg-[#fff5f2] text-[#ff6f4d] shadow-sm transition-all hover:scale-110 hover:bg-[#ff6f4d] hover:text-white"
+            >
+              <Eye size={18} strokeWidth={2.5} />
+            </Link>
+          </div>
+
+          <Link href={`/products/${product.id}`} className="block relative z-10 w-full h-full">
             <motion.img
               alt={product.name}
-              className="max-h-[190px] w-auto max-w-full object-contain drop-shadow-md"
+              className="h-full w-full object-cover"
               src={product.image}
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              variants={{ hover: { scale: 1.04, y: -2 } }}
+              variants={{ hover: { scale: 1.05 } }}
             />
           </Link>
         </div>
@@ -85,7 +99,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             </div>
             <motion.button
               className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#0b103e] text-white shadow-md transition disabled:opacity-50"
-              disabled={cartLoading}
+              disabled={mounted ? cartLoading : false}
               onClick={() => void addItem(product.id)}
               transition={{ duration: 0.18 }}
               type="button"
