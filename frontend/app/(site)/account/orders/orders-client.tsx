@@ -350,17 +350,26 @@ export default function OrderHistoryClient() {
 
 function SummaryStat({ icon, color, bg, value, label, sub }: any) {
    return (
-      <div className={`flex flex-col gap-4 p-5 rounded-xl ${bg} border border-slate-50 transition-all hover:shadow-md`}>
-         <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white shadow-sm ${color}`}>
+      <div 
+         className={`flex flex-col ${bg} border border-slate-50 transition-all hover:shadow-sm`}
+         style={{
+            width: '150.66px',
+            height: '72.71px',
+            borderRadius: '5.58px',
+            padding: '9.3px',
+            gap: '9.3px'
+         }}
+      >
+         <div className="flex items-center gap-2">
+            <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white shadow-sm ${color}`}>
                <div className="relative">
-                  {icon}
-                  <Clock size={8} className="absolute -bottom-0.5 -right-0.5 text-orange-500 bg-white rounded-full" />
+                  <div className="scale-75 flex items-center justify-center">{icon}</div>
+                  <Clock size={6} className="absolute -bottom-0.5 -right-0.5 text-orange-500 bg-white rounded-full" />
                </div>
             </div>
-            <div className="text-[13px] font-bold text-slate-500 tracking-tight">{label}</div>
+            <div className="text-[10px] font-bold text-slate-500 tracking-tight leading-none whitespace-nowrap truncate">{label}</div>
          </div>
-         <div className="flex items-baseline gap-2">
+         <div className="flex items-baseline gap-1.5 mt-auto">
             <span 
                className="font-black text-[#0A1140] leading-none shrink-0"
                style={{ 
@@ -370,7 +379,7 @@ function SummaryStat({ icon, color, bg, value, label, sub }: any) {
             >
                {value}
             </span>
-            <span className="text-[12px] font-bold text-slate-400 tracking-tight lowercase truncate">{sub}</span>
+            <span className="text-[9px] font-bold text-slate-400 tracking-tight lowercase truncate">{sub}</span>
          </div>
       </div>
    );
