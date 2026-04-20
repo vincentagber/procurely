@@ -106,9 +106,18 @@ export default function WalletClient() {
                   <div className="space-y-6 min-w-0">
                      
                      {/* Wallet Top Container Box */}
-                     <div className="bg-white rounded-2xl shadow-sm p-6 lg:p-8 border border-slate-100">
+                     <div 
+                       className="bg-white shadow-sm border border-slate-100 flex flex-col"
+                       style={{ 
+                         maxWidth: '669px', 
+                         minHeight: '336.06px', 
+                         borderRadius: '8.84px', 
+                         padding: '17.68px',
+                         gap: '8.84px'
+                       }}
+                     >
                         {/* Balance Header */}
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-[8.84px] mb-4">
                            <div>
                               <p className="text-[12px] font-bold text-slate-500 mb-1">Wallet Balance</p>
                               <h1 className="text-4xl font-extrabold text-[#0A1140] tracking-tight">
@@ -123,13 +132,15 @@ export default function WalletClient() {
                            <div className="flex flex-row gap-4 shrink-0">
                               <button 
                                 onClick={() => setIsFundModalOpen(true)}
-                                className="h-10 px-8 bg-[#0A1140] hover:bg-[#13184f] text-white rounded-xl text-[12px] font-bold shadow-md transition-colors whitespace-nowrap"
+                                className="h-10 px-8 bg-[#0A1140] hover:bg-[#13184f] text-white font-bold shadow-md transition-colors whitespace-nowrap"
+                                style={{ borderRadius: '8.84px', fontSize: '12px' }}
                               >
                                  Fund Wallet
                               </button>
                               <button 
                                 onClick={() => setIsWithdrawModalOpen(true)}
-                                className="h-10 px-8 bg-white border border-[#E2E8F0] text-[#FF5C00] hover:bg-slate-50 rounded-xl text-[12px] font-bold transition-colors whitespace-nowrap"
+                                className="h-10 px-8 bg-white border border-[#E2E8F0] text-[#FF5C00] hover:bg-slate-50 font-bold transition-colors whitespace-nowrap"
+                                style={{ borderRadius: '8.84px', fontSize: '12px' }}
                               >
                                  Withdraw Funds
                               </button>
@@ -137,50 +148,56 @@ export default function WalletClient() {
                         </div>
 
                         {/* Recent Stats Row */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-[8.84px] mb-4">
                            {/* Stat 1 */}
-                           <div className="bg-[#FFF4ED] rounded-2xl p-5 border border-orange-50/50 relative overflow-hidden">
+                           <div className="bg-[#FFF4ED] p-5 border border-orange-50/50 relative overflow-hidden flex flex-col justify-between" style={{ borderRadius: '8.84px' }}>
                               <div className="flex items-center gap-3 mb-4">
                                  <div className="w-8 h-8 rounded-lg bg-[#FF5C00] flex items-center justify-center shrink-0">
                                     <ArrowUpRight size={16} className="text-white" />
                                  </div>
                                  <span className="text-[13px] font-bold text-slate-600 whitespace-nowrap">Recent Funding</span>
                               </div>
-                              <h3 className="text-2xl font-black text-[#0A1140]">+₦50,000</h3>
-                              <div className="flex items-center gap-2 mt-2 text-[11px] font-bold text-slate-400">
-                                 <Clock size={12} /> February 26, 2026
+                              <div>
+                                 <h3 className="text-2xl font-black text-[#0A1140]">+₦50,000</h3>
+                                 <div className="flex items-center gap-2 mt-2 text-[11px] font-bold text-slate-400">
+                                    <Clock size={12} /> February 26, 2026
+                                 </div>
                               </div>
                            </div>
                            {/* Stat 2 */}
-                           <div className="bg-[#FFF4ED] rounded-2xl p-5 border border-orange-50/50">
+                           <div className="bg-[#FFF4ED] p-5 border border-orange-50/50 flex flex-col justify-between" style={{ borderRadius: '8.84px' }}>
                               <div className="flex items-center gap-3 mb-4">
                                  <div className="w-8 h-8 rounded-lg bg-[#FF5C00] flex items-center justify-center shrink-0">
                                     <CreditCard size={16} className="text-white" />
                                  </div>
                                  <span className="text-[13px] font-bold text-slate-600 whitespace-nowrap">Payment Made</span>
                               </div>
-                              <h3 className="text-2xl font-black text-[#0A1140]">₦35,000</h3>
-                              <div className="flex items-center gap-2 mt-2 text-[11px] font-bold text-slate-400">
-                                 <Clock size={12} /> February 20, 2026
+                              <div>
+                                 <h3 className="text-2xl font-black text-[#0A1140]">₦35,000</h3>
+                                 <div className="flex items-center gap-2 mt-2 text-[11px] font-bold text-slate-400">
+                                    <Clock size={12} /> February 20, 2026
+                                 </div>
                               </div>
                            </div>
                            {/* Stat 3 */}
-                           <div className="bg-[#FFF4ED] rounded-2xl p-5 border border-orange-50/50">
+                           <div className="bg-[#FFF4ED] p-5 border border-orange-50/50 flex flex-col justify-between" style={{ borderRadius: '8.84px' }}>
                               <div className="flex items-center gap-3 mb-4">
                                  <div className="w-8 h-8 rounded-lg bg-[#FF5C00] flex items-center justify-center shrink-0">
                                     <Gift size={16} className="text-white" />
                                  </div>
                                  <span className="text-[13px] font-bold text-slate-600 whitespace-nowrap">Bonus Credit</span>
                               </div>
-                              <h3 className="text-2xl font-black text-[#0A1140]">₦5,000</h3>
-                              <div className="flex items-center gap-2 mt-2 text-[11px] font-bold text-slate-400">
-                                 <Clock size={12} /> February 2, 2026
+                              <div>
+                                 <h3 className="text-2xl font-black text-[#0A1140]">₦5,000</h3>
+                                 <div className="flex items-center gap-2 mt-2 text-[11px] font-bold text-slate-400">
+                                    <Clock size={12} /> February 2, 2026
+                                 </div>
                               </div>
                            </div>
                         </div>
 
                         {/* Blue Info Banner */}
-                        <div className="bg-[#EFF6FF] rounded-2xl p-4 flex items-center gap-4 text-[#1D4ED8]">
+                        <div className="bg-[#EFF6FF] p-4 flex items-center gap-4 text-[#1D4ED8] mt-auto" style={{ borderRadius: '8.84px' }}>
                            <div className="w-10 h-10 bg-[#1D4ED8] rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
                               <CreditCard size={20} className="text-white" />
                            </div>

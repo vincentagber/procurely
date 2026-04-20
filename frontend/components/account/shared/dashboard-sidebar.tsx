@@ -23,7 +23,7 @@ export function DashboardSidebar() {
 
   const menuItems = [
     { icon: LayoutDashboard, label: "My Dashboard", href: "/account" },
-    { icon: ShoppingCart, label: "Orders", href: "/account/orders" },
+    { icon: ShoppingCart, label: "Orders", href: "/account/profile-order" },
     { icon: Wallet, label: "Wallet / Payments", href: "/account/wallet" },
     { icon: History, label: "Order History", href: "/account/orders?view=history" },
     { icon: Bookmark, label: "Saved Materials", href: "/account/saved-materials" },
