@@ -105,21 +105,28 @@ export default function OrderHistoryClient() {
                      >
                         <h3 className="line-clamp-1 text-[13px] font-bold text-slate-500 mb-2">Order Summary</h3>
                         
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-[8.84px] mb-2">
-                           <SummaryStat icon={<ShoppingBag size={18} />} color="text-orange-500" bg="bg-orange-50" value="256" label="Total Orders" sub="orders" />
-                           <SummaryStat icon={<Truck size={18} />} color="text-emerald-500" bg="bg-emerald-50" value="24" label="Active Orders" sub="ongoing" />
-                           <SummaryStat icon={<CheckCircle2 size={18} />} color="text-rose-500" bg="bg-rose-50" value="187" label="Completed Orders" sub="delivered" />
-                           <SummaryStat icon={<XCircle size={18} />} color="text-blue-500" bg="bg-blue-50" value="24" label="Canceled Orders" sub="Not completed" />
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-[8.84px] py-2">
+                           <SummaryStat icon={<ShoppingCart size={16} />} color="text-orange-500" bg="bg-orange-50" value="256" label="Total Orders" sub="orders" />
+                           <SummaryStat icon={<Truck size={16} />} color="text-emerald-500" bg="bg-emerald-50" value="24" label="Active Orders" sub="ongoing" />
+                           <SummaryStat icon={<CheckCircle2 size={16} />} color="text-rose-500" bg="bg-rose-50" value="187" label="Completed Orders" sub="delivered" />
+                           <SummaryStat icon={<XCircle size={16} />} color="text-blue-500" bg="bg-blue-50" value="24" label="Canceled Orders" sub="Not completed" />
                         </div>
 
-                        {/* Wallet Banner Inside */}
-                        <div className="bg-[#1D4ED8] rounded-[8.84px] p-4 flex items-center gap-4 text-white shadow-md mt-auto">
-                           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-                              <Wallet size={20} className="text-white" />
+                        {/* Wallet Banner Inside - Optimized Size */}
+                        <div 
+                           className="bg-[#1D4ED8] rounded-[8.84px] flex items-center gap-[8.84px] text-white shadow-md mt-auto mx-auto"
+                           style={{ 
+                             width: '586.80px', 
+                             height: '36px', 
+                             padding: '0 12px' 
+                           }}
+                        >
+                           <div className="w-6 h-6 bg-white/20 rounded-md flex items-center justify-center shrink-0">
+                              <Wallet size={14} className="text-white" />
                            </div>
-                           <p className="text-[13px] font-medium leading-relaxed tracking-wide min-w-0">
+                           <p className="text-[11px] font-bold leading-none tracking-tight flex-1 truncate">
                               Your wallet balance can be used to pay for orders or withdrawn to your bank account seamlessly.
-                              <a href="#" className="font-bold underline ml-1 hover:text-white/80 whitespace-nowrap">Learn more</a>
+                              <Link href="/account/wallet" className="font-extrabold underline ml-1 hover:text-white/80">Learn more</Link>
                            </p>
                         </div>
                      </div>
@@ -337,15 +344,15 @@ export default function OrderHistoryClient() {
 
 function SummaryStat({ icon, color, bg, value, label, sub }: any) {
    return (
-      <div className="flex items-start gap-4 p-1">
-         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${bg} ${color}`}>
+      <div className="flex items-center gap-3 p-1">
+         <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${bg} ${color}`}>
             {icon}
          </div>
-         <div className="flex flex-col">
-            <div className="text-[12px] xl:text-[13px] font-bold text-slate-500 tracking-tight leading-snug mb-1">{label}</div>
-            <div className="flex items-baseline gap-1.5">
-               <span className="text-[20px] lg:text-[24px] font-black text-[#0A1140] leading-none shrink-0">{value}</span>
-               <span className="text-[11px] font-medium text-slate-400 tracking-wide hidden sm:block">{sub}</span>
+         <div className="flex flex-col min-w-0">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">{label}</div>
+            <div className="flex items-baseline gap-1">
+               <span className="text-[16px] font-black text-[#0A1140] leading-none shrink-0">{value}</span>
+               <span className="text-[9px] font-bold text-slate-400 tracking-tight lowercase truncate">{sub}</span>
             </div>
          </div>
       </div>
