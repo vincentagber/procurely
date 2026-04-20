@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import {
   Bell,
   Search,
@@ -129,19 +128,9 @@ export default function ProfileDashboard() {
         
 
 
-        {/* Greeting Section */}
-        <div className="mb-8 pl-2">
-          <h1 className="text-[34px] font-black text-[#0001FF] tracking-tight leading-none mb-2">
-            Hello Olusegun!
-          </h1>
-          <p className="text-[14px] font-bold text-slate-400">
-            Welcome back, lets manage your procurement.
-          </p>
-        </div>
-
         {/* Top Metric Cards row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-[16px] max-w-[866px] w-full mb-4">
-           <Link href="/account/profile-order" className="block flex-1 transition-transform hover:scale-[1.02]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-[13px] max-w-[866px] w-full mb-2">
+           <Link href="/account/profile-order" className="block flex-1">
              <MetricCard 
                label="Orders" 
                value="124" 
@@ -149,34 +138,30 @@ export default function ProfileDashboard() {
                sub="In the last" 
                subAction="10 Weeks"
                color="blue" 
-               data={[{v:20},{v:45},{v:30},{v:50},{v:40},{v:60},{v:45},{v:70}]}
+               data={[{v:20},{v:45},{v:30},{v:50},{v:40},{v:60}]}
              />
            </Link>
-           <div className="transition-transform hover:scale-[1.02]">
-            <MetricCard 
-              label="Request" 
-              value="30" 
-              trend="+3 new today" 
-              sub="+3 new today" 
-              color="green" 
-              data={[{v:10},{v:30},{v:20},{v:60},{v:40},{v:80},{v:50},{v:90}]}
-            />
-           </div>
-           <div className="transition-transform hover:scale-[1.02]">
-            <MetricCard 
-              label="Savings" 
-              value="₦4.2M" 
-              trend="-5% c/s" 
-              sub="Total cost savings" 
-              color="orange" 
-              data={[{v:50},{v:40},{v:60},{v:30},{v:70},{v:40},{v:80},{v:50}]}
-            />
-           </div>
+           <MetricCard 
+             label="Request" 
+             value="30" 
+             trend="+3 new" 
+             sub="+3 new today" 
+             color="green" 
+             data={[{v:10},{v:30},{v:20},{v:60},{v:40},{v:80}]}
+           />
+           <MetricCard 
+             label="Savings" 
+             value="₦4.2M" 
+             trend="-5% c/s" 
+             sub="Total cost savings" 
+             color="orange" 
+             data={[{v:50},{v:40},{v:60},{v:30},{v:70},{v:40}]}
+           />
         </div>
 
-        {/* Procurement Spend Overview Section */}
+        {/* Order Overview Section */}
         <section 
-          className="bg-white p-6 relative overflow-hidden flex flex-col justify-between shadow-sm"
+          className="bg-white p-6 relative overflow-hidden flex flex-col justify-between"
           style={{
             width: '673.69px',
             height: '247.79px',
@@ -186,9 +171,9 @@ export default function ProfileDashboard() {
           }}
         >
            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-[16px] font-extrabold text-[#0C1457] tracking-tight">Procurement Spend Overview</h3>
+              <h3 className="text-[16px] font-extrabold text-[#0C1457] tracking-tight">Order Overview</h3>
               <div className="flex items-center gap-1.5 p-1 bg-slate-50 rounded-lg">
-                 {['7 Days', '30 Days', '90 Days'].map((tab, idx) => (
+                 {['1W', '1M', '3M'].map((tab, idx) => (
                     <button key={tab} className={`px-3 py-1 text-[11px] font-bold rounded-md transition-all ${idx === 0 ? 'bg-white text-[#1D4ED8] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
                        {tab}
                     </button>
@@ -196,12 +181,12 @@ export default function ProfileDashboard() {
               </div>
            </div>
 
-           <div className="flex justify-end gap-6 mb-4 text-[11px] font-bold">
-              <span className="flex items-center gap-2 text-[#FF5C00]">
-                <div className="w-2 h-2 rounded-full bg-[#FF5C00]" /> Orders Placed
+           <div className="flex justify-center gap-6 mb-2 text-[11px] font-bold">
+              <span className="flex items-center gap-2 text-orange-500">
+                <div className="w-2 h-2 rounded-full bg-orange-500" /> Income
               </span>
-              <span className="flex items-center gap-2 text-[#1D4ED8]">
-                <div className="w-2 h-2 rounded-full bg-[#1D4ED8]" /> Payments Made
+              <span className="flex items-center gap-2 text-blue-600">
+                <div className="w-2 h-2 rounded-full bg-blue-600" /> Outcome
               </span>
            </div>
 
@@ -209,16 +194,16 @@ export default function ProfileDashboard() {
               <ResponsiveContainer width="100%" height="100%">
                  <AreaChart data={spendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
-                       <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                       <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#FF5C00" stopOpacity={0.05}/>
                           <stop offset="95%" stopColor="#FF5C00" stopOpacity={0}/>
                        </linearGradient>
-                       <linearGradient id="colorPayments" x1="0" y1="0" x2="0" y2="1">
+                       <linearGradient id="colorOutcome" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#1D4ED8" stopOpacity={0.05}/>
                           <stop offset="95%" stopColor="#1D4ED8" stopOpacity={0}/>
                        </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" strokeOpacity={0.5} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                     <XAxis 
                        dataKey="name" 
                        axisLine={false} 
@@ -235,21 +220,21 @@ export default function ProfileDashboard() {
                     <Tooltip cursor={{ stroke: '#00D1FF', strokeWidth: 1, strokeDasharray: '5 5' }} />
                     <Area 
                       type="monotone" 
-                      dataKey="orders" 
+                      dataKey="payments" 
                       stroke="#FF5C00" 
                       strokeWidth={2} 
                       fillOpacity={1} 
-                      fill="url(#colorOrders)" 
+                      fill="url(#colorIncome)" 
                       dot={{r: 4, fill: '#FF5C00', strokeWidth: 2, stroke: '#fff'}}
                       activeDot={{ r: 6, strokeWidth: 0 }}
                     />
                     <Area 
                       type="monotone" 
-                      dataKey="payments" 
+                      dataKey="orders" 
                       stroke="#1D4ED8" 
                       strokeWidth={2} 
                       fillOpacity={1} 
-                      fill="url(#colorPayments)" 
+                      fill="url(#colorOutcome)" 
                       dot={{r: 4, fill: '#1D4ED8', strokeWidth: 2, stroke: '#fff'}}
                       activeDot={{ r: 6, strokeWidth: 0 }}
                     />
@@ -594,15 +579,15 @@ export default function ProfileDashboard() {
 
 function MetricCard({ label, value, trend, sub, color, data, subAction }: any) {
    const variants: any = {
-      blue: { stroke: "#0001FF", bg: "bg-blue-50" }, 
-      green: { stroke: "#10B981", bg: "bg-emerald-50" },
-      orange: { stroke: "#FF5C00", bg: "bg-orange-50" }
+      blue: { stroke: "#7C3AED", bg: "bg-blue-50 text-blue-600" }, // Purple for Orders
+      green: { stroke: "#10B981", bg: "bg-emerald-50 text-emerald-600" },
+      orange: { stroke: "#FF5C00", bg: "bg-orange-50 text-orange-600" }
    };
    
    return (
-      <div className="bg-white rounded-[12.38px] p-5 flex items-center h-[120px] border border-slate-100 shadow-sm transition-all hover:shadow-md w-full">
+      <div className="bg-white rounded-[8px] p-4 flex items-center gap-4 h-[108px] border border-slate-50 transition-all hover:shadow-md">
          {/* Sparkline on the Left */}
-         <div className="w-[110px] h-[70px] shrink-0 -ml-4">
+         <div className="w-[100px] h-[60px] shrink-0">
             <ResponsiveContainer width="100%" height="100%">
                <LineChart data={data}>
                   <Line 
@@ -617,20 +602,20 @@ function MetricCard({ label, value, trend, sub, color, data, subAction }: any) {
          </div>
 
          {/* Content on the Right */}
-         <div className="flex-1 min-w-0 pl-1">
-            <div className="flex flex-wrap items-baseline gap-1.5">
-               <h3 className="text-[28px] font-black text-[#0A1140] tracking-tighter leading-none">{value}</h3>
-               <span className="text-[16px] font-bold text-[#0A1140] truncate pr-1">{label}</span>
+         <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-2">
+               <h3 className="text-[28px] font-black text-[#0C1457] tracking-tighter leading-none">{value}</h3>
+               <span className="text-[16px] font-bold text-[#0C1457]">{label}</span>
                {trend && (
-                 <span className={`text-[12px] font-bold ml-auto whitespace-nowrap pr-2 ${trend.startsWith('+') ? 'text-[#0001FF]' : 'text-[#FF5C00]'}`}>
+                 <span className={`text-[12px] font-bold ml-auto ${trend.startsWith('+') ? 'text-blue-600' : 'text-orange-500'}`}>
                    {trend}
                  </span>
                )}
             </div>
-            <div className="flex items-center gap-2 mt-2">
-               <p className="text-[12px] font-bold text-slate-400 capitalize whitespace-nowrap">{sub}</p>
+            <div className="flex items-center gap-2 mt-1">
+               <p className="text-[12px] font-medium text-slate-400 capitalize whitespace-nowrap">{sub}</p>
                {subAction && (
-                 <span className="text-[10px] font-black bg-slate-100 text-slate-400 px-2 py-1 rounded-[4px] uppercase tracking-tighter whitespace-nowrap">
+                 <span className="text-[10px] font-bold bg-slate-50 text-slate-400 px-2 py-0.5 rounded-full uppercase tracking-tighter whitespace-nowrap">
                    {subAction}
                  </span>
                )}
