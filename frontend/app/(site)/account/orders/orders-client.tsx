@@ -351,7 +351,15 @@ function SummaryStat({ icon, color, bg, value, label, sub }: any) {
          <div className="flex flex-col min-w-0">
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">{label}</div>
             <div className="flex items-baseline gap-1">
-               <span className="text-[16px] font-black text-[#0A1140] leading-none shrink-0">{value}</span>
+               <span 
+                  className="font-bold text-[#0A1140] leading-[100%] shrink-0"
+                  style={{ 
+                    fontSize: '23.25px', 
+                    fontFamily: "'Circular Std', 'Inter', system-ui, sans-serif" 
+                  }}
+               >
+                  {value}
+               </span>
                <span className="text-[9px] font-bold text-slate-400 tracking-tight lowercase truncate">{sub}</span>
             </div>
          </div>
