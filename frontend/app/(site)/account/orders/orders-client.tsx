@@ -103,31 +103,37 @@ export default function OrderHistoryClient() {
                           gap: '8.84px'
                         }}
                      >
-                        <h3 className="line-clamp-1 text-[13px] font-bold text-slate-500 mb-2">Order Summary</h3>
+                        <div className="flex items-center justify-between mb-4">
+                           <h3 className="text-[14px] font-bold text-[#0A1140]">Order Summary</h3>
+                        </div>
+                        <div className="border-t border-slate-100 mb-6 -mx-[17.68px]"></div>
                         
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-[8.84px] py-2">
-                           <SummaryStat icon={<ShoppingBag size={14} />} color="text-orange-500" bg="bg-orange-50" value="256" label="Total Orders" sub="orders" />
-                           <SummaryStat icon={<Truck size={14} />} color="text-blue-500" bg="bg-blue-50" value="24" label="Active Orders" sub="ongoing" />
-                           <SummaryStat icon={<CheckCircle2 size={14} />} color="text-emerald-500" bg="bg-emerald-50" value="187" label="Completed Orders" sub="delivered" />
-                           <SummaryStat icon={<XCircle size={14} />} color="text-rose-500" bg="bg-rose-50" value="24" label="Canceled Orders" sub="Not completed" />
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-[11px] mb-4">
+                           <SummaryStat icon={<ShoppingBag size={18} />} color="text-[#FF5C00]" bg="bg-[#F8F9FF]" value="256" label="Total Orders" sub="orders" />
+                           <SummaryStat icon={<FileText size={18} />} color="text-[#FF5C00]" bg="bg-[#F8F9FF]" value="24" label="Active Orders" sub="ongoing" />
+                           <SummaryStat icon={<CheckCircle2 size={18} />} color="text-[#FF5C00]" bg="bg-[#F8F9FF]" value="187" label="Completed Orders" sub="delivered" />
+                           <SummaryStat icon={<XCircle size={18} />} color="text-[#FF5C00]" bg="bg-[#F8F9FF]" value="24" label="Canceled Orders" sub="Not completed" />
                         </div>
 
-                        {/* Wallet Banner Inside - Optimized Size */}
+                        {/* Wallet Banner Inside - Light Blue Theme */}
                         <div 
-                           className="bg-[#1D4ED8] rounded-[8.84px] flex items-center gap-[8.84px] text-white shadow-md mt-auto mx-auto"
+                           className="bg-[#F0F2FF] rounded-[8.84px] flex items-center gap-[12px] shadow-sm mt-auto mx-auto"
                            style={{ 
-                             width: '586.80px', 
-                             height: '36px', 
-                             padding: '0 12px' 
+                             width: '633.64px', // Adjusted to fit container padding
+                             height: '64px', 
+                             padding: '0 20px',
+                             border: '1px solid #E0E4FF'
                            }}
                         >
-                           <div className="w-6 h-6 bg-white/20 rounded-md flex items-center justify-center shrink-0">
-                              <Wallet size={14} className="text-white" />
+                           <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shrink-0 shadow-lg">
+                              <Wallet size={24} className="text-white" />
                            </div>
-                           <p className="text-[11px] font-bold leading-none tracking-tight flex-1 truncate">
-                              Your wallet balance can be used to pay for orders or withdrawn to your bank account seamlessly.
-                              <Link href="/account/wallet" className="font-extrabold underline ml-1 hover:text-white/80">Learn more</Link>
-                           </p>
+                           <div className="flex flex-col">
+                              <p className="text-[13px] font-bold text-[#0A1140] leading-snug">
+                                 Your wallet balance can be used to pay for orders or withdrawn to your bank account seamlessly.
+                              </p>
+                              <Link href="/account/wallet" className="text-[12px] font-black text-[#0001FF] hover:underline mt-0.5">Learn more</Link>
+                           </div>
                         </div>
                      </div>
 
@@ -344,24 +350,27 @@ export default function OrderHistoryClient() {
 
 function SummaryStat({ icon, color, bg, value, label, sub }: any) {
    return (
-      <div className="flex items-center gap-3 p-1">
-         <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${bg} ${color}`}>
-            {icon}
-         </div>
-         <div className="flex flex-col min-w-0">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">{label}</div>
-            <div className="flex items-baseline gap-1">
-               <span 
-                  className="font-bold text-[#0A1140] leading-[100%] shrink-0"
-                  style={{ 
-                    fontSize: '23.25px', 
-                    fontFamily: "'Circular Std', 'Inter', system-ui, sans-serif" 
-                  }}
-               >
-                  {value}
-               </span>
-               <span className="text-[9px] font-bold text-slate-400 tracking-tight lowercase truncate">{sub}</span>
+      <div className={`flex flex-col gap-4 p-5 rounded-xl ${bg} border border-slate-50 transition-all hover:shadow-md`}>
+         <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white shadow-sm ${color}`}>
+               <div className="relative">
+                  {icon}
+                  <Clock size={8} className="absolute -bottom-0.5 -right-0.5 text-orange-500 bg-white rounded-full" />
+               </div>
             </div>
+            <div className="text-[13px] font-bold text-slate-500 tracking-tight">{label}</div>
+         </div>
+         <div className="flex items-baseline gap-2">
+            <span 
+               className="font-black text-[#0A1140] leading-none shrink-0"
+               style={{ 
+                 fontSize: '23.25px', 
+                 fontFamily: "'Circular Std', 'Inter', system-ui, sans-serif" 
+               }}
+            >
+               {value}
+            </span>
+            <span className="text-[12px] font-bold text-slate-400 tracking-tight lowercase truncate">{sub}</span>
          </div>
       </div>
    );
