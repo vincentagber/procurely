@@ -100,7 +100,7 @@ export default function WalletClient() {
     <div className="max-w-[1440px] mx-auto min-w-0">
                
                {/* Grid Layout Container */}
-               <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-8">
+               <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-[48px]">
 
                   {/* LEFT COLUMN */}
                   <div className="space-y-6 min-w-0">

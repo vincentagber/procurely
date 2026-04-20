@@ -36,7 +36,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         {/* Breadcrumbs Section */}
         <div className="flex justify-center pt-8 pb-4">
           <div
-            className="w-full max-w-[1115px] h-[81px] bg-white rounded-[10px] flex items-center px-[30px] shadow-sm border border-slate-100"
+            className="w-full max-w-[1240px] h-[81px] bg-white rounded-[10px] flex items-center px-[30px] shadow-sm border border-slate-100"
           >
             <div className="flex items-center gap-2 text-[14px] font-bold">
               <span className="text-slate-400">Home</span>
@@ -49,7 +49,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         </div>
 
         <div className="flex-1 flex justify-center py-4">
-          <div className="w-full max-w-[1115px] flex flex-col md:flex-row gap-[18px] px-4 md:px-6 lg:px-0 items-start">
+          <div className="w-full max-w-[1240px] flex flex-col md:flex-row gap-[40px] px-4 md:px-6 lg:px-0 items-start">
             <DashboardSidebar />
             <main className="flex-1 w-full min-w-0 pb-[100px]">
               {children}

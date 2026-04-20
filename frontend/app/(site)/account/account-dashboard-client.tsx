@@ -132,7 +132,7 @@ export default function AccountDashboardClient() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_229.97px] gap-[18.32px]">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_229.97px] gap-[40px]">
         {/* Main Content (Left) */}
         <div className="space-y-[18px] min-w-0">
           
