@@ -110,10 +110,10 @@ export default function OrderHistoryClient() {
                         <div className="border-t border-slate-100 mb-6 -mx-[17.68px]"></div>
                         
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-[11px] mb-4">
-                           <SummaryStat icon={<ShoppingBag size={18} />} color="text-[#FF5C00]" bg="bg-[#F8F9FF]" value="256" label="Total Orders" sub="orders" />
-                           <SummaryStat icon={<FileText size={18} />} color="text-[#FF5C00]" bg="bg-[#F8F9FF]" value="24" label="Active Orders" sub="ongoing" />
-                           <SummaryStat icon={<CheckCircle2 size={18} />} color="text-[#FF5C00]" bg="bg-[#F8F9FF]" value="187" label="Completed Orders" sub="delivered" />
-                           <SummaryStat icon={<XCircle size={18} />} color="text-[#FF5C00]" bg="bg-[#F8F9FF]" value="24" label="Canceled Orders" sub="Not completed" />
+                           <SummaryStat icon={<ShoppingBag size={18} />} color="text-[#FF5C00]" value="256" label="Total Orders" sub="orders" />
+                           <SummaryStat icon={<FileText size={18} />} color="text-[#FF5C00]" value="24" label="Active Orders" sub="ongoing" />
+                           <SummaryStat icon={<CheckCircle2 size={18} />} color="text-[#FF5C00]" value="187" label="Completed Orders" sub="delivered" />
+                           <SummaryStat icon={<XCircle size={18} />} color="text-[#FF5C00]" value="24" label="Canceled Orders" sub="Not completed" />
                         </div>
 
                         {/* Wallet Banner Inside - Light Blue Theme */}
@@ -349,16 +349,17 @@ export default function OrderHistoryClient() {
 
 // --- Specific Components ---
 
-function SummaryStat({ icon, color, bg, value, label, sub }: any) {
+function SummaryStat({ icon, color, value, label, sub }: any) {
    return (
       <div 
-         className={`flex flex-col ${bg} border border-slate-50 transition-all hover:shadow-sm`}
+         className={`flex flex-col border border-slate-50 transition-all hover:shadow-sm`}
          style={{
             width: '150.66px',
             height: '72.71px',
             borderRadius: '5.58px',
             padding: '9.3px',
-            gap: '9.3px'
+            gap: '9.3px',
+            background: '#E6E6FF80'
          }}
       >
          <div className="flex items-center gap-2">
