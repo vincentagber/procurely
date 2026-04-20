@@ -104,37 +104,35 @@ export default function OrderHistoryClient() {
                           gap: '8.84px'
                         }}
                      >
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between mb-2">
                            <h3 className="text-[14px] font-bold text-[#0A1140]">Order Summary</h3>
                         </div>
-                        <div className="border-t border-slate-100 mb-6 -mx-[17.68px]"></div>
+                        <div className="border-t border-slate-100 mb-3 -mx-[17.68px]"></div>
                         
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-[11px] mb-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-[11px] mb-2">
                            <SummaryStat icon={<ShoppingBag size={18} />} color="text-[#FF5C00]" value="256" label="Total Orders" sub="orders" />
                            <SummaryStat icon={<FileText size={18} />} color="text-[#FF5C00]" value="24" label="Active Orders" sub="ongoing" />
                            <SummaryStat icon={<CheckCircle2 size={18} />} color="text-[#FF5C00]" value="187" label="Completed Orders" sub="delivered" />
                            <SummaryStat icon={<XCircle size={18} />} color="text-[#FF5C00]" value="24" label="Canceled Orders" sub="Not completed" />
                         </div>
 
-                        {/* Wallet Banner Inside - Light Blue Theme */}
+                        {/* Wallet Banner Inside - Optimized Compact Theme */}
                         <div 
-                           className="bg-[#F0F2FF] rounded-[8.84px] flex items-center gap-[12px] shadow-sm mt-auto mx-auto"
+                           className="bg-[#F0F2FF] rounded-[8.84px] flex items-center gap-[10px] shadow-sm mt-auto mx-auto"
                            style={{ 
-                             width: '633.64px', // Adjusted to fit container padding
-                             height: '64px', 
-                             padding: '0 20px',
+                             width: '633.64px',
+                             height: '44px', 
+                             padding: '0 16px',
                              border: '1px solid #E0E4FF'
                            }}
                         >
-                           <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shrink-0 shadow-lg">
-                              <Wallet size={24} className="text-white" />
+                           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+                              <Wallet size={16} className="text-white" />
                            </div>
-                           <div className="flex flex-col">
-                              <p className="text-[13px] font-bold text-[#0A1140] leading-snug">
-                                 Your wallet balance can be used to pay for orders or withdrawn to your bank account seamlessly.
-                              </p>
-                              <Link href="/account/wallet" className="text-[12px] font-black text-[#0001FF] hover:underline mt-0.5">Learn more</Link>
-                           </div>
+                           <p className="text-[12px] font-bold text-[#0A1140] leading-none flex items-center gap-2">
+                              Your wallet balance can be used to pay for orders...
+                              <Link href="/account/wallet" className="font-black text-[#0001FF] hover:underline whitespace-nowrap">Learn more</Link>
+                           </p>
                         </div>
                      </div>
 
