@@ -129,9 +129,19 @@ export default function ProfileDashboard() {
         
 
 
+        {/* Greeting Section */}
+        <div className="mb-8 pl-2">
+          <h1 className="text-[34px] font-black text-[#0001FF] tracking-tight leading-none mb-2">
+            Hello Olusegun!
+          </h1>
+          <p className="text-[14px] font-bold text-slate-400">
+            Welcome back, lets manage your procurement.
+          </p>
+        </div>
+
         {/* Top Metric Cards row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-[13px] max-w-[866px] w-full mb-2">
-           <Link href="/account/profile-order" className="block flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-[16px] max-w-[866px] w-full mb-4">
+           <Link href="/account/profile-order" className="block flex-1 transition-transform hover:scale-[1.02]">
              <MetricCard 
                label="Orders" 
                value="124" 
@@ -139,25 +149,29 @@ export default function ProfileDashboard() {
                sub="In the last" 
                subAction="10 Weeks"
                color="blue" 
-               data={[{v:20},{v:45},{v:30},{v:50},{v:40},{v:60}]}
+               data={[{v:20},{v:45},{v:30},{v:50},{v:40},{v:60},{v:45},{v:70}]}
              />
            </Link>
-           <MetricCard 
-             label="Request" 
-             value="30" 
-             trend="+3 new" 
-             sub="+3 new today" 
-             color="green" 
-             data={[{v:10},{v:30},{v:20},{v:60},{v:40},{v:80}]}
-           />
-           <MetricCard 
-             label="Savings" 
-             value="₦4.2M" 
-             trend="-5% c/s" 
-             sub="Total cost savings" 
-             color="orange" 
-             data={[{v:50},{v:40},{v:60},{v:30},{v:70},{v:40}]}
-           />
+           <div className="transition-transform hover:scale-[1.02]">
+            <MetricCard 
+              label="Request" 
+              value="30" 
+              trend="+3 new today" 
+              sub="+3 new today" 
+              color="green" 
+              data={[{v:10},{v:30},{v:20},{v:60},{v:40},{v:80},{v:50},{v:90}]}
+            />
+           </div>
+           <div className="transition-transform hover:scale-[1.02]">
+            <MetricCard 
+              label="Savings" 
+              value="₦4.2M" 
+              trend="-5% c/s" 
+              sub="Total cost savings" 
+              color="orange" 
+              data={[{v:50},{v:40},{v:60},{v:30},{v:70},{v:40},{v:80},{v:50}]}
+            />
+           </div>
         </div>
 
         {/* Procurement Spend Overview Section */}
@@ -580,15 +594,15 @@ export default function ProfileDashboard() {
 
 function MetricCard({ label, value, trend, sub, color, data, subAction }: any) {
    const variants: any = {
-      blue: { stroke: "#7C3AED", bg: "bg-blue-50 text-blue-600" }, // Purple for Orders
-      green: { stroke: "#10B981", bg: "bg-emerald-50 text-emerald-600" },
-      orange: { stroke: "#FF5C00", bg: "bg-orange-50 text-orange-600" }
+      blue: { stroke: "#0001FF", bg: "bg-blue-50" }, 
+      green: { stroke: "#10B981", bg: "bg-emerald-50" },
+      orange: { stroke: "#FF5C00", bg: "bg-orange-50" }
    };
    
    return (
-      <div className="bg-white rounded-[8px] p-4 flex items-center gap-4 h-[108px] border border-slate-50 transition-all hover:shadow-md">
+      <div className="bg-white rounded-[12.38px] p-5 flex items-center h-[120px] border border-slate-100 shadow-sm transition-all hover:shadow-md w-full">
          {/* Sparkline on the Left */}
-         <div className="w-[100px] h-[60px] shrink-0">
+         <div className="w-[110px] h-[70px] shrink-0 -ml-4">
             <ResponsiveContainer width="100%" height="100%">
                <LineChart data={data}>
                   <Line 
@@ -603,20 +617,20 @@ function MetricCard({ label, value, trend, sub, color, data, subAction }: any) {
          </div>
 
          {/* Content on the Right */}
-         <div className="flex-1 min-w-0">
-            <div className="flex items-baseline gap-2">
-               <h3 className="text-[28px] font-black text-[#0C1457] tracking-tighter leading-none">{value}</h3>
-               <span className="text-[16px] font-bold text-[#0C1457]">{label}</span>
+         <div className="flex-1 min-w-0 pl-1">
+            <div className="flex flex-wrap items-baseline gap-1.5">
+               <h3 className="text-[28px] font-black text-[#0A1140] tracking-tighter leading-none">{value}</h3>
+               <span className="text-[16px] font-bold text-[#0A1140] truncate pr-1">{label}</span>
                {trend && (
-                 <span className={`text-[12px] font-bold ml-auto ${trend.startsWith('+') ? 'text-blue-600' : 'text-orange-500'}`}>
+                 <span className={`text-[12px] font-bold ml-auto whitespace-nowrap pr-2 ${trend.startsWith('+') ? 'text-[#0001FF]' : 'text-[#FF5C00]'}`}>
                    {trend}
                  </span>
                )}
             </div>
-            <div className="flex items-center gap-2 mt-1">
-               <p className="text-[12px] font-medium text-slate-400 capitalize whitespace-nowrap">{sub}</p>
+            <div className="flex items-center gap-2 mt-2">
+               <p className="text-[12px] font-bold text-slate-400 capitalize whitespace-nowrap">{sub}</p>
                {subAction && (
-                 <span className="text-[10px] font-bold bg-slate-50 text-slate-400 px-2 py-0.5 rounded-full uppercase tracking-tighter whitespace-nowrap">
+                 <span className="text-[10px] font-black bg-slate-100 text-slate-400 px-2 py-1 rounded-[4px] uppercase tracking-tighter whitespace-nowrap">
                    {subAction}
                  </span>
                )}
