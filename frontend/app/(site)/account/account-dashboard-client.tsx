@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
+import { DashboardTools } from "@/components/account/dashboard-tools";
 import { useAuth } from "@/components/auth/auth-provider";
 import {
   LineChart,
@@ -79,21 +80,21 @@ const supplierData = [
   { name: 'Fri', value: 3.5 },
   { name: 'Sat', value: 4.5 },
 ];
-
-const activityData = [
-  { name: 'Mon', value: 4 },
-  { name: 'Tue', value: 7 },
-  { name: 'Wed', value: 4 },
-  { name: 'Thu', value: 5 },
+   { name: 'Mon', value: 2 },
+   { name: 'Tue', value: 4 },
+   { name: 'Wed', value: 5 },
+   { name: 'Thu', value: 6 },
+   { name: 'Fri', value: 3 },
+   { name: 'Sat', value: 4 },
   { name: 'Fri', value: 8 },
   { name: 'Sat', value: 4 },
 ];
-
-const orderHistory = [
-  { id: 'PRO102563', subId: 'A85264', supplier: 'Traxus Industrial', items: '8 items supplied', amount: '₦80,000', date: 'Mar 1, 2024', status: 'Processing', statusColor: 'bg-amber-50 text-amber-600 border-amber-100' },
-  { id: 'PRO102567', subId: 'A85264', supplier: 'Gibson Holdings', items: '5 items supplied', amount: '₦45,000', date: 'Mar 1, 2024', status: 'In Progress', statusColor: 'bg-blue-50 text-blue-600 border-blue-100' },
-  { id: 'PRO102541', subId: 'A85264', supplier: 'Halcyon Supplies', items: '10 items supplied', amount: '₦85,000', date: 'Mar 1, 2024', status: 'Delivered', statusColor: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
-  { id: 'PRO102532', subId: 'A85264', supplier: 'Primalogic Systems', items: '12 items supplied', amount: '₦85,000', date: 'Mar 1, 2024', status: 'Canceled', statusColor: 'bg-rose-50 text-rose-600 border-rose-100' },
+   { name: 'Mon', value: 32 },
+   { name: 'Tue', value: 48 },
+   { name: 'Wed', value: 41 },
+   { name: 'Thu', value: 54 },
+   { name: 'Fri', value: 47 },
+   { name: 'Sat', value: 51 },
 ];
 
 export default function AccountDashboardClient() {
@@ -126,7 +127,7 @@ export default function AccountDashboardClient() {
   return (
     <div className="space-y-10">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 mt-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 mt-2 pb-6 border-b border-slate-200">
         <div 
           className="flex flex-col"
           style={{ width: '886px', height: '76.10px', gap: '23.1px' }}
@@ -451,85 +452,13 @@ export default function AccountDashboardClient() {
                     <span className="text-[10px] font-black text-[#0A1140]">70</span>
                  </div>
                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-[#1D4ED8] h-full w-[70%]" />
+                    <div className="bg-[#FF5C00] h-full w-[70%]" />
                  </div>
               </div>
            </div>
 
-           {/* Activity Summary */}
-           <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
-              <h3 className="text-[12px] font-black text-[#0A1140] mb-5">Activity Summary</h3>
-              <div className="space-y-4">
-                 {[
-                   { icon: <FileText size={14} />, label: "Requests placed", val: "112", color: "text-[#FF5C00]", bg: "bg-orange-50" },
-                   { icon: <ShoppingBag size={14} />, label: "Orders delivered", val: "68", color: "text-[#1D4ED8]", bg: "bg-blue-50" },
-                   { icon: <UserIcon size={14} />, label: "Suppliers engaged", val: "27", color: "text-blue-400", bg: "bg-sky-50" },
-                   { icon: <AlertCircle size={14} />, label: "Deliveries in progress", val: "4", color: "text-amber-500", bg: "bg-amber-50" },
-                 ].map(item => (
-                   <div key={item.label} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                         <div className={`w-8 h-8 rounded-lg ${item.bg} ${item.color} flex items-center justify-center`}>
-                            {item.icon}
-                         </div>
-                         <span className="text-[10px] font-bold text-slate-500">{item.label}</span>
-                      </div>
-                      <span className="text-[11px] font-black text-[#0A1140]">{item.val}</span>
-                   </div>
-                 ))}
-              </div>
-           </div>
-
-           {/* Quick Tools */}
-           <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
-              <h3 className="text-[12px] font-black text-[#0A1140] mb-5">Quick Tools</h3>
-              <div className="space-y-3">
-                 {[
-                   { icon: <FileDown size={14} />, label: "Upload BOQ Document", sub: "PDF, Word" },
-                   { icon: <Plus size={14} />, label: "Create New RFQ", sub: "Draft" },
-                   { icon: <Building size={14} />, label: "Add New Supplier", sub: "List" },
-                 ].map(item => (
-                   <button key={item.label} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors text-left group">
-                      <div className="flex items-center gap-3">
-                         <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center">
-                            {item.icon}
-                         </div>
-                         <div className="min-w-0">
-                            <p className="text-[10px] font-black text-[#0A1140]">{item.label}</p>
-                            <p className="text-[8px] font-bold text-slate-400">{item.sub}</p>
-                         </div>
-                      </div>
-                      <ChevronRight size={14} className="text-slate-300 group-hover:text-[#1D4ED8]" />
-                   </button>
-                 ))}
-              </div>
-           </div>
-
-           {/* Recent Documents */}
-           <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-5">
-                 <h3 className="text-[12px] font-black text-[#0A1140]">Recent Documents</h3>
-                 <button className="text-[9px] font-black text-[#FF5C00] uppercase">View All</button>
-              </div>
-              <div className="space-y-3">
-                 {[
-                   { icon: <FileText size={14} />, label: "BoQ_Material.pdf", sub: "1.2 MB", color: "text-amber-500" },
-                   { icon: <FileText size={14} />, label: "Invoice_056.pdf", sub: "850 KB", color: "text-rose-500" },
-                 ].map(item => (
-                   <div key={item.label} className="flex items-center justify-between group cursor-pointer">
-                      <div className="flex items-center gap-3">
-                         <div className={`w-8 h-8 rounded-lg bg-slate-50 ${item.color} flex items-center justify-center`}>
-                            {item.icon}
-                         </div>
-                         <div>
-                            <p className="text-[10px] font-black text-[#0A1140] group-hover:text-[#1D4ED8] transition-colors">{item.label}</p>
-                            <p className="text-[8px] font-bold text-slate-400">{item.sub}</p>
-                         </div>
-                      </div>
-                      <ChevronRight size={14} className="text-slate-300" />
-                   </div>
-                 ))}
-              </div>
-           </div>
+           {/* Unified Activity, Tools & Documents Block */}
+           <DashboardTools />
 
       </div>
     </div>

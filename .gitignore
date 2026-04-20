@@ -1,25 +1,35 @@
-# macOS
-.DS_Store
-
-# Local analysis / scratch work
-.analysis/
-
-# Node / Next.js
+# Dependencies
+node_modules/
+backend/vendor/
 frontend/node_modules/
+
+# Next.js
 frontend/.next/
 frontend/out/
-frontend/.vercel/
-frontend/.env.local
-frontend/.env.*.local
 
-# PHP / Composer
-backend/vendor/
-backend/.env
-backend/storage/*.sqlite
-
-# Logs
+# IDEs and OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+frontend/.env
+backend/.env
+
+# Large Assets/Scratch
+*.png
+*.jpg
+*.jpeg
+*.gif
+!frontend/public/**/*
+
+# Temporary files
+.temp/
+.cache/
+.gemini/
+.analysis/

@@ -111,50 +111,68 @@ const renderOverlay = (item: SiteContent["categoriesSection"]["items"][0]) => {
 
 export function CategorySection({ section }: CategorySectionProps) {
   return (
-    <section className="container-shell py-12 md:py-16">
-      <SectionHeading
-        actionHref="#explore-products"
-        actionLabel={section.linkLabel}
-        accent={section.eyebrowAccent}
-        lead={section.eyebrowLead}
-      />
+    <section className="container-shell py-16 md:py-24">
+      {/* Custom Heading to match image exactly */}
+      <div className="relative mb-12 border-b border-slate-100 pb-5 flex items-end justify-between">
+        <div>
+          <h2 className="text-[2.2rem] font-bold text-slate-500 tracking-tight leading-none">
+            Shop Popular <span className="text-[#0001FF]">Category</span>
+          </h2>
+          <div className="absolute -bottom-[2.5px] left-0 h-[4px] w-[320px] bg-[#FF5C00]" />
+        </div>
+        <Link 
+          href="/materials" 
+          className="group flex items-center gap-1.5 text-[15px] font-bold text-slate-800 transition hover:text-[#0001FF]"
+        >
+          View All
+          <ChevronRight className="size-5 text-[#FF5C00] transition-transform group-hover:translate-x-1" strokeWidth={3} />
+        </Link>
+      </div>
 
-      <div className="mt-8 grid gap-4 sm:mt-10 sm:gap-5 md:grid-cols-12 md:auto-rows-[160px]">
-        {section.items.map((item, index) => (
-          <Reveal
-            className={cn("group", variantClasses[item.variant])}
-            delay={index * 0.06}
-            key={item.id}
-          >
-            <motion.div
-              className="h-full"
-              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-              whileHover="hover"
-              whileTap={{ scale: 0.992 }}
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-12 md:auto-rows-[180px] lg:auto-rows-[220px]">
+        {section.items.map((item, index) => {
+          // Custom Grid Mapping
+          let gridClass = "md:col-span-4";
+          if (item.id === "smart-building-materials") gridClass = "md:col-span-8 md:row-span-2";
+          else if (item.id === "rebars-category") gridClass = "md:col-span-4 md:row-span-2";
+          else if (item.id === "sharp-sand-category") gridClass = "md:col-span-6 md:row-span-1";
+          else if (item.id === "plaster-sand-category") gridClass = "md:col-span-3 md:row-span-1";
+          else if (item.id === "granite-category") gridClass = "md:col-span-3 md:row-span-1";
+
+          return (
+            <Reveal
+              className={cn("group", gridClass)}
+              delay={index * 0.06}
+              key={item.id}
             >
-              <Link
-                aria-label={item.title}
-                className="group relative block h-full overflow-hidden rounded-[24px] border border-white/70 shadow-[0_24px_60px_rgba(19,24,79,0.08)] transition-card-hover focus-visible:outline-none focus-visible:shadow-focus sm:rounded-[30px]"
-                href={item.href}
+              <motion.div
+                className="h-full"
+                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                whileHover="hover"
+                whileTap={{ scale: 0.992 }}
               >
-                <motion.img
-                  alt={item.title}
-                  className="h-full min-h-[220px] w-full object-cover md:min-h-0"
-                  src={item.cardImage}
-                  transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                  variants={{ hover: { scale: 1.045 } }}
-                />
-                <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.08)_0%,rgba(19,24,79,0.06)_100%)] opacity-90 transition-card-hover group-hover:opacity-100" />
-                <span className="pointer-events-none absolute inset-x-6 bottom-5 h-px bg-white/70 opacity-0 transition-card-hover group-hover:opacity-100" />
-                {renderOverlay(item)}
-                <span className="sr-only">
-                  {item.title} {item.description} {item.ctaLabel}
-                </span>
-              </Link>
-            </motion.div>
-          </Reveal>
-        ))}
+                <Link
+                  aria-label={item.title}
+                  className="group relative block h-full overflow-hidden rounded-[28px] border border-white/70 shadow-[0_24px_60px_rgba(19,24,79,0.08)] transition-all duration-500 focus-visible:outline-none"
+                  href={item.href}
+                >
+                  <motion.img
+                    alt={item.title}
+                    className="h-full min-h-[220px] w-full object-cover md:min-h-0"
+                    src={item.cardImage}
+                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                    variants={{ hover: { scale: 1.06 } }}
+                  />
+                  <div className="absolute inset-0 bg-black/5 opacity-50 group-hover:opacity-40 transition-opacity" />
+                  {renderOverlay(item)}
+                </Link>
+              </motion.div>
+            </Reveal>
+          );
+        })}
       </div>
     </section>
   );
 }
+
+import { ChevronRight } from "lucide-react";
