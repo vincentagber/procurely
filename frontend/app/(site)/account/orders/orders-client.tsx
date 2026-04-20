@@ -27,7 +27,8 @@ import {
    Truck,
    ArrowRightLeft,
    ChevronLeft,
-   Info
+   Info,
+   Clock
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
