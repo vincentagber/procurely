@@ -38,7 +38,7 @@ export function DashboardSidebar() {
    const sidebarContent = (
     <div className="flex flex-col h-full bg-[#0C1457] pt-[17.47px] pr-[8.73px]">
       {/* Brand & User Card */}
-      <div className="shrink-0 mb-8 pl-8">
+      <div className="shrink-0 mb-8 pl-10">
         <div className="flex items-center justify-between mb-10">
           <Link href="/" className="group">
             <h2 className="text-2xl font-bold text-white tracking-tight flex items-center">
@@ -84,7 +84,7 @@ export function DashboardSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`w-full flex items-center gap-3 pl-8 pr-4 py-2.5 transition-all h-[44px] ${
+                className={`w-full flex items-center gap-3 pl-10 pr-4 py-2.5 transition-all h-[44px] ${
                   active
                     ? "bg-[#0001FF] text-white font-bold"
                     : "bg-transparent text-white hover:bg-white/10 font-bold"
@@ -100,7 +100,7 @@ export function DashboardSidebar() {
 
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 pl-8 pr-4 py-2.5 transition-all h-[44px] bg-transparent text-white hover:bg-white/10 font-bold mt-auto"
+            className="w-full flex items-center gap-3 pl-10 pr-4 py-2.5 transition-all h-[44px] bg-transparent text-white hover:bg-white/10 font-bold mt-auto"
           >
             <LogOut size={18} />
             <span className="text-[13px] tracking-tight">Logout</span>
