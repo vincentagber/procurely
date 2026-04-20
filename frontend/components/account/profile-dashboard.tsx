@@ -160,9 +160,9 @@ export default function ProfileDashboard() {
            />
         </div>
 
-        {/* Order Overview Section */}
+        {/* Procurement Spend Overview Section */}
         <section 
-          className="bg-white p-6 relative overflow-hidden flex flex-col justify-between"
+          className="bg-white p-6 relative overflow-hidden flex flex-col justify-between shadow-sm"
           style={{
             width: '673.69px',
             height: '247.79px',
@@ -172,9 +172,9 @@ export default function ProfileDashboard() {
           }}
         >
            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-[16px] font-extrabold text-[#0C1457] tracking-tight">Order Overview</h3>
+              <h3 className="text-[16px] font-extrabold text-[#0C1457] tracking-tight">Procurement Spend Overview</h3>
               <div className="flex items-center gap-1.5 p-1 bg-slate-50 rounded-lg">
-                 {['1W', '1M', '3M'].map((tab, idx) => (
+                 {['7 Days', '30 Days', '90 Days'].map((tab, idx) => (
                     <button key={tab} className={`px-3 py-1 text-[11px] font-bold rounded-md transition-all ${idx === 0 ? 'bg-white text-[#1D4ED8] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
                        {tab}
                     </button>
@@ -182,12 +182,12 @@ export default function ProfileDashboard() {
               </div>
            </div>
 
-           <div className="flex justify-center gap-6 mb-2 text-[11px] font-bold">
-              <span className="flex items-center gap-2 text-orange-500">
-                <div className="w-2 h-2 rounded-full bg-orange-500" /> Income
+           <div className="flex justify-end gap-6 mb-4 text-[11px] font-bold">
+              <span className="flex items-center gap-2 text-[#FF5C00]">
+                <div className="w-2 h-2 rounded-full bg-[#FF5C00]" /> Orders Placed
               </span>
-              <span className="flex items-center gap-2 text-blue-600">
-                <div className="w-2 h-2 rounded-full bg-blue-600" /> Outcome
+              <span className="flex items-center gap-2 text-[#1D4ED8]">
+                <div className="w-2 h-2 rounded-full bg-[#1D4ED8]" /> Payments Made
               </span>
            </div>
 
@@ -195,16 +195,16 @@ export default function ProfileDashboard() {
               <ResponsiveContainer width="100%" height="100%">
                  <AreaChart data={spendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
-                       <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                       <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#FF5C00" stopOpacity={0.05}/>
                           <stop offset="95%" stopColor="#FF5C00" stopOpacity={0}/>
                        </linearGradient>
-                       <linearGradient id="colorOutcome" x1="0" y1="0" x2="0" y2="1">
+                       <linearGradient id="colorPayments" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#1D4ED8" stopOpacity={0.05}/>
                           <stop offset="95%" stopColor="#1D4ED8" stopOpacity={0}/>
                        </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" strokeOpacity={0.5} />
                     <XAxis 
                        dataKey="name" 
                        axisLine={false} 
@@ -221,21 +221,21 @@ export default function ProfileDashboard() {
                     <Tooltip cursor={{ stroke: '#00D1FF', strokeWidth: 1, strokeDasharray: '5 5' }} />
                     <Area 
                       type="monotone" 
-                      dataKey="payments" 
+                      dataKey="orders" 
                       stroke="#FF5C00" 
                       strokeWidth={2} 
                       fillOpacity={1} 
-                      fill="url(#colorIncome)" 
+                      fill="url(#colorOrders)" 
                       dot={{r: 4, fill: '#FF5C00', strokeWidth: 2, stroke: '#fff'}}
                       activeDot={{ r: 6, strokeWidth: 0 }}
                     />
                     <Area 
                       type="monotone" 
-                      dataKey="orders" 
+                      dataKey="payments" 
                       stroke="#1D4ED8" 
                       strokeWidth={2} 
                       fillOpacity={1} 
-                      fill="url(#colorOutcome)" 
+                      fill="url(#colorPayments)" 
                       dot={{r: 4, fill: '#1D4ED8', strokeWidth: 2, stroke: '#fff'}}
                       activeDot={{ r: 6, strokeWidth: 0 }}
                     />
