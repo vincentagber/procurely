@@ -245,49 +245,51 @@ export default function AccountDashboardClient() {
           </div>
 
           {/* Widget Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
              {/* Material Category Spend */}
-              <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm col-span-1">
+              <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm col-span-1 flex flex-col">
                  <div className="flex items-center justify-between mb-4">
                     <h3 className="text-[13px] font-black text-[#13184F] whitespace-nowrap">Material Category Spend</h3>
                     <div className="flex gap-1 bg-[#E7E8EE] rounded-lg p-1">
-                       <button className="px-2 py-1 text-[9px] font-bold bg-white rounded shadow-sm">6W</button>
-                       <button className="px-2 py-1 text-[9px] font-bold text-slate-500">6M</button>
+                       <button className="px-2 py-1 text-[9px] font-bold bg-white rounded shadow-sm">1W</button>
+                       <button className="px-2 py-1 text-[9px] font-bold text-slate-500">1M</button>
                     </div>
                  </div>
-                 <div className="h-44 w-full relative">
-                    <ResponsiveContainer width="100%" height="100%">
-                       <PieChart>
-                          <Pie
-                            data={categoryData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={45}
-                            outerRadius={65}
-                            paddingAngle={5}
-                            dataKey="value"
-                            stroke="none"
-                          >
-                             {categoryData.map((entry, index) => (
-                               <Cell key={`cell-${index}`} fill={entry.color} />
-                             ))}
-                          </Pie>
-                       </PieChart>
-                    </ResponsiveContainer>
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-                       <div className="text-[16px] font-black text-[#13184F]">82%</div>
+                 <div className="flex items-center gap-6 flex-1">
+                    <div className="h-44 w-1/2 relative">
+                       <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                             <Pie
+                               data={categoryData}
+                               cx="50%"
+                               cy="50%"
+                               innerRadius={45}
+                               outerRadius={65}
+                               paddingAngle={5}
+                               dataKey="value"
+                               stroke="none"
+                             >
+                                {categoryData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                             </Pie>
+                          </PieChart>
+                       </ResponsiveContainer>
+                       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                          <div className="text-[16px] font-black text-[#13184F]">82%</div>
+                       </div>
                     </div>
-                 </div>
-                 <div className="space-y-3 mt-4">
-                    {categoryData.map(item => (
-                      <div key={item.name} className="flex items-center justify-between">
-                         <div className="flex items-center gap-2.5">
-                            <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: item.color}} />
-                            <span className="text-[11px] font-bold text-slate-500">{item.name}</span>
+                    <div className="space-y-3 w-1/2">
+                       {categoryData.map(item => (
+                         <div key={item.name} className="flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                               <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: item.color}} />
+                               <span className="text-[11px] font-bold text-slate-500">{item.name}</span>
+                            </div>
+                            <span className="text-[11px] font-black text-[#13184F]">{item.value}%</span>
                          </div>
-                         <span className="text-[11px] font-black text-[#13184F]">{item.value}%</span>
-                      </div>
-                    ))}
+                       ))}
+                    </div>
                  </div>
               </div>
 
@@ -310,15 +312,16 @@ export default function AccountDashboardClient() {
                  <div className="flex items-center justify-between mb-4">
                     <h3 className="text-[13px] font-black text-[#13184F]">Order Activity</h3>
                     <div className="flex gap-1 bg-[#E7E8EE] rounded-lg p-1">
-                       <button className="px-2 py-1 text-[9px] font-bold bg-white rounded shadow-sm">W</button>
-                       <button className="px-2 py-1 text-[9px] font-bold text-slate-500">M</button>
+                       <button className="px-2 py-1 text-[9px] font-bold bg-white rounded shadow-sm">1W</button>
+                       <button className="px-2 py-1 text-[9px] font-bold text-slate-500">1M</button>
                     </div>
                  </div>
                  <div className="h-44 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                        <BarChart data={activityData}>
-                          <Bar dataKey="value" fill="#3B82F6" radius={[6, 6, 0, 0]} barSize={16} />
+                          <Bar dataKey="value" fill="#3B82F6" radius={[6, 6, 0, 0]} barSize={20} />
                           <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94A3B8'}} />
+                          <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 'bold', fill: '#94A3B8'}} />
                        </BarChart>
                     </ResponsiveContainer>
                  </div>
@@ -327,26 +330,26 @@ export default function AccountDashboardClient() {
               {/* Delivery Performance */}
               <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm col-span-1">
                  <h3 className="text-[13px] font-black text-[#13184F] mb-8">Delivery Performance</h3>
-                 <div className="flex gap-6 items-end justify-center mb-8 h-20">
-                    <div className="flex flex-col items-center gap-1 w-full max-w-[24px]">
-                       <div className="w-full bg-[#10B981]/20 rounded-full h-12 relative overflow-hidden">
-                         <div className="absolute bottom-0 w-full bg-[#36D1B2] h-[33%]" />
+                 <div className="flex gap-10 items-end justify-center mb-8 h-20">
+                    <div className="flex flex-col items-center gap-1 w-full max-w-[32px]">
+                       <div className="w-full bg-[#10B981]/10 rounded-full h-12 relative overflow-hidden">
+                         <div className="absolute bottom-0 w-full bg-[#36D1B2] h-[23%]" />
                        </div>
                     </div>
-                    <div className="flex flex-col items-center gap-1 w-full max-w-[24px]">
-                       <div className="w-full bg-[#FF7D00]/20 rounded-full h-16 relative overflow-hidden">
-                         <div className="absolute bottom-0 w-full bg-[#FF9F0A] h-[67%]" />
+                    <div className="flex flex-col items-center gap-1 w-full max-w-[32px]">
+                       <div className="w-full bg-[#FF7D00]/10 rounded-full h-16 relative overflow-hidden">
+                         <div className="absolute bottom-0 w-full bg-[#FF9F0A] h-[57%]" />
                        </div>
                     </div>
                  </div>
-                 <div className="flex items-center justify-center gap-5">
+                 <div className="flex items-center justify-center gap-10">
                     <div className="flex items-center gap-2">
                        <div className="w-2.5 h-2.5 rounded-full bg-[#36D1B2]" />
-                       <span className="text-[10px] font-bold text-slate-500">On-Time <span className="text-[#13184F] font-black">33%</span></span>
+                       <span className="text-[11px] font-bold text-slate-500">On-Time <span className="text-[#13184F] font-black ml-1">23%</span></span>
                     </div>
                     <div className="flex items-center gap-2">
                        <div className="w-2.5 h-2.5 rounded-full bg-[#FF9F0A]" />
-                       <span className="text-[10px] font-bold text-slate-500">Delayed <span className="text-[#13184F] font-black">67%</span></span>
+                       <span className="text-[11px] font-bold text-slate-500">Delayed <span className="text-[#13184F] font-black ml-1">57%</span></span>
                     </div>
                  </div>
               </div>
