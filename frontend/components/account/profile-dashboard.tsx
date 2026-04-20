@@ -130,15 +130,17 @@ export default function ProfileDashboard() {
 
         {/* Top Metric Cards row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-[13px] max-w-[866px] w-full mb-2">
-           <MetricCard 
-             label="Orders" 
-             value="124" 
-             trend="+10%" 
-             sub="In the last" 
-             subAction="10 Weeks"
-             color="blue" 
-             data={[{v:20},{v:45},{v:30},{v:50},{v:40},{v:60}]}
-           />
+           <Link href="/account/profile-order" className="block flex-1">
+             <MetricCard 
+               label="Orders" 
+               value="124" 
+               trend="+10%" 
+               sub="In the last" 
+               subAction="10 Weeks"
+               color="blue" 
+               data={[{v:20},{v:45},{v:30},{v:50},{v:40},{v:60}]}
+             />
+           </Link>
            <MetricCard 
              label="Request" 
              value="30" 

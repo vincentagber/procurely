@@ -139,14 +139,14 @@ export default function AccountDashboardClient() {
           {/* Top Stat Cards Row */}
           <div className="flex flex-col sm:flex-row gap-[10.11px] w-full">
             {/* Stat Card 1 */}
-            <div className="flex-1 h-[84px] bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center justify-between overflow-hidden">
+            <Link href="/account/profile-order" className="flex-1 h-[84px] bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center justify-between overflow-hidden hover:bg-slate-50 transition-colors">
                <div>
                   <div className="flex items-center gap-2 mb-1">
                      <span className="text-2xl font-black text-[#0A1140]">124</span>
                      <span className="text-[12px] font-bold text-slate-500">Orders</span>
-                     <span className="text-[10px] font-bold text-[#1D4ED8] bg-blue-50 px-1.5 py-0.5 rounded">-10%</span>
+                     <span className="text-[10px] font-bold text-[#1D4ED8] bg-blue-50 px-1.5 py-0.5 rounded">+10%</span>
                   </div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">In the last 10 weeks</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">In the last 10 Weeks</p>
                </div>
                <div className="w-24 h-12">
                   <ResponsiveContainer width="100%" height="100%">
@@ -155,7 +155,7 @@ export default function AccountDashboardClient() {
                     </LineChart>
                   </ResponsiveContainer>
                </div>
-            </div>
+            </Link>
 
             {/* Stat Card 2 */}
             <div className="flex-1 h-[84px] bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center justify-between overflow-hidden">
