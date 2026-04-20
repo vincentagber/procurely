@@ -36,7 +36,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         {/* Breadcrumbs Section */}
         <div className="flex justify-center pt-8 pb-4">
           <div
-            className="w-full max-w-[1240px] h-[81px] bg-white rounded-[10px] flex items-center px-6 shadow-sm border border-slate-100"
+            className="w-full max-w-[1240px] h-[81px] bg-white rounded-[10px] flex items-center px-8 shadow-sm border border-slate-100"
           >
             <div className="flex items-center gap-2 text-[14px] font-bold">
                <span className="text-slate-400">Home</span>
