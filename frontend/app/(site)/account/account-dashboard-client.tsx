@@ -73,28 +73,17 @@ const categoryData = [
 ];
 
 const supplierData = [
-  { name: 'Mon', value: 3 },
   { name: 'Tue', value: 4 },
-  { name: 'Wed', value: 5.5 },
-  { name: 'Thu', value: 6.5 },
+  { name: 'Thu', value: 6 },
   { name: 'Fri', value: 3.5 },
   { name: 'Sat', value: 4.5 },
 ];
-   { name: 'Mon', value: 2 },
-   { name: 'Tue', value: 4 },
-   { name: 'Wed', value: 5 },
-   { name: 'Thu', value: 6 },
-   { name: 'Fri', value: 3 },
-   { name: 'Sat', value: 4 },
-  { name: 'Fri', value: 8 },
-  { name: 'Sat', value: 4 },
-];
-   { name: 'Mon', value: 32 },
-   { name: 'Tue', value: 48 },
-   { name: 'Wed', value: 41 },
-   { name: 'Thu', value: 54 },
-   { name: 'Fri', value: 47 },
-   { name: 'Sat', value: 51 },
+
+const activityData = [
+  { name: 'Tue', value: 32 },
+  { name: 'Thu', value: 54 },
+  { name: 'Fri', value: 47 },
+  { name: 'Sat', value: 51 },
 ];
 
 export default function AccountDashboardClient() {
