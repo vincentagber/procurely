@@ -93,30 +93,39 @@ export default function OrderHistoryClient() {
                      </h1>
 
                      {/* Order Summary Box */}
-                     <div className="bg-white rounded-[1rem] shadow-sm py-5">
-                        <h3 className="px-6 text-[13px] font-bold text-slate-500 mb-4">Order Summary</h3>
-                        <div className="border-t border-slate-100 mb-2"></div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-6 pt-2">
+                     <div 
+                        className="bg-white shadow-sm border border-slate-100 flex flex-col"
+                        style={{ 
+                          maxWidth: '669px', 
+                          minHeight: '225.57px', 
+                          borderRadius: '8.84px', 
+                          padding: '17.68px',
+                          gap: '8.84px'
+                        }}
+                     >
+                        <h3 className="line-clamp-1 text-[13px] font-bold text-slate-500 mb-2">Order Summary</h3>
+                        
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-[8.84px] mb-2">
                            <SummaryStat icon={<ShoppingBag size={18} />} color="text-orange-500" bg="bg-orange-50" value="256" label="Total Orders" sub="orders" />
                            <SummaryStat icon={<Truck size={18} />} color="text-emerald-500" bg="bg-emerald-50" value="24" label="Active Orders" sub="ongoing" />
                            <SummaryStat icon={<CheckCircle2 size={18} />} color="text-rose-500" bg="bg-rose-50" value="187" label="Completed Orders" sub="delivered" />
                            <SummaryStat icon={<XCircle size={18} />} color="text-blue-500" bg="bg-blue-50" value="24" label="Canceled Orders" sub="Not completed" />
                         </div>
-                     </div>
 
-                     {/* Wallet Banner */}
-                     <div className="bg-[#1D4ED8] rounded-[1rem] p-4 flex items-start sm:items-center gap-4 text-white shadow-md">
-                        <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-                           <Wallet size={20} className="text-white" />
+                        {/* Wallet Banner Inside */}
+                        <div className="bg-[#1D4ED8] rounded-[8.84px] p-4 flex items-center gap-4 text-white shadow-md mt-auto">
+                           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                              <Wallet size={20} className="text-white" />
+                           </div>
+                           <p className="text-[13px] font-medium leading-relaxed tracking-wide min-w-0">
+                              Your wallet balance can be used to pay for orders or withdrawn to your bank account seamlessly.
+                              <a href="#" className="font-bold underline ml-1 hover:text-white/80 whitespace-nowrap">Learn more</a>
+                           </p>
                         </div>
-                        <p className="text-[13px] font-medium leading-relaxed tracking-wide min-w-0">
-                           Your wallet balance can be used to pay for orders or withdrawn to your bank account seamlessly.
-                           <a href="#" className="font-bold underline ml-1 hover:text-white/80 whitespace-nowrap">Learn more</a>
-                        </p>
                      </div>
 
                      {/* Main Data Table Wrap */}
-                     <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col mt-2">
+                     <div className="bg-white shadow-sm overflow-hidden flex flex-col mt-2" style={{ borderRadius: '8.84px', border: '1px solid #F1F5F9' }}>
 
                         {/* Controls Row */}
                         <div className="p-6 border-b border-slate-100 flex flex-col xl:flex-row items-center gap-4 justify-between">
@@ -207,7 +216,7 @@ export default function OrderHistoryClient() {
                                        </tr>
                                     ))
                                  ) : (
-                                    <tr><td colSpan={6} className="py-20 text-center text-slate-400 font-bold uppercase tracking-widest">No procurement records found.</td></tr>
+                                    <tr><td colSpan={6} className="py-20 text-center text-slate-400 font-bold tracking-widest">No procurement records found.</td></tr>
                                  )}
                               </tbody>
                            </table>
