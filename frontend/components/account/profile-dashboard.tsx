@@ -569,6 +569,7 @@ export default function ProfileDashboard() {
       </aside>
 
     </div>
+    </div>
   );
 }
 
