@@ -49,9 +49,9 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         </div>
 
         <div className="flex-1 flex justify-center py-4">
-          <div className="w-full max-w-[1115px] flex flex-row gap-[18px] px-4 md:px-0 items-start">
+          <div className="w-full max-w-[1115px] flex flex-col md:flex-row gap-[18px] px-4 md:px-6 lg:px-0 items-start">
             <DashboardSidebar />
-            <main className="w-[886px] min-w-0 pb-[100px]">
+            <main className="flex-1 w-full min-w-0 pb-[100px]">
               {children}
             </main>
           </div>

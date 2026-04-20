@@ -118,8 +118,8 @@ export default function AccountDashboardClient() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 mt-2 pb-6 border-b border-slate-200">
         <div 
-          className="flex flex-col"
-          style={{ width: '886px', height: '76.10px', gap: '23.1px' }}
+          className="flex flex-col w-full"
+          style={{ maxWidth: '886px', minHeight: '76.10px', gap: '8px' }}
         >
           <h1 className="text-4xl font-extrabold text-[#0001FF] tracking-tight m-0 leading-none">Hello {user?.roles?.includes('admin') ? 'Admin' : (user?.fullName?.split(' ')[0] || 'Admin')}!</h1>
           <p className="text-[14px] font-medium text-slate-400 m-0 leading-tight">Welcome back, lets manage your procurement.</p>
@@ -132,12 +132,12 @@ export default function AccountDashboardClient() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[673.68px_1fr] gap-[18.32px]">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_229.97px] gap-[18.32px]">
         {/* Main Content (Left) */}
         <div className="space-y-[18px] min-w-0">
           
           {/* Top Stat Cards Row */}
-          <div className="flex gap-[10.11px] w-[673.68px]">
+          <div className="flex flex-col sm:flex-row gap-[10.11px] w-full">
             {/* Stat Card 1 */}
             <div className="flex-1 h-[84px] bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center justify-between overflow-hidden">
                <div>
@@ -197,7 +197,7 @@ export default function AccountDashboardClient() {
           </div>
 
           {/* PROCUREMENT SPEND OVERVIEW */}
-          <div className="w-[673.68px] h-[247.79px] bg-white rounded-[6.19px] p-6 border border-slate-100 shadow-sm flex flex-col">
+          <div className="w-full min-h-[247.79px] bg-white rounded-[6.19px] p-6 border border-slate-100 shadow-sm flex flex-col">
              <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[14px] font-black text-[#0A1140]">Procurement Spend Overview</h3>
                 <div className="flex items-center gap-2">

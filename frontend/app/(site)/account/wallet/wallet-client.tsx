@@ -230,83 +230,88 @@ export default function WalletClient() {
                            </div>
                         </div>
 
-                        {/* Header Row */}
-                        <div className="grid grid-cols-[140px_1fr_120px_120px_140px_80px] gap-4 px-8 py-4 bg-slate-50/50 border-b border-slate-100 items-center">
-                           {["Order ID", "Supplier", "Total Amount", "Date Placed", "Delivery Status", "Actions"].map((header) => (
-                              <span key={header} className={`text-[13px] font-bold text-[#0A1140] ${header === "Actions" ? "text-right" : ""}`}>
-                                 {header}
-                              </span>
-                           ))}
-                        </div>
-
-                        {/* Transactions List */}
-                        <div className="flex flex-col min-w-0">
-                           {[
-                              { id: "PRO102563", subId: "A85064", supplier: "Traxus Industrial", items: 8, amount: "₦80,000", date: "Mar 1, 2024", status: "Processing", statusColor: "amber", icon: "Clock" },
-                              { id: "PRO102567", subId: "A85064", supplier: "Gibson Holdings", items: 5, amount: "₦45,000", date: "Mar 1, 2024", status: "In Progress", statusColor: "blue", icon: "ArrowUpRight" },
-                              { id: "PRO102541", subId: "A85064", supplier: "Halcyon Supplies", items: 10, amount: "₦85,000", date: "Mar 1, 2024", status: "Delivered", statusColor: "emerald", icon: "CheckCircle2" },
-                              { id: "PRO102532", subId: "A85064", supplier: "Primelogic Systems", items: 10, amount: "₦85,000", date: "Mar 1, 2024", status: "Canceled", statusColor: "red", icon: "AlertCircle" },
-                              { id: "PRO102532", subId: "A85064", supplier: "Caltex Resources", items: 10, amount: "₦85,000", date: "Mar 1, 2024", status: "Canceled", statusColor: "red", icon: "AlertCircle" },
-                              { id: "PRO102532", subId: "A85064", supplier: "Genocom Tech", items: 10, amount: "₦85,000", date: "Mar 1, 2024", status: "Delivered", statusColor: "emerald", icon: "CheckCircle2" },
-                              { id: "PRO102532", subId: "A85064", supplier: "Innotech Enterprises", items: 10, amount: "₦85,000", date: "Mar 1, 2024", status: "Canceled", statusColor: "red", icon: "AlertCircle" },
-                           ].map((order, i) => (
-                              <div key={i} className="grid grid-cols-[140px_1fr_120px_120px_140px_80px] gap-4 px-8 py-6 border-b border-slate-50 hover:bg-slate-50/30 transition-all items-center group">
-                                 {/* Order ID */}
-                                 <div className="flex flex-col">
-                                    <span className="text-[14px] font-extrabold text-[#0A1140]">{order.id}</span>
-                                    <span className="text-[11px] font-bold text-slate-400 mt-0.5 tracking-tight">{order.subId}</span>
-                                 </div>
-                                 
-                                 {/* Supplier */}
-                                 <div className="flex flex-col">
-                                    <span className="text-[14px] font-extrabold text-[#0A1140]">{order.supplier}</span>
-                                    <span className="text-[11px] font-bold text-slate-400 mt-0.5">{order.items} items supplied</span>
-                                 </div>
-
-                                 {/* Amount */}
-                                 <div className="flex flex-col">
-                                    <span className="text-[14px] font-extrabold text-[#0A1140]">{order.amount}</span>
-                                    <span className="text-[11px] font-bold text-slate-400 mt-0.5">N{order.amount.replace("₦", "")}</span>
-                                 </div>
-
-                                 {/* Date */}
-                                 <div className="flex flex-col">
-                                    <span className="text-[14px] font-extrabold text-[#0A1140]">{order.date}</span>
-                                    <span className="text-[11px] font-bold text-slate-400 mt-0.5">{order.date}</span>
-                                 </div>
-
-                                 {/* Status */}
-                                 <div className="flex flex-col items-start gap-1">
-                                    <div className={`
-                                       flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-black uppercase tracking-wide
-                                       ${order.statusColor === 'amber' ? 'bg-amber-50 text-amber-600 border-amber-100' : ''}
-                                       ${order.statusColor === 'blue' ? 'bg-blue-50 text-blue-600 border-blue-100' : ''}
-                                       ${order.statusColor === 'emerald' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : ''}
-                                       ${order.statusColor === 'red' ? 'bg-red-50 text-red-600 border-red-100' : ''}
-                                    `}>
-                                       {order.status === 'Processing' && <Clock size={12} />}
-                                       {order.status === 'In Progress' && <ArrowUpRight size={12} />}
-                                       {order.status === 'Delivered' && <CheckCircle2 size={12} />}
-                                       {order.status === 'Canceled' && <AlertCircle size={12} />}
-                                       {order.status}
-                                    </div>
-                                    <span className="text-[10px] font-bold text-slate-400 ml-1">Mar 10, 2026</span>
-                                 </div>
-
-                                 {/* Actions */}
-                                 <div className="flex justify-end">
-                                    <button className={`
-                                       w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-slate-50 group-hover:bg-white border border-transparent group-hover:border-slate-100
-                                       ${order.status === 'Canceled' ? 'text-amber-500 hover:bg-amber-50' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}
-                                    `}>
-                                       {order.status === 'Canceled' ? <Repeat size={18} /> : 
-                                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                       }
-                                    </button>
-                                 </div>
-                              </div>
-                           ))}
-                        </div>
+                         {/* Scrollable Table Area */}
+                         <div className="overflow-x-auto scrollbar-hide">
+                            <div className="min-w-[800px]">
+                               {/* Header Row */}
+                               <div className="grid grid-cols-[140px_1fr_120px_120px_140px_80px] gap-4 px-8 py-4 bg-slate-50/50 border-b border-slate-100 items-center">
+                                  {["Order ID", "Supplier", "Total Amount", "Date Placed", "Delivery Status", "Actions"].map((header) => (
+                                     <span key={header} className={`text-[13px] font-bold text-[#0A1140] ${header === "Actions" ? "text-right" : ""}`}>
+                                        {header}
+                                     </span>
+                                  ))}
+                               </div>
+ 
+                               {/* Transactions List */}
+                               <div className="flex flex-col min-w-0">
+                                  {[
+                                     { id: "PRO102563", subId: "A85064", supplier: "Traxus Industrial", items: 8, amount: "₦80,000", date: "Mar 1, 2024", status: "Processing", statusColor: "amber", icon: "Clock" },
+                                     { id: "PRO102567", subId: "A85064", supplier: "Gibson Holdings", items: 5, amount: "₦45,000", date: "Mar 1, 2024", status: "In Progress", statusColor: "blue", icon: "ArrowUpRight" },
+                                     { id: "PRO102541", subId: "A85064", supplier: "Halcyon Supplies", items: 10, amount: "₦85,000", date: "Mar 1, 2024", status: "Delivered", statusColor: "emerald", icon: "CheckCircle2" },
+                                     { id: "PRO102532", subId: "A85064", supplier: "Primelogic Systems", items: 10, amount: "₦85,000", date: "Mar 1, 2024", status: "Canceled", statusColor: "red", icon: "AlertCircle" },
+                                     { id: "PRO102532", subId: "A85064", supplier: "Caltex Resources", items: 10, amount: "₦85,000", date: "Mar 1, 2024", status: "Canceled", statusColor: "red", icon: "AlertCircle" },
+                                     { id: "PRO102532", subId: "A85064", supplier: "Genocom Tech", items: 10, amount: "₦85,000", date: "Mar 1, 2024", status: "Delivered", statusColor: "emerald", icon: "CheckCircle2" },
+                                     { id: "PRO102532", subId: "A85064", supplier: "Innotech Enterprises", items: 10, amount: "₦85,000", date: "Mar 1, 2024", status: "Canceled", statusColor: "red", icon: "AlertCircle" },
+                                  ].map((order, i) => (
+                                     <div key={i} className="grid grid-cols-[140px_1fr_120px_120px_140px_80px] gap-4 px-8 py-6 border-b border-slate-50 hover:bg-slate-50/30 transition-all items-center group">
+                                        {/* Order ID */}
+                                        <div className="flex flex-col">
+                                           <span className="text-[14px] font-extrabold text-[#0A1140]">{order.id}</span>
+                                           <span className="text-[11px] font-bold text-slate-400 mt-0.5 tracking-tight">{order.subId}</span>
+                                        </div>
+                                        
+                                        {/* Supplier */}
+                                        <div className="flex flex-col">
+                                           <span className="text-[14px] font-extrabold text-[#0A1140]">{order.supplier}</span>
+                                           <span className="text-[11px] font-bold text-slate-400 mt-0.5">{order.items} items supplied</span>
+                                        </div>
+ 
+                                        {/* Amount */}
+                                        <div className="flex flex-col">
+                                           <span className="text-[14px] font-extrabold text-[#0A1140]">{order.amount}</span>
+                                           <span className="text-[11px] font-bold text-slate-400 mt-0.5">N{order.amount.replace("₦", "")}</span>
+                                        </div>
+ 
+                                        {/* Date */}
+                                        <div className="flex flex-col">
+                                           <span className="text-[14px] font-extrabold text-[#0A1140]">{order.date}</span>
+                                           <span className="text-[11px] font-bold text-slate-400 mt-0.5">{order.date}</span>
+                                        </div>
+ 
+                                        {/* Status */}
+                                        <div className="flex flex-col items-start gap-1">
+                                           <div className={`
+                                              flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-black uppercase tracking-wide
+                                              ${order.statusColor === 'amber' ? 'bg-amber-50 text-amber-600 border-amber-100' : ''}
+                                              ${order.statusColor === 'blue' ? 'bg-blue-50 text-blue-600 border-blue-100' : ''}
+                                              ${order.statusColor === 'emerald' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : ''}
+                                              ${order.statusColor === 'red' ? 'bg-red-50 text-red-600 border-red-100' : ''}
+                                           `}>
+                                              {order.status === 'Processing' && <Clock size={12} />}
+                                              {order.status === 'In Progress' && <ArrowUpRight size={12} />}
+                                              {order.status === 'Delivered' && <CheckCircle2 size={12} />}
+                                              {order.status === 'Canceled' && <AlertCircle size={12} />}
+                                              {order.status}
+                                           </div>
+                                           <span className="text-[10px] font-bold text-slate-400 ml-1">Mar 10, 2026</span>
+                                        </div>
+ 
+                                        {/* Actions */}
+                                        <div className="flex justify-end">
+                                           <button className={`
+                                              w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-slate-50 group-hover:bg-white border border-transparent group-hover:border-slate-100
+                                              ${order.status === 'Canceled' ? 'text-amber-500 hover:bg-amber-50' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}
+                                           `}>
+                                              {order.status === 'Canceled' ? <Repeat size={18} /> : 
+                                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                              }
+                                           </button>
+                                        </div>
+                                     </div>
+                                  ))}
+                               </div>
+                            </div>
+                         </div>
 
                         {/* Pagination Footer */}
                         <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
