@@ -106,10 +106,10 @@ export default function OrderHistoryClient() {
                         <h3 className="line-clamp-1 text-[13px] font-bold text-slate-500 mb-2">Order Summary</h3>
                         
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-[8.84px] py-2">
-                           <SummaryStat icon={<ShoppingCart size={16} />} color="text-orange-500" bg="bg-orange-50" value="256" label="Total Orders" sub="orders" />
-                           <SummaryStat icon={<Truck size={16} />} color="text-emerald-500" bg="bg-emerald-50" value="24" label="Active Orders" sub="ongoing" />
-                           <SummaryStat icon={<CheckCircle2 size={16} />} color="text-rose-500" bg="bg-rose-50" value="187" label="Completed Orders" sub="delivered" />
-                           <SummaryStat icon={<XCircle size={16} />} color="text-blue-500" bg="bg-blue-50" value="24" label="Canceled Orders" sub="Not completed" />
+                           <SummaryStat icon={<ShoppingBag size={14} />} color="text-orange-500" bg="bg-orange-50" value="256" label="Total Orders" sub="orders" />
+                           <SummaryStat icon={<Truck size={14} />} color="text-blue-500" bg="bg-blue-50" value="24" label="Active Orders" sub="ongoing" />
+                           <SummaryStat icon={<CheckCircle2 size={14} />} color="text-emerald-500" bg="bg-emerald-50" value="187" label="Completed Orders" sub="delivered" />
+                           <SummaryStat icon={<XCircle size={14} />} color="text-rose-500" bg="bg-rose-50" value="24" label="Canceled Orders" sub="Not completed" />
                         </div>
 
                         {/* Wallet Banner Inside - Optimized Size */}
