@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ProfileDashboard from "@/components/account/profile-dashboard";
+import ProfileOrderDetail from "@/components/account/profile-order-detail";
 
 export const metadata: Metadata = {
   title: "Profile Order | Procurely",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function ProfileOrderPage() {
-  return <ProfileDashboard />;
+  return <ProfileOrderDetail />;
 }
