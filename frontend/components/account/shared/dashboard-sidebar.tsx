@@ -35,11 +35,11 @@ export function DashboardSidebar() {
     return pathname.startsWith(href.split('?')[0]);
   };
 
-  const sidebarContent = (
-    <div className="flex flex-col h-full bg-[#0C1457] pt-[17.47px] pr-[8.73px] pl-4">
+   const sidebarContent = (
+    <div className="flex flex-col h-full bg-[#0C1457] pt-[17.47px] pr-[8.73px] pl-6">
       {/* Brand & User Card */}
       <div className="shrink-0 mb-8">
-        <div className="flex items-center justify-between mb-10 pl-2">
+        <div className="flex items-center justify-between mb-10">
           <Link href="/" className="group">
             <h2 className="text-2xl font-bold text-white tracking-tight flex items-center">
               Procurely<span className="text-[12px] align-super ml-0.5">™</span>
@@ -50,7 +50,7 @@ export function DashboardSidebar() {
           </button>
         </div>
 
-        <div className="flex items-center gap-3 pl-2">
+        <div className="flex items-center gap-3">
           <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-primary-blue bg-slate-800 shrink-0 shadow-lg">
             <img 
               src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=100&auto=format&fit=crop" 
@@ -70,7 +70,7 @@ export function DashboardSidebar() {
 
         <div className="mt-8 mb-8 border-t border-white/20 w-full" />
 
-        <div className="text-[11px] font-bold tracking-wider text-white mb-4 pl-2">
+        <div className="text-[11px] font-bold tracking-wider text-white mb-4">
           MAIN MENU
         </div>
       </div>
@@ -84,10 +84,10 @@ export function DashboardSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-[12px] transition-all h-[44px] ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] transition-all h-[44px] -ml-3 ${
                   active
                     ? "bg-[#0001FF] text-white font-bold"
-                    : "bg-white text-[#0C1457] hover:bg-gray-50 font-bold"
+                    : "bg-transparent text-white hover:bg-white/10 font-bold"
                 }`}
               >
                 <span className="shrink-0">
@@ -100,7 +100,7 @@ export function DashboardSidebar() {
 
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-[12px] transition-all h-[44px] bg-white text-[#0C1457] hover:bg-gray-50 font-bold mt-auto"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] transition-all h-[44px] bg-transparent text-white hover:bg-white/10 font-bold mt-auto -ml-3"
           >
             <LogOut size={18} />
             <span className="text-[13px] tracking-tight">Logout</span>
