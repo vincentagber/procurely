@@ -12,7 +12,9 @@ const apiBaseUrl =
 if (
   typeof process !== "undefined" &&
   process.env.NODE_ENV === "production" &&
-  apiBaseUrl.startsWith("http://")
+  apiBaseUrl.startsWith("http://") &&
+  !apiBaseUrl.includes("localhost") &&
+  !apiBaseUrl.includes("127.0.0.1")
 ) {
   throw new Error(
     `[Procurely Security Exception] Critical: NEXT_PUBLIC_API_BASE_URL must use HTTPS in production. Plaintext HTTP is prohibited. Current: ${apiBaseUrl}`,
@@ -30,7 +32,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
   }
 
-  if (init?.body) {
+  if (init?.body && !(init.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -209,6 +211,12 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
+  submitBoq(formData: FormData) {
+    return request<{ message: string }>("/api/quotes", {
+      method: "POST",
+      body: formData,
+    });
+  },
   subscribeToNewsletter(payload: { email: string }) {
     return request<{ message: string }>("/api/newsletter", {
       method: "POST",
@@ -298,6 +306,7 @@ export const ORDER_HISTORY_KEY = "procurely-order-history";
 type StoredOrderRef = { orderNumber: string; cartToken: string; placedAt: string };
 
 export function persistOrderRef(orderNumber: string, cartToken: string): void {
+  if (typeof window === "undefined") return;
   try {
     const raw = window.sessionStorage.getItem(ORDER_HISTORY_KEY);
     const existing: StoredOrderRef[] = raw ? (JSON.parse(raw) as StoredOrderRef[]) : [];

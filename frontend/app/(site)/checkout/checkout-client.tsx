@@ -53,13 +53,14 @@ export function CheckoutPageClient() {
       });
 
       if (!order) {
-        throw new Error("Failed to create order");
+        setIsProcessing(false);
+        return;
       }
 
       // 2. Decide if we need Paystack
-      // Only use Paystack for 'card' or if explicitly requested. 
-      // For now, if user selects 'bank' or 'cod', we might skip the iframe and just go to confirmation.
-      if (formData.paymentMethod === 'cod' || formData.paymentMethod === 'bank') {
+      // Only use Paystack for 'card', 'bank' or if explicitly requested. 
+      // For now, only 'cod' skips the gateway.
+      if (formData.paymentMethod === 'cod') {
         persistOrderRef(order.orderNumber, cartTokenSnap);
         clearCart();
         router.push("/order-confirmation");
@@ -68,7 +69,11 @@ export function CheckoutPageClient() {
 
       // 3. Initialize Paystack (for card payments)
       // @ts-ignore
-      const handler = window.PaystackPop.setup({
+      const paystack = typeof window !== "undefined" ? (window as any).PaystackPop : null;
+      if (!paystack) {
+        throw new Error("Payment provider not loaded. Please refresh and try again.");
+      }
+      const handler = paystack.setup({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email: formData.email,
         amount: order.total * 100, // Paystack expects amount in kobo/cents
@@ -94,9 +99,18 @@ export function CheckoutPageClient() {
     }
   };
 
+  const currentError = useCart().error;
+
   return (
     <div className="container-shell mx-auto px-4 pb-20 sm:px-6">
       <h1 className="mb-10 text-4xl font-bold text-[#13184f]">Billing Details</h1>
+
+      {currentError && (
+        <div className="mb-8 rounded-lg bg-rose-50 p-4 text-rose-600 font-medium border border-rose-100 flex items-center gap-3">
+          <span className="text-lg">⚠️</span>
+          {currentError}
+        </div>
+      )}
 
       <form onSubmit={handleCheckout} className="grid grid-cols-1 gap-16 lg:grid-cols-12">
         <div className="space-y-6 lg:col-span-7">

@@ -11,7 +11,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { startTransition, useState } from "react";
+import { startTransition, useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { useCart } from "@/components/cart/cart-provider";
@@ -35,6 +35,11 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const cartCount =
     cart?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;
@@ -56,7 +61,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
           </div>
           <div className="flex items-center gap-2.5 text-[12px] font-medium tracking-tight">
             <UserRound className="size-4" strokeWidth={1.5} />
-            {user ? (
+            {mounted && user ? (
               <Link href="/account" className="hover:text-white/80">Account: {user.fullName.split(' ')[0]}</Link>
             ) : (
               <Link href="/login" className="hover:text-white/80">Login / Register</Link>
@@ -103,7 +108,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
           <div className="flex items-center gap-8">
             <Link href="/wishlist" className="relative p-1 text-[#0B1457] transition hover:scale-105">
               <Heart className="size-[28px]" strokeWidth={2} />
-              {wishlistCount > 0 && (
+              {mounted && wishlistCount > 0 && (
                 <span className="absolute -right-2 -top-1 flex size-[18px] items-center justify-center rounded-full bg-[#FF4242] text-[10px] font-bold text-white">
                   {wishlistCount}
                 </span>
@@ -114,7 +119,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
             </Link>
             <button onClick={openCart} className="relative p-1 text-[#0B1457] transition hover:scale-105">
               <ShoppingBag className="size-[28px]" strokeWidth={2} />
-              {cartCount > 0 && (
+              {mounted && cartCount > 0 && (
                 <span className="absolute -right-2 -top-1 flex size-[16px] items-center justify-center rounded-full bg-[#0001FF] text-[8px] font-bold text-white">
                   {cartCount}
                 </span>

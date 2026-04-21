@@ -73,12 +73,14 @@ final class OrderService
                     $checkStock->execute(['product_id' => $productId]);
                     $stock = $checkStock->fetch();
 
-                    if ($stock === false || (int) $stock['stock_level'] < $quantity) {
+                    if ($stock !== false && (int) $stock['stock_level'] < $quantity) {
                         Telemetry::error('Inadequate stock', ['product' => $productId]);
                         throw new ApiException(sprintf('Insufficient stock for %s.', $item['product']['name']), 422);
                     }
 
-                    $deductStock->execute(['qty' => $quantity, 'now' => $now, 'product_id' => $productId]);
+                    if ($stock !== false) {
+                        $deductStock->execute(['qty' => $quantity, 'now' => $now, 'product_id' => $productId]);
+                    }
                 }
             } catch (\PDOException $e) {
                 // If inventory table doesn't exist, assume unlimited stock

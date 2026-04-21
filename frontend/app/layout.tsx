@@ -1,5 +1,7 @@
 import { Inter, Bebas_Neue } from "next/font/google";
 import type { Metadata } from "next";
+import Script from "next/script";
+import { Suspense } from "react";
 
 import { Providers } from "@/app/providers";
 import "./globals.css";
@@ -49,9 +51,13 @@ export default async function RootLayout({
         className={`${inter.variable} ${bebasNeue.variable} min-h-screen bg-white antialiased`}
         suppressHydrationWarning
       >
-        <Providers initialUser={user}>{children}</Providers>
+        <Providers initialUser={user}>
+          <Suspense fallback={null}>
+            {children}
+          </Suspense>
+        </Providers>
         {/* Paystack Inline Script */}
-        <script src="https://js.paystack.co/v1/inline.js" async />
+        <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
       </body>
     </html>
   );

@@ -46,10 +46,10 @@ $cartService = new CartService($database, $contentStore);
 $paymentProcessor = new \Procurely\Api\Support\PaymentProcessor($database);
 $emailService = new \Procurely\Api\Support\EmailService($rootPath);
 $orderService = new OrderService($database, $cartService, $paymentProcessor, $emailService, $notificationService);
-$engagementService = new EngagementService($database);
+$storage = new Storage($rootPath);
+$engagementService = new EngagementService($database, $storage);
 $wishlistService = new \Procurely\Api\Services\WishlistService($database, $contentStore);
 $accountService = new \Procurely\Api\Services\AccountService($database);
-$storage = new Storage($rootPath);
 $adminService = new \Procurely\Api\Services\AdminService($database, $contentStore, $storage);
 
 $app = AppFactory::create();
@@ -314,7 +314,16 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
             $user = $authService->resolveToken($token);
             if ($user) $userId = (int) $user['id'];
         }
-        return JsonResponder::success($response, $orderService->checkout(RequestData::body($request), $userId), 201);
+        $result = $orderService->checkout(RequestData::body($request), $userId);
+        
+        // Clear cart if successful and NOT card (card is async via webhook)
+        $paymentMethod = $result['paymentMethod'] ?? 'card';
+        if (in_array($paymentMethod, ['cod', 'bank'])) {
+            $cartToken = Input::cartToken(RequestData::body($request));
+            $cartService->clearCart($cartToken);
+        }
+
+        return JsonResponder::success($response, $result, 201);
     })->add($orderRateLimit);
 
     $group->post('/orders', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService, $authService): ResponseInterface {
@@ -462,7 +471,7 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
 
     // ─── Engagement ────────────────────────────────────────────────────────────────
     $group->post('/quotes', static function (ServerRequestInterface $request, ResponseInterface $response) use ($engagementService): ResponseInterface {
-        return JsonResponder::success($response, $engagementService->requestQuote(RequestData::body($request)), 201);
+        return JsonResponder::success($response, $engagementService->requestQuote(RequestData::body($request), $request->getUploadedFiles()), 201);
     })->add($orderRateLimit);
 
     $group->post('/newsletter', static function (ServerRequestInterface $request, ResponseInterface $response) use ($engagementService): ResponseInterface {

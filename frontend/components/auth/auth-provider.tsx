@@ -36,10 +36,16 @@ export function AuthProvider({
 }) {
   const [user, setUser] = useState<User | null>(initialUser);
   const [loading, setLoading] = useState(!initialUser);
+  const [mounted, setMounted] = useState(false);
   const lastRefreshed = useRef<number>(initialUser ? Date.now() : 0);
   const router = useRouter();
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const refreshUser = async (force = false) => {
+    if (!mounted) return;
     const isStale = Date.now() - lastRefreshed.current > SESSION_TTL_MS;
 
     // Skip the network call if we have a fresh session and no force flag
@@ -84,7 +90,14 @@ export function AuthProvider({
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading: mounted ? loading : true,
+        logout,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

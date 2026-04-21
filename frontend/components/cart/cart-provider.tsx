@@ -33,6 +33,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 const cartStorageKey = "procurely-cart-token";
 
 function readCartToken(): string | null {
+  if (typeof window === "undefined") return null;
   try {
     return window.sessionStorage.getItem(cartStorageKey);
   } catch {
@@ -41,6 +42,7 @@ function readCartToken(): string | null {
 }
 
 function writeCartToken(token: string): void {
+  if (typeof window === "undefined") return;
   try {
     window.sessionStorage.setItem(cartStorageKey, token);
   } catch {
@@ -102,9 +104,11 @@ export function CartProvider({
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window === "undefined") return;
+
     // MEDIUM-11: Use sessionStorage (see above). Generate a new UUID if none exists.
     const storedToken = readCartToken();
-    const nextToken = storedToken || window.crypto.randomUUID();
+    const nextToken = storedToken || (typeof window !== "undefined" && window.crypto ? window.crypto.randomUUID() : Math.random().toString(36).substring(2));
     writeCartToken(nextToken);
     setCartToken(nextToken);
     void hydrateCart(nextToken);

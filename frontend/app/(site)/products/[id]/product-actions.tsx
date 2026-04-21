@@ -1,12 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/components/cart/cart-provider";
 import type { Product } from "@/lib/types";
 
 export function ProductActions({ product }: { product: Product }) {
   const { addItem, loading } = useCart();
   const [qty, setQty] = useState(1);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return (
+    <div className="flex flex-col gap-6 animate-pulse">
+       <div className="h-14 w-36 bg-slate-100 rounded-xl" />
+       <div className="h-16 bg-slate-200 rounded-2xl" />
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-6">

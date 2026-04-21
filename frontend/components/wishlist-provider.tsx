@@ -27,6 +27,7 @@ const WishlistContext = createContext<WishlistContextValue | null>(null);
 const wishlistStorageKey = "procurely-wishlist-token";
 
 function readWishlistToken(): string | null {
+  if (typeof window === "undefined") return null;
   try {
     return window.sessionStorage.getItem(wishlistStorageKey);
   } catch {
@@ -35,6 +36,7 @@ function readWishlistToken(): string | null {
 }
 
 function writeWishlistToken(token: string): void {
+  if (typeof window === "undefined") return;
   try {
     window.sessionStorage.setItem(wishlistStorageKey, token);
   } catch {
@@ -81,8 +83,10 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window === "undefined") return;
+
     const storedToken = readWishlistToken();
-    const nextToken = storedToken || window.crypto.randomUUID();
+    const nextToken = storedToken || (typeof window !== "undefined" && window.crypto ? window.crypto.randomUUID() : Math.random().toString(36).substring(2));
     writeWishlistToken(nextToken);
     setWishlistToken(nextToken);
     void hydrateWishlist(nextToken);

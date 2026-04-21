@@ -12,10 +12,11 @@ final class EngagementService
 {
     public function __construct(
         private readonly Database $database,
+        private readonly \Procurely\Api\Support\Storage $storage,
     ) {
     }
 
-    public function requestQuote(array $payload): array
+    public function requestQuote(array $payload, array $files = []): array
     {
         $companyName = Input::requiredString($payload, 'companyName', 'Company name', 120);
         $fullName = Input::requiredString($payload, 'fullName', 'Full name', 120);
@@ -24,9 +25,24 @@ final class EngagementService
         $projectLocation = Input::requiredString($payload, 'projectLocation', 'Project location', 160);
         $boqNotes = Input::requiredString($payload, 'boqNotes', 'BOQ notes', 2000, false);
 
+        $boqFilePath = null;
+        if (!empty($files['boq_file'])) {
+            $file = $files['boq_file'];
+            if ($file->getError() === UPLOAD_ERR_OK) {
+                $fileArray = [
+                    'name' => $file->getClientFilename(),
+                    'type' => $file->getClientMediaType(),
+                    'tmp_name' => $file->getFilePath(),
+                    'error' => $file->getError(),
+                    'size' => $file->getSize(),
+                ];
+                $boqFilePath = $this->storage->save($fileArray);
+            }
+        }
+
         $statement = $this->database->connection()->prepare(
-            'INSERT INTO quote_requests (company_name, full_name, email, phone, project_location, boq_notes, created_at)
-             VALUES (:company_name, :full_name, :email, :phone, :project_location, :boq_notes, :created_at)'
+            'INSERT INTO quote_requests (company_name, full_name, email, phone, project_location, boq_notes, boq_file, created_at)
+             VALUES (:company_name, :full_name, :email, :phone, :project_location, :boq_notes, :boq_file, :created_at)'
         );
         $statement->execute([
             'company_name' => $companyName,
@@ -35,6 +51,7 @@ final class EngagementService
             'phone' => $phone,
             'project_location' => $projectLocation,
             'boq_notes' => $boqNotes,
+            'boq_file' => $boqFilePath,
             'created_at' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
 

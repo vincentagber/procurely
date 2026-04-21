@@ -30,7 +30,6 @@ import {
    Info,
    Clock
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
 
@@ -48,11 +47,14 @@ export default function OrderHistoryClient() {
    const [hasMounted, setHasMounted] = useState(false);
    const [orders, setOrders] = useState<any[]>([]);
    const [loading, setLoading] = useState(true);
-   const searchParams = useSearchParams();
-   const isHistory = searchParams.get("view") === "history";
+   const [isHistory, setIsHistory] = useState(false);
 
    useEffect(() => {
       setHasMounted(true);
+      if (typeof window !== "undefined") {
+         const params = new URLSearchParams(window.location.search);
+         setIsHistory(params.get("view") === "history");
+      }
       fetchOrders();
    }, []);
 

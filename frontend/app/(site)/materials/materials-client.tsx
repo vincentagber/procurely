@@ -1,20 +1,27 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { ProductCard } from "@/components/product-card";
 import type { Product } from "@/lib/types";
 import { Filter, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
 export function MaterialsClient({ products }: { products: Product[] }) {
-  const searchParams = useSearchParams();
-  const searchQuery = searchParams.get("q")?.toLowerCase() || "";
+  const [searchQuery, setSearchQuery] = useState("");
+  const [hasMounted, setHasMounted] = useState(false);
   
   const [activeCategory, setActiveCategory] = useState("All Materials");
   const [maxPrice, setMaxPrice] = useState(100000000);
   const [limit, setLimit] = useState(12);
+
+  useEffect(() => {
+    setHasMounted(true);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setSearchQuery(params.get("q")?.toLowerCase() || "");
+    }
+  }, []);
 
   const categories = [
     "All Materials", "Sand & Aggregates", "Cement & Concrete",
@@ -48,6 +55,10 @@ export function MaterialsClient({ products }: { products: Product[] }) {
 
   const [showFilters, setShowFilters] = useState(false);
   
+  if (!hasMounted) {
+    return <div className="container-shell mx-auto px-4 pb-20 sm:px-6 lg:px-8 animate-pulse" />;
+  }
+
   return (
     <div className="container-shell mx-auto px-4 pb-20 sm:px-6 lg:px-8 relative">
       <div className="mb-10 flex flex-col w-full pt-4">
@@ -114,7 +125,7 @@ export function MaterialsClient({ products }: { products: Product[] }) {
                      const isActive = activeCategory === item;
                      return (
                        <li key={idx}>
-                          <label className="flex cursor-pointer items-center gap-3.5 group" onClick={() => { setActiveCategory(item); setLimit(12); if(window.innerWidth < 1024) setShowFilters(false); }}>
+                          <label className="flex cursor-pointer items-center gap-3.5 group" onClick={() => { setActiveCategory(item); setLimit(12); if(typeof window !== 'undefined' && window.innerWidth < 1024) setShowFilters(false); }}>
                              <div className={`flex size-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px] transition-colors duration-200 ${isActive ? 'border-[#344054] bg-[#344054]' : 'border-slate-200 bg-white group-hover:border-slate-300'}`}>
                                 {isActive && <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                              </div>

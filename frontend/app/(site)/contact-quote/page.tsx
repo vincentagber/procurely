@@ -27,6 +27,9 @@ export default function ContactQuotePage() {
     speed: "standard"
   });
 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = (typeof window !== "undefined") ? require("react").useRef(null) : { current: null };
+
   const [submittingQuote, setSubmittingQuote] = useState(false);
   const [submittingBoq, setSubmittingBoq] = useState(false);
   const [quoteMessage, setQuoteMessage] = useState<string | null>(null);
@@ -58,6 +61,31 @@ export default function ContactQuotePage() {
     load();
   }, []);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      validateAndSetFile(file);
+    }
+  };
+
+  const validateAndSetFile = (file: File) => {
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv', 'application/vnd.ms-excel'];
+    const maxSize = 25 * 1024 * 1024; // 25MB
+
+    if (!allowedTypes.includes(file.type) && !file.name.endsWith('.csv') && !file.name.endsWith('.xlsx')) {
+      setError("Invalid file type. Please upload XLSX, PDF, or CSV.");
+      return;
+    }
+
+    if (file.size > maxSize) {
+      setError("File size exceeds 25MB limit.");
+      return;
+    }
+
+    setSelectedFile(file);
+    setError(null);
+  };
+
   const handleQuoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmittingQuote(true);
@@ -84,21 +112,29 @@ export default function ContactQuotePage() {
 
   const handleBoqSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!selectedFile) {
+      setError("Please upload your structural or architectural drawings.");
+      return;
+    }
+
     setSubmittingBoq(true);
     setBoqMessage(null);
     setError(null);
     try {
-      const payload = {
-        companyName: boqForm.companyName,
-        fullName: "N/A",
-        email: boqForm.email,
-        phone: "N/A",
-        projectLocation: boqForm.projectName,
-        boqNotes: `Speed: ${boqForm.speed}. AI BoQ Generation Request.`,
-      };
-      const res = await api.requestQuote(payload);
+      const formData = new FormData();
+      formData.append("companyName", boqForm.companyName);
+      formData.append("fullName", "N/A");
+      formData.append("email", boqForm.email);
+      formData.append("phone", "N/A");
+      formData.append("projectLocation", boqForm.projectName);
+      formData.append("boqNotes", `Speed: ${boqForm.speed}. AI BoQ Generation Request.`);
+      formData.append("boq_file", selectedFile);
+
+      const res = await api.submitBoq(formData);
       setBoqMessage(res.message);
       setBoqForm({ companyName: "", projectName: "", email: "", speed: "standard" });
+      setSelectedFile(null);
     } catch (err: any) {
       setError(err.message || "Failed to submit BoQ request.");
     } finally {
@@ -272,10 +308,39 @@ export default function ContactQuotePage() {
                </div>
              ) : (
                <form className="space-y-4" onSubmit={handleBoqSubmit}>
-                  <div className="group rounded-[8px] border-2 border-dashed border-slate-200 bg-[#f9fafb] py-12 text-center transition-colors hover:border-[#1900ff]">
-                    <UploadCloud className="mx-auto mb-3 size-8 text-slate-400" />
-                    <p className="text-[14px] font-bold text-slate-900">Drag & Drop your structural and architectural drawings flat here</p>
-                    <p className="text-[12px] text-slate-400">or click to browse</p>
+                  {error && (
+                    <div className="mb-4 rounded-lg bg-rose-50 p-3 text-sm text-rose-600">
+                      {error}
+                    </div>
+                  )}
+                  
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange} 
+                    className="hidden" 
+                    accept=".pdf,.xlsx,.csv" 
+                  />
+
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-[#1900ff]'); }}
+                    onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('border-[#1900ff]'); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove('border-[#1900ff]');
+                      const file = e.dataTransfer.files?.[0];
+                      if (file) validateAndSetFile(file);
+                    }}
+                    className="group cursor-pointer rounded-[8px] border-2 border-dashed border-slate-200 bg-[#f9fafb] py-12 text-center transition-colors hover:border-[#1900ff]"
+                  >
+                    <UploadCloud className={`mx-auto mb-3 size-8 ${selectedFile ? 'text-[#1900ff]' : 'text-slate-400'}`} />
+                    <p className="text-[14px] font-bold text-slate-900">
+                      {selectedFile ? selectedFile.name : "Drag & Drop your structural and architectural drawings flat here"}
+                    </p>
+                    <p className="text-[12px] text-slate-400">
+                      {selectedFile ? "Click to change file" : "or click to browse"}
+                    </p>
                     <p className="mt-2 text-[10px] text-slate-300">Supports: XLSX, PDF, CSV (max 25MB)</p>
                   </div>
 

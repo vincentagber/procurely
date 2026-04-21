@@ -26,10 +26,15 @@ final class Storage
         }
 
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'pdf', 'xlsx', 'csv', 'xls'];
 
         if (!in_array(strtolower($extension), $allowedExtensions)) {
             throw new ApiException('Invalid file type. Allowed: ' . implode(', ', $allowedExtensions), 400);
+        }
+
+        // Limit to 25MB
+        if ($file['size'] > 25 * 1024 * 1024) {
+            throw new ApiException('File size exceeds the 25MB limit.', 400);
         }
 
         $filename = bin2hex(random_bytes(16)) . '.' . $extension;

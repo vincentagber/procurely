@@ -266,6 +266,7 @@ final class Database
               total BIGINT NOT NULL,
               status VARCHAR(50) NOT NULL,
               paid_at $dateTime,
+              payment_method VARCHAR(50) DEFAULT 'card',
               created_at $dateTime NOT NULL,
               FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
             );
@@ -289,6 +290,7 @@ final class Database
               phone VARCHAR(50) NOT NULL,
               project_location VARCHAR(255) NOT NULL,
               boq_notes $text NOT NULL,
+              boq_file VARCHAR(255),
               created_at $dateTime NOT NULL
             );
 
