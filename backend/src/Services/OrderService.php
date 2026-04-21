@@ -40,6 +40,7 @@ final class OrderService
         $customerEmail = Input::email($payload, 'customerEmail', 'customer email');
         $phone = Input::phone($payload, 'phone', 'phone number');
         $address = Input::requiredString($payload, 'address', 'Address', 400, false);
+        $paymentMethod = (string) ($payload['paymentMethod'] ?? 'card');
 
         $cart = $this->cartService->getCart($cartToken);
         if (($cart['items'] ?? []) === []) {
@@ -47,7 +48,7 @@ final class OrderService
         }
 
         /** @var array $orderData */
-        $orderData = $this->database->transaction(function (PDO $pdo) use ($cart, $userId, $cartToken, $customerName, $customerEmail, $phone, $address, $skipPayment) {
+        $orderData = $this->database->transaction(function (PDO $pdo) use ($cart, $userId, $cartToken, $customerName, $customerEmail, $phone, $address, $skipPayment, $paymentMethod) {
             Telemetry::start('order_processing');
             
             // 1. Idempotency Check
@@ -88,9 +89,14 @@ final class OrderService
             $orderNumber = sprintf('PR-%s', strtoupper(substr(bin2hex(random_bytes(6)), 0, 10)));
             $createdAt = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
             
+            // Map payment method to initial status
+            $initialStatus = 'processing';
+            if ($paymentMethod === 'cod') $initialStatus = 'pending_delivery';
+            if ($paymentMethod === 'bank') $initialStatus = 'awaiting_confirmation';
+
             $insertOrder = $pdo->prepare('
-                INSERT INTO orders (user_id, order_number, cart_token, customer_name, customer_email, phone, address, subtotal, vat, shipping_fee, service_fee, total, status, created_at)
-                VALUES (:user_id, :order_number, :cart_token, :customer_name, :customer_email, :phone, :address, :subtotal, :vat, :shipping_fee, :service_fee, :total, "processing", :created_at)
+                INSERT INTO orders (user_id, order_number, cart_token, customer_name, customer_email, phone, address, subtotal, vat, shipping_fee, service_fee, total, status, payment_method, created_at)
+                VALUES (:user_id, :order_number, :cart_token, :customer_name, :customer_email, :phone, :address, :subtotal, :vat, :shipping_fee, :service_fee, :total, :status, :payment_method, :created_at)
             ');
             $insertOrder->execute([
                 'user_id' => $userId,
@@ -105,6 +111,8 @@ final class OrderService
                 'shipping_fee' => $cart['shippingFee'] ?? 0,
                 'service_fee' => $cart['serviceFee'],
                 'total' => $cart['total'],
+                'status' => $initialStatus,
+                'payment_method' => $paymentMethod,
                 'created_at' => $createdAt,
             ]);
 
@@ -130,7 +138,10 @@ final class OrderService
             // 5. Finalize State
             $finalOrder = $this->findByOrderNumber($orderNumber, '', '', true);
 
-            if (!$skipPayment) {
+            // Skip immediate capture if it's COD, Bank, or we explicitly asked to skip (for Paystack flow)
+            $isAsyncPayment = in_array($paymentMethod, ['cod', 'bank', 'card']); 
+            
+            if (!$skipPayment && !$isAsyncPayment) {
                 if (!$this->paymentProcessor->capture($orderNumber, (int) $cart['total'], $customerEmail)) {
                     throw new ApiException('Payment verification failed. Please try again.', 502);
                 }
@@ -236,7 +247,7 @@ final class OrderService
     {
         $pdo = $this->database->connection();
         $orderStatement = $pdo->prepare(
-            'SELECT order_number, cart_token, customer_name, customer_email, phone, address, subtotal, vat, shipping_fee, service_fee, total, status, created_at
+            'SELECT order_number, cart_token, customer_name, customer_email, phone, address, subtotal, vat, shipping_fee, service_fee, total, status, payment_method, created_at
              FROM orders WHERE order_number = :order_number LIMIT 1'
         );
         $orderStatement->execute(['order_number' => $orderNumber]);
@@ -262,6 +273,7 @@ final class OrderService
         return [
             'orderNumber' => $order['order_number'],
             'status' => $order['status'],
+            'paymentMethod' => $order['payment_method'] ?? 'card',
             'customerName' => $order['customer_name'],
             'customerEmail' => $order['customer_email'],
             'phone' => $order['phone'],

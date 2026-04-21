@@ -152,7 +152,7 @@ final class AdminService
 
         // Ensure inventory entry exists for new products
         $pdo = $this->database->connection();
-        $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         $isMysql = ($_ENV['DB_DRIVER'] ?? 'sqlite') === 'mysql';
         $sql = $isMysql 
             ? 'INSERT IGNORE INTO inventory (product_id, stock_level, updated_at) VALUES (?, ?, ?)'

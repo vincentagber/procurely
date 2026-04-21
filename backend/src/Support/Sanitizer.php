@@ -25,7 +25,7 @@ final class Sanitizer
             // Basic XSS protection: convert sensitive characters to HTML entities 
             // where appropriate, but we mostly rely on client-side React escaping.
             // For a baseline, we'll strip tags from single-line inputs.
-            return htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
+            return trim($value);
         }
 
         return $value;

@@ -184,11 +184,13 @@ export type CheckoutPayload = {
   customerEmail: string;
   phone: string;
   address: string;
+  paymentMethod?: string;
 };
 
 export type Order = {
   orderNumber: string;
   status: string;
+  paymentMethod: string;
   customerName: string;
   customerEmail: string;
   phone: string;

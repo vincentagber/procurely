@@ -56,6 +56,25 @@ $app = AppFactory::create();
 $app->addBodyParsingMiddleware();
 $app->add(new \Procurely\Api\Support\AuthMiddleware($authService));
 
+// ─── Production Logging & Monitoring Middleware ──────────────────────────────
+$app->add(function (ServerRequestInterface $request, $handler): ResponseInterface {
+    $start = microtime(true);
+    $response = $handler->handle($request);
+    $duration = round((microtime(true) - $start) * 1000, 2);
+    
+    $log = sprintf(
+        "[%s] %s %s - %d (%s ms)\n",
+        date('Y-m-d H:i:s'),
+        $request->getMethod(),
+        $request->getUri()->getPath(),
+        $response->getStatusCode(),
+        $duration
+    );
+    
+    @file_put_contents(dirname(__DIR__) . '/storage/logs/api-' . date('Y-m-d') . '.log', $log, FILE_APPEND);
+    return $response;
+});
+
 // ─── Direct limits for intensive operations ──────────────────────────────────
 $authRateLimit = (new RateLimiter($database, 10, 60, 'auth'))->middleware();
 $orderRateLimit = (new RateLimiter($database, 5, 60, 'order'))->middleware();
@@ -88,6 +107,15 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
     // ─── Health check ─────────────────────────────────────────────────────────────
     $group->get('', static function (ServerRequestInterface $request, ResponseInterface $response): ResponseInterface {
         return JsonResponder::success($response, ['message' => 'Procurely API is running.']);
+    });
+
+    // ─── Placeholder images ───────────────────────────────────────────────────────
+    $group->get('/placeholder/{width}/{height}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface {
+        $width = (int) $args['width'];
+        $height = (int) $args['height'];
+        $svg = "<svg width=\"$width\" height=\"$height\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"100%\" height=\"100%\" fill=\"#ccc\"/><text x=\"50%\" y=\"50%\" text-anchor=\"middle\" dy=\".3em\" fill=\"#666\" font-size=\"12\">{$width}x{$height}</text></svg>";
+        $response->getBody()->write($svg);
+        return $response->withHeader('Content-Type', 'image/svg+xml');
     });
 
     // ─── Catalog ───────────────────────────────────────────────────────────────────
@@ -200,6 +228,7 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
         $notificationService->markAsRead((int) $user['id'], (int) $args['id']);
         return JsonResponder::success($response, ['message' => 'Notification marked as read.']);
     });
+
 
     // ─── Account & Company ────────────────────────────────────────────────────────
     $group->get('/account/company', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
@@ -440,6 +469,7 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
         return JsonResponder::success($response, $engagementService->subscribe(RequestData::body($request)), 201);
     })->add($authRateLimit);
 });
+
 
 // ─── Error handler ─────────────────────────────────────────────────────────────
 $errorMiddleware = $app->addErrorMiddleware($debug, true, true);

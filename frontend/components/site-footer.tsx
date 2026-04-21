@@ -146,7 +146,7 @@ export function SiteFooter({ footer, site }: SiteFooterProps) {
           </div>
           <Image
             alt="Accepted payment methods"
-            className="h-auto w-full max-w-[330px]"
+            className="h-auto max-w-[330px]"
             height={53}
             src={footer.paymentsImage}
             width={332}

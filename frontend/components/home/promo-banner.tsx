@@ -6,17 +6,22 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { Reveal } from "@/components/ui/reveal";
 import type { PromotionBanner } from "@/lib/types";
+import type { CSSProperties } from "react";
 
 type PromoBannerProps = {
   banner: PromotionBanner;
   controls?: boolean;
   id?: string;
+  className?: string;
+  style?: CSSProperties;
 };
 
 export function PromoBanner({
   banner,
   controls = false,
   id,
+  className = "",
+  style,
 }: PromoBannerProps) {
   // Dynamically assign background gradients based on the banner type
   const isRenovation = banner.title.includes("Renovating");
@@ -25,7 +30,8 @@ export function PromoBanner({
     : "bg-gradient-to-r from-[#ff6f4d] to-[#e65432]";
 
   return (
-    <section className="container-shell py-10 md:py-14" id={id}>
+    <section className={`py-10 md:py-14 ${className}`} id={id} style={style}>
+      <div className="container-shell">
       <Reveal className="relative">
         <motion.div
           transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
@@ -121,6 +127,7 @@ export function PromoBanner({
           </>
         ) : null}
       </Reveal>
+      </div>
     </section>
   );
 }

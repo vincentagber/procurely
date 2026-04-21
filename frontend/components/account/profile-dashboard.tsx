@@ -58,9 +58,9 @@ const spendData = [
 
 const categoryData = [
   { name: 'Sand', value: 45, color: '#FF5C00' },
-  { name: 'Cement', value: 25, color: '#1D4ED8' },
-  { name: 'Rebars', value: 20, color: '#10B981' },
-  { name: 'Finishing', value: 10, color: '#6366f1' },
+  { name: 'Cement', value: 25, color: '#23C1A1' },
+  { name: 'Rebars', value: 20, color: '#0047FF' },
+  { name: 'Finishing', value: 10, color: '#94A3B8' },
 ];
 
 const supplierData = [
@@ -126,117 +126,158 @@ export default function ProfileDashboard() {
            <span className="text-slate-400">Dashboard</span> 
         </div>
         
-
-
-        {/* Top Metric Cards row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-[13px] max-w-[866px] w-full mb-2">
-           <Link href="/account/profile-order" className="block flex-1">
-             <MetricCard 
-               label="Orders" 
-               value="124" 
-               trend="+10%" 
-               sub="In the last" 
-               subAction="10 Weeks"
-               color="blue" 
-               data={[{v:20},{v:45},{v:30},{v:50},{v:40},{v:60}]}
-             />
-           </Link>
-           <MetricCard 
-             label="Request" 
-             value="30" 
-             trend="+3 new" 
-             sub="+3 new today" 
-             color="green" 
-             data={[{v:10},{v:30},{v:20},{v:60},{v:40},{v:80}]}
-           />
-           <MetricCard 
-             label="Savings" 
-             value="₦4.2M" 
-             trend="-5% c/s" 
-             sub="Total cost savings" 
-             color="orange" 
-             data={[{v:50},{v:40},{v:60},{v:30},{v:70},{v:40}]}
-           />
-        </div>
-
-        {/* Order Overview Section */}
-        <section 
-          className="bg-white p-6 relative overflow-hidden flex flex-col justify-between"
-          style={{
-            width: '673.69px',
-            height: '247.79px',
-            borderRadius: '6.19px',
-            boxShadow: '0px 5.81px 23.24px 0px #3326AE14',
-            border: 'none'
-          }}
+        {/* Top Metric Bar */}
+        <div 
+          className="flex items-center mb-8" 
+          style={{ width: '673.69px', gap: '10.11px' }}
         >
-           <div className="flex justify-between items-center mb-4">
-              <h3 className="text-[16px] font-extrabold text-[#0C1457] tracking-tight">Order Overview</h3>
-              <div className="flex items-center gap-1.5 p-1 bg-slate-50 rounded-lg">
-                 {['1W', '1M', '3M'].map((tab, idx) => (
-                    <button key={tab} className={`px-3 py-1 text-[11px] font-bold rounded-md transition-all ${idx === 0 ? 'bg-white text-[#1D4ED8] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
-                       {tab}
-                    </button>
-                 ))}
+           {/* Metric 1: Orders */}
+           <div 
+             className="bg-white flex items-center gap-3 shadow-sm border border-slate-50" 
+             style={{ 
+               width: '217.82px', 
+               height: '84.02px', 
+               borderRadius: '6.22px',
+               paddingLeft: '7.78px',
+               paddingRight: '15.56px'
+             }}
+           >
+              <div className="w-[80px] h-[50px] shrink-0">
+                 <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[{v:20},{v:45},{v:30},{v:50},{v:40},{v:60}]}>
+                       <Line type="monotone" dataKey="v" stroke="#7C3AED" strokeWidth={2.5} dot={false} />
+                    </LineChart>
+                 </ResponsiveContainer>
+              </div>
+              <div className="flex flex-col">
+                 <div className="flex items-baseline gap-1">
+                    <span className="text-[20px] font-black text-[#0C1457] leading-none">124</span>
+                    <span className="text-[14px] font-bold text-[#0C1457] leading-none">Orders</span>
+                    <span className="text-[10px] font-bold text-blue-600 ml-0.5">+10%</span>
+                 </div>
+                 <div className="flex items-center gap-1 mt-1">
+                    <span className="text-[9px] font-bold text-slate-400">In the last</span>
+                    <span className="text-[8px] font-black bg-slate-50 text-slate-400 px-1.5 py-0.5 rounded-full uppercase">10 Weeks</span>
+                 </div>
               </div>
            </div>
 
-           <div className="flex justify-center gap-6 mb-2 text-[11px] font-bold">
-              <span className="flex items-center gap-2 text-orange-500">
-                <div className="w-2 h-2 rounded-full bg-orange-500" /> Income
-              </span>
-              <span className="flex items-center gap-2 text-blue-600">
-                <div className="w-2 h-2 rounded-full bg-blue-600" /> Outcome
-              </span>
+           {/* Metric 2: Request */}
+           <div 
+             className="bg-white flex items-center gap-3 shadow-sm border border-slate-50" 
+             style={{ 
+               width: '217.82px', 
+               height: '84.02px', 
+               borderRadius: '6.22px',
+               paddingLeft: '7.78px',
+               paddingRight: '15.56px'
+             }}
+           >
+              <div className="w-[80px] h-[50px] shrink-0">
+                 <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[{v:10},{v:30},{v:20},{v:60},{v:40},{v:80}]}>
+                       <Line type="monotone" dataKey="v" stroke="#10B981" strokeWidth={2.5} dot={false} />
+                    </LineChart>
+                 </ResponsiveContainer>
+              </div>
+              <div className="flex flex-col">
+                 <div className="flex items-baseline gap-1.5">
+                    <span className="text-[20px] font-black text-[#0C1457] leading-none">30</span>
+                    <span className="text-[14px] font-bold text-[#0C1457] leading-none">Request</span>
+                 </div>
+                 <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">
+                   <span className="text-emerald-500 mr-1">↑</span> +3 new today
+                 </span>
+              </div>
            </div>
 
-           <div className="flex-1 w-full">
+           {/* Metric 3: Savings */}
+           <div 
+             className="bg-white flex items-center gap-3 shadow-sm border border-slate-50" 
+             style={{ 
+               width: '217.82px', 
+               height: '84.02px', 
+               borderRadius: '6.22px',
+               paddingLeft: '7.78px',
+               paddingRight: '15.56px'
+             }}
+           >
+              <div className="w-[80px] h-[50px] shrink-0">
+                 <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[{v:50},{v:40},{v:60},{v:30},{v:70},{v:40}]}>
+                       <Line type="monotone" dataKey="v" stroke="#FF5C00" strokeWidth={2.5} dot={false} />
+                    </LineChart>
+                 </ResponsiveContainer>
+              </div>
+              <div className="flex flex-col">
+                 <div className="flex items-baseline gap-1.5">
+                    <span className="text-[20px] font-black text-[#0C1457] leading-none">N4.2M</span>
+                    <span className="text-[10px] font-bold text-orange-500 ml-1">-5% c/s</span>
+                 </div>
+                 <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">Total cost savings</span>
+              </div>
+           </div>
+        </div>
+
+        {/* Procurement Spend Overview Section */}
+        <section className="bg-white p-8 rounded-[16px] shadow-sm border border-slate-50 flex flex-col h-[400px]">
+           <div className="flex justify-between items-start mb-6">
+              <h3 className="text-[18px] font-black text-[#0A1140]">Procurement Spend Overview</h3>
+              <div className="flex flex-col items-end gap-4">
+                 <div className="flex items-center gap-1.5 p-1 bg-slate-50 rounded-lg">
+                    {['7 Days', '30 Days', '90 Days'].map((tab, idx) => (
+                       <button key={tab} className={`px-4 py-1.5 text-[11px] font-black rounded-md transition-all ${idx === 0 ? 'bg-white text-[#0A1140] shadow-sm' : 'text-slate-400'}`}>
+                          {tab}
+                       </button>
+                    ))}
+                 </div>
+                 <div className="flex items-center gap-6">
+                    <span className="flex items-center gap-2 text-[#FF5C00] text-[11px] font-black">
+                       <div className="w-2 h-2 rounded-full bg-[#FF5C00]" /> Orders Placed
+                    </span>
+                    <span className="flex items-center gap-2 text-[#0047FF] text-[11px] font-black">
+                       <div className="w-2 h-2 rounded-full bg-[#0047FF]" /> Payments Made
+                    </span>
+                 </div>
+              </div>
+           </div>
+
+           <div className="flex-1 w-full translate-x-[-15px]">
               <ResponsiveContainer width="100%" height="100%">
-                 <AreaChart data={spendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                       <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#FF5C00" stopOpacity={0.05}/>
-                          <stop offset="95%" stopColor="#FF5C00" stopOpacity={0}/>
-                       </linearGradient>
-                       <linearGradient id="colorOutcome" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#1D4ED8" stopOpacity={0.05}/>
-                          <stop offset="95%" stopColor="#1D4ED8" stopOpacity={0}/>
-                       </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                 <AreaChart data={spendData} margin={{ top: 20, right: 10, left: 10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="5 5" vertical={false} stroke="#E2E8F0" />
                     <XAxis 
                        dataKey="name" 
                        axisLine={false} 
                        tickLine={false} 
-                       tick={{fill: '#94A3B8', fontSize: 10, fontWeight: 700}} 
-                       dy={10}
+                       tick={{fill: '#94A3B8', fontSize: 13, fontWeight: 700}} 
+                       dy={15}
                     />
                     <YAxis 
                        axisLine={false} 
                        tickLine={false} 
-                       tick={{fill: '#94A3B8', fontSize: 10, fontWeight: 700}} 
+                       tick={{fill: '#94A3B8', fontSize: 12, fontWeight: 700}} 
                        tickFormatter={(v) => `N${v/1000}k`}
+                       ticks={[0, 200000, 260000]}
                     />
                     <Tooltip cursor={{ stroke: '#00D1FF', strokeWidth: 1, strokeDasharray: '5 5' }} />
                     <Area 
                       type="monotone" 
                       dataKey="payments" 
-                      stroke="#FF5C00" 
-                      strokeWidth={2} 
-                      fillOpacity={1} 
-                      fill="url(#colorIncome)" 
-                      dot={{r: 4, fill: '#FF5C00', strokeWidth: 2, stroke: '#fff'}}
-                      activeDot={{ r: 6, strokeWidth: 0 }}
+                      stroke="#0047FF" 
+                      strokeWidth={3} 
+                      fillOpacity={0} 
+                      dot={{r: 5, fill: '#0047FF', strokeWidth: 2, stroke: '#fff'}}
+                      activeDot={{ r: 7, strokeWidth: 0 }}
                     />
                     <Area 
                       type="monotone" 
                       dataKey="orders" 
-                      stroke="#1D4ED8" 
-                      strokeWidth={2} 
-                      fillOpacity={1} 
-                      fill="url(#colorOutcome)" 
-                      dot={{r: 4, fill: '#1D4ED8', strokeWidth: 2, stroke: '#fff'}}
-                      activeDot={{ r: 6, strokeWidth: 0 }}
+                      stroke="#FF5C00" 
+                      strokeWidth={3} 
+                      fillOpacity={0} 
+                      dot={{r: 5, fill: '#FF5C00', strokeWidth: 2, stroke: '#fff'}}
+                      activeDot={{ r: 7, strokeWidth: 0 }}
                     />
                  </AreaChart>
               </ResponsiveContainer>
@@ -291,45 +332,35 @@ export default function ProfileDashboard() {
            </div>
 
            {/* Supplier Distribution (Bars) */}
-           <div 
-              className="bg-white relative flex flex-col justify-between"
-              style={{
-                width: '376px',
-                height: '320px',
-                padding: '15px',
-                borderRadius: '6.19px',
-                boxShadow: '0px 5.81px 23.24px 0px #3326AE14',
-                border: 'none'
-              }}
-           >
-              <h3 className="text-[16px] font-extrabold text-[#0C1457] tracking-tight mb-4">Supplier Distribution</h3>
+           <div className="bg-white rounded-[16px] p-8 shadow-sm border border-slate-50 flex flex-col h-[320px]">
+              <h3 className="text-[18px] font-black text-[#0A1140] mb-6">Supplier Distribution</h3>
               <div className="flex-1 w-full">
                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={supplierData} margin={{ top: 0, right: 0, left: -10, bottom: 0 }}>
+                    <BarChart data={supplierData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                        <XAxis 
                           dataKey="day" 
-                          axisLine={{ stroke: '#E2E8F0' }} 
+                          axisLine={false} 
                           tickLine={false} 
-                          tick={{fill: '#94A3B8', fontSize: 13, fontWeight: 500}} 
-                          dy={10} 
+                          tick={{fill: '#94A3B8', fontSize: 13, fontWeight: 700}} 
+                          dy={15} 
                        />
                        <YAxis 
                           axisLine={false} 
                           tickLine={false} 
-                          tick={{fill: '#94A3B8', fontSize: 11, fontWeight: 500}}
-                          tickFormatter={(v, index) => `${5 - index} stars`}
-                          ticks={[100, 80, 60, 40]}
+                          tick={{fill: '#94A3B8', fontSize: 11, fontWeight: 700}}
+                          tickFormatter={(v) => `${v} stars`}
+                          ticks={[2, 3, 4, 5]}
                        />
                        <Bar 
                           dataKey="count" 
                           radius={[6, 6, 6, 6]} 
-                          barSize={24}
+                          barSize={28}
                        >
                           {supplierData.map((entry, index) => (
                             <Cell 
                                key={`cell-${index}`} 
-                               fill={index % 3 === 0 ? '#3B82F6' : index % 3 === 1 ? '#60A5FA' : '#93C5FD'} 
+                               fill={index % 2 === 0 ? '#60A5FA' : '#3B82F6'} 
                                className="transition-all hover:opacity-80" 
                             />
                           ))}
@@ -341,33 +372,47 @@ export default function ProfileDashboard() {
         </div>
 
         {/* Small Widgets Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-[10px]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
            {/* Order Activity */}
-           <div className="bg-white rounded-[8px] p-6 shadow-sm border border-slate-100 flex items-center justify-between">
-              <div>
-                 <h4 className="text-[13px] font-black text-[#0A1140] uppercase tracking-wider mb-2">Order Activity</h4>
-                 <p className="text-[11px] font-medium text-slate-400">Projected volume vs Actuals</p>
+           <div className="bg-white rounded-[16px] p-8 shadow-sm border border-slate-50">
+              <div className="flex justify-between items-center mb-10">
+                 <div>
+                    <h3 className="text-[18px] font-black text-[#0A1140]">Order Activity</h3>
+                    <p className="text-[12px] font-bold text-slate-400 mt-1">Projected volume vs Actuals</p>
+                 </div>
+                 <div className="flex gap-1 bg-slate-50 p-1 rounded-lg">
+                    <button className="px-3 py-1 text-[10px] font-black bg-white shadow-sm rounded-md uppercase">1W</button>
+                    <button className="px-3 py-1 text-[10px] font-black text-slate-400 uppercase">1M</button>
+                 </div>
               </div>
-              <div className="w-32 h-14 opacity-40">
+              <div className="h-[140px] w-full">
                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[{v:40},{v:70},{v:50},{v:90},{v:60}]}>
-                       <Bar dataKey="v" fill="#1D4ED8" radius={2} />
+                    <BarChart data={supplierData}>
+                       <Bar dataKey="count" radius={[5, 5, 5, 5]} barSize={24}>
+                          {supplierData.map((e, i) => (
+                             <Cell key={`b-${i}`} fill={i % 2 === 0 ? '#1D4ED8' : '#60A5FA'} />
+                          ))}
+                       </Bar>
                     </BarChart>
                  </ResponsiveContainer>
               </div>
            </div>
 
            {/* Delivery Performance */}
-           <div className="bg-white rounded-[8px] p-6 shadow-sm border border-slate-100">
-              <h4 className="text-[13px] font-black text-[#0A1140] uppercase tracking-wider mb-4">Delivery Performance</h4>
-              <div className="flex items-center gap-4">
-                 <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden flex">
-                    <div className="h-full bg-[#10B981] w-[33%]" />
-                    <div className="h-full bg-[#FF5C00] w-[67%]" />
+           <div className="bg-white rounded-[16px] p-8 shadow-sm border border-slate-50">
+              <h3 className="text-[18px] font-black text-[#0A1140] mb-12">Delivery Performance</h3>
+              <div className="flex flex-col gap-10">
+                 <div className="flex gap-4">
+                    <div className="h-10 w-[33%] bg-[#23C1A1] rounded-lg shadow-[0_4px_12px_rgba(35,193,161,0.2)]" />
+                    <div className="h-10 w-[67%] bg-[#FF5C00] rounded-lg shadow-[0_4px_12px_rgba(255,92,0,0.2)]" />
                  </div>
-                 <div className="flex gap-4 text-[10px] font-black uppercase tracking-widest shrink-0">
-                    <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#10B981]" /> 33% On-Time</span>
-                    <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#FF5C00]" /> 67% Delayed</span>
+                 <div className="flex items-center justify-around">
+                    <span className="flex items-center gap-3 text-[13px] font-black text-[#0A1140]">
+                       <div className="w-2.5 h-2.5 rounded-full bg-[#23C1A1]" /> On-Time <span className="text-slate-400 ml-1">23%</span>
+                    </span>
+                    <span className="flex items-center gap-3 text-[13px] font-black text-[#0A1140]">
+                       <div className="w-2.5 h-2.5 rounded-full bg-[#FF5C00]" /> Delayed <span className="text-slate-400 ml-1">57%</span>
+                    </span>
                  </div>
               </div>
            </div>
@@ -577,48 +622,32 @@ export default function ProfileDashboard() {
 
 // --- Internal Helper Components ---
 
-function MetricCard({ label, value, trend, sub, color, data, subAction }: any) {
-   const variants: any = {
-      blue: { stroke: "#7C3AED", bg: "bg-blue-50 text-blue-600" }, // Purple for Orders
-      green: { stroke: "#10B981", bg: "bg-emerald-50 text-emerald-600" },
-      orange: { stroke: "#FF5C00", bg: "bg-orange-50 text-orange-600" }
+function MetricCard({ label, value, trend, sub, color, data }: any) {
+   const strokeColors: any = {
+      blue: "#7C3AED", 
+      green: "#10B981", 
+      orange: "#FF5C00"
    };
    
    return (
-      <div className="bg-white rounded-[8px] p-4 flex items-center gap-4 h-[108px] border border-slate-50 transition-all hover:shadow-md">
-         {/* Sparkline on the Left */}
-         <div className="w-[100px] h-[60px] shrink-0">
+      <div className="bg-white rounded-[16px] p-6 flex items-center justify-between shadow-sm border border-slate-50 transition-all hover:shadow-md h-[124px]">
+         <div className="w-[110px] h-[60px] shrink-0">
             <ResponsiveContainer width="100%" height="100%">
                <LineChart data={data}>
-                  <Line 
-                    type="monotone" 
-                    dataKey="v" 
-                    stroke={variants[color].stroke} 
-                    strokeWidth={2.5} 
-                    dot={false} 
-                  />
+                  <Line type="monotone" dataKey="v" stroke={strokeColors[color]} strokeWidth={3} dot={false} />
                </LineChart>
             </ResponsiveContainer>
          </div>
-
-         {/* Content on the Right */}
-         <div className="flex-1 min-w-0">
+         <div className="text-right flex flex-col items-end gap-1">
             <div className="flex items-baseline gap-2">
-               <h3 className="text-[28px] font-black text-[#0C1457] tracking-tighter leading-none">{value}</h3>
-               <span className="text-[16px] font-bold text-[#0C1457]">{label}</span>
-               {trend && (
-                 <span className={`text-[12px] font-bold ml-auto ${trend.startsWith('+') ? 'text-blue-600' : 'text-orange-500'}`}>
-                   {trend}
-                 </span>
-               )}
+               <h3 className="text-[32px] font-black text-[#0A1140] tracking-tighter leading-none">{value}</h3>
+               <span className="text-[14px] font-black text-[#0A1140]">{label}</span>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-               <p className="text-[12px] font-medium text-slate-400 capitalize whitespace-nowrap">{sub}</p>
-               {subAction && (
-                 <span className="text-[10px] font-bold bg-slate-50 text-slate-400 px-2 py-0.5 rounded-full uppercase tracking-tighter whitespace-nowrap">
-                   {subAction}
-                 </span>
-               )}
+            <div className="flex items-center gap-2">
+               <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${trend.includes('+') || trend.includes('new') ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
+                  {trend}
+               </span>
+               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{sub}</p>
             </div>
          </div>
       </div>

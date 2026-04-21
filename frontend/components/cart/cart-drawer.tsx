@@ -93,7 +93,7 @@ export function CartDrawer() {
                             </button>
                           </div>
                           <span className="text-sm font-bold text-[#13184f]">
-                            {item.product.currency === 'NGN' ? 'N ' : ''}{item.lineTotal.toLocaleString()}
+                            ₦{item.lineTotal.toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -112,7 +112,7 @@ export function CartDrawer() {
               <div className="mt-auto pt-6">
                 <div className="mb-6 flex items-center justify-between text-lg font-bold text-[#446d4e]">
                   <span className="text-[#ff6f4d]">Subtotal</span>
-                  <span>{cart.items[0]?.product.currency === 'NGN' ? 'N' : '$'}{cart.subtotal.toLocaleString()}</span>
+                  <span>₦{cart.subtotal.toLocaleString()}</span>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">

@@ -19,7 +19,9 @@ export default function OrderConfirmationPage() {
                </div>
             </div>
             
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-[#13184f] mb-6 tracking-tight">Payment Successful!</h1>
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-[#13184f] mb-6 tracking-tight">
+               {lastOrder?.paymentMethod === 'card' ? 'Payment Successful!' : 'Order Received!'}
+            </h1>
             
             {lastOrder ? (
               <div className="mb-10 rounded-2xl bg-slate-50 p-6 border border-slate-100">

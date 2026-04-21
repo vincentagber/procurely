@@ -114,6 +114,7 @@ final class Database
             ? 'ON DUPLICATE KEY UPDATE hits = hits + 1, reset_at = VALUES(reset_at)' 
             : 'ON CONFLICT(`key`) DO UPDATE SET hits = hits + 1, reset_at = excluded.reset_at';
         $now = $isMysql ? 'NOW()' : "datetime('now')";
+        $isoNow = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
 
         $sql = <<<SQL
             CREATE TABLE IF NOT EXISTS users (
@@ -380,6 +381,14 @@ final class Database
             $insertIgnore INTO roles (name, description, created_at) VALUES 
             ('admin', 'Full system access', $now),
             ('customer', 'Standard customer access', $now);
+
+            $insertIgnore INTO users (uuid, full_name, email, password_hash, wallet_balance, created_at, updated_at) VALUES
+            ('018ed3d0-3770-711e-a131-0164c0556855', 'Procurely Admin', 'admin@procurely.com', '\$2y\$12\$Vn4xphquyHU4fXolPTUU3uTYN6cN2cunQB8hJoYuiXGihcVYshWQ6', 0, '$isoNow', '$isoNow');
+
+            -- Link admin user to admin role (assumes id 1 if fresh, but better handled by service usually)
+            -- However, for a seed, we can attempt a subquery link
+            $insertIgnore INTO user_roles (user_id, role_id, assigned_at)
+            SELECT u.id, r.id, $now FROM users u, roles r WHERE u.email = 'admin@procurely.com' AND r.name = 'admin';
 
             $insertIgnore INTO permissions (name, description, created_at) VALUES 
             ('user.create', 'Create users', $now),

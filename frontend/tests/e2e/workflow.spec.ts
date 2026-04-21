@@ -52,6 +52,32 @@ test.describe('Critical Workflows & Core Navigation', () => {
     }
   });
 
+  test('Complete purchase workflow: login -> add to cart -> checkout', async ({ page }: { page: Page }) => {
+    // Login
+    await page.goto('/login');
+    await page.fill('input[name="email"]', 'customer@useprocurely.com');
+    await page.fill('input[name="password"]', 'Apassword123!');
+    await page.click('button[type="submit"]');
+    await expect(page).toHaveURL(/\/account/);
+
+    // Go to materials
+    await page.goto('/materials');
+    // Add to cart
+    const productCard = page.locator('.product-card').first();
+    if (await productCard.isVisible()) {
+      await productCard.locator('button:has-text("Add")').click();
+      // Check cart
+      const cartBadge = page.locator('header button svg').locator('..').locator('span.bg-\\[\\#1D4ED8\\]');
+      await expect(cartBadge).toHaveText('1');
+      // Go to cart
+      await page.click('header a[href="/cart"]');
+      await expect(page).toHaveURL('/cart');
+      // Proceed to checkout
+      await page.click('button:has-text("Checkout")');
+      await expect(page).toHaveURL('/checkout');
+    }
+  });
+
   // Additional mock performance assertion logic
   test('Check homepage bundle loading performance criteria', async ({ page }: { page: Page }) => {
     await page.goto('/');

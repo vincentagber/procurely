@@ -257,7 +257,7 @@ export default function AccountDashboardClient() {
                  </div>
                  <div className="flex items-center gap-6 flex-1">
                     <div className="h-44 w-1/2 relative">
-                       <ResponsiveContainer width="100%" height="100%">
+                       <ResponsiveContainer width="100%" height={176}>
                           <PieChart>
                              <Pie
                                data={categoryData}
@@ -297,7 +297,7 @@ export default function AccountDashboardClient() {
               <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm col-span-1">
                  <h3 className="text-[13px] font-black text-[#13184F] mb-6">Supplier Distribution</h3>
                  <div className="h-44 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height={176}>
                        <BarChart data={supplierData}>
                           <Bar dataKey="value" fill="#3B82F6" radius={[6, 6, 0, 0]} barSize={16} />
                           <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94A3B8'}} />
@@ -317,7 +317,7 @@ export default function AccountDashboardClient() {
                     </div>
                  </div>
                  <div className="h-44 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height={176}>
                        <BarChart data={activityData}>
                           <Bar dataKey="value" fill="#3B82F6" radius={[6, 6, 0, 0]} barSize={20} />
                           <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94A3B8'}} />

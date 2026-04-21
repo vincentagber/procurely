@@ -90,8 +90,8 @@ final class CartService
             'cart_token' => $cartToken,
             'product_id' => $productId,
         ]);
+        $timestamp = (new DateTimeImmutable())->format('Y-m-d H:i:s');
         $item = $existing->fetch();
-        $timestamp = (new DateTimeImmutable())->format(DateTimeImmutable::ATOM);
 
         if ($item !== false) {
             $update = $pdo->prepare('UPDATE cart_items SET quantity = :quantity, updated_at = :updated_at WHERE id = :id');
@@ -128,7 +128,7 @@ final class CartService
         $statement = $this->database->connection()->prepare('UPDATE cart_items SET quantity = :quantity, updated_at = :updated_at WHERE id = :id AND cart_token = :cart_token');
         $statement->execute([
             'quantity' => $quantity,
-            'updated_at' => (new DateTimeImmutable())->format(DateTimeImmutable::ATOM),
+            'updated_at' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
             'id' => $itemId,
             'cart_token' => $cartToken,
         ]);

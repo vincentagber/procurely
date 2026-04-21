@@ -99,7 +99,7 @@ final class ContentStore
     public function saveProduct(array $product): array
     {
         $pdo = $this->database->connection();
-        $now = (new \DateTimeImmutable())->format(\DateTimeImmutable::ATOM);
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
 
         $isMysql = ($_ENV['DB_DRIVER'] ?? 'sqlite') === 'mysql';
         $sql = $isMysql 
@@ -123,6 +123,16 @@ final class ContentStore
             'homepage_slot' => (string) ($product['homepageSlot'] ?? ''),
             'created_at' => $product['createdAt'] ?? $now,
             'updated_at' => $now,
+        ]);
+
+        // Ensure inventory record exists
+        $inventorySql = $isMysql 
+            ? 'INSERT IGNORE INTO inventory (product_id, stock_level, updated_at) VALUES (?, ?, ?)'
+            : 'INSERT OR IGNORE INTO inventory (product_id, stock_level, updated_at) VALUES (?, ?, ?)';
+        $pdo->prepare($inventorySql)->execute([
+            (string) ($product['id']),
+            100, // Default stock level
+            $now
         ]);
 
         return $this->productById((string) $product['id']);

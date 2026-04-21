@@ -17,6 +17,11 @@ class ApiTest extends TestCase
 
     protected function setUp(): void
     {
+        // Clean the test database
+        if (file_exists('storage/test.sqlite')) {
+            unlink('storage/test.sqlite');
+        }
+
         // Use environment variables for test DB (MySQL in CI, SQLite locally)
         $this->db = new Database('storage/test.sqlite');
         $this->pdo = $this->db->connection();

@@ -19,6 +19,7 @@ export function CheckoutPageClient() {
     phone: "",
     email: "",
     saveInfo: true,
+    paymentMethod: "bank",
   });
 
   if (!cart || cart.items.length === 0) {
@@ -42,19 +43,30 @@ export function CheckoutPageClient() {
     try {
       const cartTokenSnap = cart.cartToken;
       
-      // 1. Create the order first (in pending status)
+      // 1. Create the order
       const order = await checkout({
         customerName: formData.firstName,
         customerEmail: formData.email,
         phone: formData.phone,
         address: `${formData.address}, ${formData.city}`,
+        paymentMethod: formData.paymentMethod,
       });
 
       if (!order) {
         throw new Error("Failed to create order");
       }
 
-      // 2. Initialize Paystack
+      // 2. Decide if we need Paystack
+      // Only use Paystack for 'card' or if explicitly requested. 
+      // For now, if user selects 'bank' or 'cod', we might skip the iframe and just go to confirmation.
+      if (formData.paymentMethod === 'cod' || formData.paymentMethod === 'bank') {
+        persistOrderRef(order.orderNumber, cartTokenSnap);
+        clearCart();
+        router.push("/order-confirmation");
+        return;
+      }
+
+      // 3. Initialize Paystack (for card payments)
       // @ts-ignore
       const handler = window.PaystackPop.setup({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
@@ -63,7 +75,7 @@ export function CheckoutPageClient() {
         currency: isNgn ? 'NGN' : 'USD',
         ref: order.orderNumber,
         callback: function(response: any) {
-          // 3. Payment successful, redirect to confirmation
+          // 4. Payment successful, redirect to confirmation
           persistOrderRef(order.orderNumber, cartTokenSnap);
           clearCart();
           router.push("/order-confirmation");
@@ -135,41 +147,51 @@ export function CheckoutPageClient() {
                      </div>
                      <span className="font-medium">{item.product.name}</span>
                   </div>
-                  <span className="font-semibold">{isNgn ? 'N' : '$'}{item.lineTotal.toLocaleString()}</span>
+                  <span className="font-semibold">₦{item.lineTotal.toLocaleString()}</span>
                 </div>
               ))}
 
               <div className="border-y border-slate-200 py-4 space-y-4">
                  <div className="flex justify-between">
                     <span className="font-medium text-[#13184f]">Subtotal:</span>
-                    <span className="font-semibold">{isNgn ? 'N' : '$'}{cart.subtotal.toLocaleString()}</span>
+                    <span className="font-semibold">₦{cart.subtotal.toLocaleString()}</span>
                  </div>
-                 {isNgn && (
-                    <>
-                       <div className="flex justify-between">
-                          <span className="font-medium text-[#13184f]">VAT:</span>
-                          <span className="font-semibold">N{vat.toLocaleString()}</span>
-                       </div>
-                       <div className="flex justify-between">
-                          <span className="font-medium text-[#13184f]">Shipping:</span>
-                          <span className="font-semibold">N{shipping.toLocaleString()}</span>
-                       </div>
-                    </>
-                 )}
+                 <div className="flex justify-between">
+                    <span className="font-medium text-[#13184f]">VAT:</span>
+                    <span className="font-semibold">₦{vat.toLocaleString()}</span>
+                 </div>
+                 <div className="flex justify-between">
+                    <span className="font-medium text-[#13184f]">Shipping:</span>
+                    <span className="font-semibold">₦{shipping.toLocaleString()}</span>
+                 </div>
               </div>
 
               <div className="flex justify-between font-bold text-lg">
                 <span>Total:</span>
-                <span>{isNgn ? 'N' : '$'}{total.toLocaleString()}</span>
+                <span>₦{total.toLocaleString()}</span>
               </div>
 
               <div className="space-y-4 pt-4">
                  <label className="flex items-center gap-4 cursor-pointer">
-                    <input type="radio" name="payment" value="bank" className="size-5 accent-[#13184f]" defaultChecked />
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      value="bank" 
+                      className="size-5 accent-[#13184f]" 
+                      checked={formData.paymentMethod === 'bank'}
+                      onChange={() => setFormData({...formData, paymentMethod: 'bank'})}
+                    />
                     <span className="font-medium">Bank</span>
                  </label>
                  <label className="flex items-center gap-4 cursor-pointer">
-                    <input type="radio" name="payment" value="cod" className="size-5 accent-[#13184f]" />
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      value="cod" 
+                      className="size-5 accent-[#13184f]" 
+                      checked={formData.paymentMethod === 'cod'}
+                      onChange={() => setFormData({...formData, paymentMethod: 'cod'})}
+                    />
                     <span className="font-medium">Cash on delivery</span>
                  </label>
               </div>
