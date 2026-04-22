@@ -162,62 +162,59 @@ export default function ContactQuotePage() {
       </div>
 
       {/* Hero Header Area */}
-      <section className="container-shell mx-auto px-4 sm:px-6 lg:px-8 mb-10">
-        <div className="relative overflow-hidden bg-[#13184f] rounded-[16px] py-24 text-center text-white">
-          <div className="relative z-10 max-w-4xl mx-auto">
-            <h1 className="text-[44px] sm:text-[56px] font-extrabold tracking-tight leading-tight">
-              Get your free quote<br />or <span className="text-[#3b82f6]">upload your BoQ</span>
+      <section className="container-shell mx-auto px-4 sm:px-6 lg:px-8 mb-6 sm:mb-10">
+        <div className="relative overflow-hidden bg-[#13184f] rounded-[16px] py-12 sm:py-24 text-center text-white">
+          <div className="relative z-10 max-w-4xl mx-auto px-4">
+            <h1 className="text-[28px] sm:text-[44px] lg:text-[56px] font-extrabold tracking-tight leading-tight">
+              Get your free quote<br className="hidden sm:block" /> or <span className="text-[#3b82f6]">upload your BoQ</span>
             </h1>
-            <p className="mt-6 mx-auto max-w-2xl text-[16px] text-slate-300 font-medium leading-relaxed">
-              Get accurate pricing in minutes. Request a free quote for your structural and architectural drawings, or upload your BoQ to receive a detailed cost breakdown consultant fast, simple and reliable.
+            <p className="mt-4 sm:mt-6 mx-auto max-w-2xl text-[13px] sm:text-[16px] text-slate-300 font-medium leading-relaxed">
+              Get accurate pricing in minutes. Request a free quote for your drawings, or upload your BoQ to receive a detailed cost breakdown fast and reliable.
             </p>
           </div>
         </div>
       </section>
 
       {/* Contact Cards */}
-      <section className="container-shell mx-auto px-4 sm:px-6 lg:px-8 mb-20">
+      <section className="container-shell mx-auto px-4 sm:px-6 lg:px-8 mb-16 sm:mb-20">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="flex flex-col items-center rounded-[12px] bg-white py-12 px-6 text-center ring-1 ring-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-shadow hover:shadow-md">
-             <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-orange-50 text-orange-500">
+          <div className="flex flex-col items-center rounded-[12px] bg-white py-8 sm:py-12 px-6 text-center ring-1 ring-slate-100 shadow-sm transition-shadow hover:shadow-md">
+             <div className="mb-4 flex size-10 sm:size-12 items-center justify-center rounded-full bg-orange-50 text-orange-500">
                <Phone className="size-5" />
              </div>
-             <h2 className="mb-1 text-[18px] font-bold text-slate-900">Call</h2>
-             <p className="text-[16px] font-bold text-slate-900">+2348139259377</p>
-             <p className="mt-1 text-[12px] text-slate-400 font-medium">Mon-Sat, 9am-6pm</p>
+             <h2 className="mb-1 text-[16px] sm:text-[18px] font-bold text-slate-900">Call</h2>
+             <p className="text-[14px] sm:text-[16px] font-bold text-slate-900">+2348139259377</p>
           </div>
-          <div className="flex flex-col items-center rounded-[12px] bg-white py-12 px-6 text-center ring-1 ring-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-shadow hover:shadow-md">
-             <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-orange-50 text-orange-500">
+          <div className="flex flex-col items-center rounded-[12px] bg-white py-8 sm:py-12 px-6 text-center ring-1 ring-slate-100 shadow-sm transition-shadow hover:shadow-md">
+             <div className="mb-4 flex size-10 sm:size-12 items-center justify-center rounded-full bg-orange-50 text-orange-500">
                <Mail className="size-5" />
              </div>
-             <h2 className="mb-1 text-[18px] font-bold text-slate-900">Email</h2>
-             <p className="text-[16px] font-bold text-slate-900">sales@procurely.com</p>
-             <p className="mt-1 text-[12px] text-slate-400 font-medium">Response within 24h</p>
+             <h2 className="mb-1 text-[16px] sm:text-[18px] font-bold text-slate-900">Email</h2>
+             <p className="text-[14px] sm:text-[16px] font-bold text-slate-900">sales@procurely.com</p>
           </div>
-          <div className="flex flex-col items-center rounded-[12px] bg-white py-12 px-6 text-center ring-1 ring-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-shadow hover:shadow-md">
-             <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-orange-50 text-orange-500">
+          <div className="flex flex-col items-center rounded-[12px] bg-white py-8 sm:py-12 px-6 text-center ring-1 ring-slate-100 shadow-sm transition-shadow hover:shadow-md">
+             <div className="mb-4 flex size-10 sm:size-12 items-center justify-center rounded-full bg-orange-50 text-orange-500">
                <MapPin className="size-5" />
              </div>
-             <h2 className="mb-1 text-[18px] font-bold text-slate-900">Visit Us</h2>
-             <p className="text-[16px] font-bold text-slate-900">Lagos, Nigeria</p>
+             <h2 className="mb-1 text-[16px] sm:text-[18px] font-bold text-slate-900">Visit Us</h2>
+             <p className="text-[14px] sm:text-[16px] font-bold text-slate-900">Lagos, Nigeria</p>
           </div>
-          <div className="flex flex-col items-center rounded-[12px] bg-white py-12 px-6 text-center ring-1 ring-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-shadow hover:shadow-md">
-             <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-orange-50 text-orange-500">
+          <div className="flex flex-col items-center rounded-[12px] bg-white py-8 sm:py-12 px-6 text-center ring-1 ring-slate-100 shadow-sm transition-shadow hover:shadow-md">
+             <div className="mb-4 flex size-10 sm:size-12 items-center justify-center rounded-full bg-orange-50 text-orange-500">
                <Clock className="size-5" />
              </div>
-             <h2 className="mb-1 text-[18px] font-bold text-slate-900">Working Hours</h2>
-             <p className="text-[16px] font-bold text-slate-900">Mon - Sat: 9am - 6pm</p>
-             <p className="mt-1 text-[12px] text-slate-400 font-medium">Sun: Closed</p>
+             <h2 className="mb-1 text-[16px] sm:text-[18px] font-bold text-slate-900">Working Hours</h2>
+             <p className="text-[14px] sm:text-[16px] font-bold text-slate-900">9am - 6pm (Mon-Sat)</p>
           </div>
         </div>
       </section>
 
       {/* Forms Section */}
-      <section className="container-shell mx-auto px-4 sm:px-6 lg:px-8 mb-24">
+      <section className="container-shell mx-auto px-4 sm:px-6 lg:px-8 mb-20 sm:mb-24">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           
           {/* Quote Form */}
-          <div className="rounded-[12px] border border-slate-100 bg-white p-10 shadow-sm">
+          <div className="rounded-[12px] border border-slate-100 bg-white p-6 sm:p-10 shadow-sm">
             <h2 className="mb-8 text-[28px] font-bold text-slate-900">Get a free quote in <span className="text-[#1900ff]">minutes</span></h2>
             {quoteMessage ? (
               <div className="mb-6 flex items-center gap-3 rounded-[12px] bg-emerald-50 p-4 text-emerald-700">

@@ -80,47 +80,42 @@ export function MaterialsClient({ products }: { products: Product[] }) {
 
       <div className="flex flex-col gap-10 lg:flex-row items-start relative border-t border-slate-100 pt-10">
         
+        {/* Mobile Filter Trigger */}
+        <div className="lg:hidden w-full mb-6">
+           <button 
+             onClick={() => setShowFilters(true)}
+             className="flex items-center justify-center gap-3 w-full h-[52px] rounded-xl border border-slate-200 bg-white font-bold text-[#13184f] shadow-sm hover:bg-slate-50 active:scale-[0.98] transition-all"
+           >
+              <Filter className="size-5" />
+              Show Filters & Categories
+           </button>
+        </div>
+
         {/* Overlay for mobile filters */}
         {showFilters && (
           <div 
-            className="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm lg:hidden transition-opacity" 
+            className="fixed inset-0 z-[100] bg-slate-950/60 backdrop-blur-sm lg:hidden transition-opacity" 
             onClick={() => setShowFilters(false)} 
           />
         )}
 
         {/* Sidebar Filters - Sliding on mobile, sidebar on desktop */}
         <aside className={`
-          fixed inset-y-0 left-0 z-[110] w-[300px] bg-[#f6f7fd] p-8 shadow-2xl transition-transform duration-300 transform lg:translate-x-0 lg:static lg:block lg:w-[260px] lg:p-0 lg:bg-transparent lg:shadow-none lg:z-0
+          fixed inset-y-0 left-0 z-[110] w-[310px] sm:w-[350px] bg-white p-8 shadow-2xl transition-transform duration-300 transform lg:translate-x-0 lg:static lg:block lg:w-[280px] lg:p-0 lg:bg-transparent lg:shadow-none lg:z-0
           ${showFilters ? 'translate-x-0' : '-translate-x-full'}
         `}>
           <div className="flex items-center justify-between mb-8 lg:hidden">
              <h3 className="text-2xl font-black text-[#13184f]">Filters</h3>
-             <button onClick={() => setShowFilters(false)} className="size-10 rounded-full bg-white flex items-center justify-center text-slate-400 shadow-sm">
+             <button onClick={() => setShowFilters(false)} className="size-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors">
                 <ChevronDown className="size-6 rotate-90" />
              </button>
           </div>
 
-          <div className="space-y-6 h-[calc(100vh-160px)] lg:h-auto overflow-y-auto pr-2 lg:pr-0 lg:overflow-visible">
+          <div className="space-y-6 h-[calc(100vh-140px)] lg:h-auto overflow-y-auto pr-2 lg:pr-0 lg:overflow-visible">
             {/* Materials Filter */}
-            <div 
-              className="flex flex-col bg-white shadow-sm"
-              style={{
-                width: '100%',
-                maxWidth: '319px',
-                height: '296.58px',
-                gap: '13.41px',
-                paddingTop: '13.41px',
-                paddingRight: '20.12px',
-                paddingBottom: '13.41px',
-                paddingLeft: '20.12px',
-                borderRadius: '8.38px',
-                borderWidth: '0.84px',
-                borderColor: '#ECEFF2',
-                borderStyle: 'solid'
-              }}
-            >
-               <h3 className="m-0 text-[18px] font-bold leading-tight text-[#344054] shrink-0">Materials</h3>
-               <ul className="flex flex-col m-0 p-0 flex-grow justify-between">
+            <div className="flex flex-col bg-white shadow-sm border border-[#ECEFF2] rounded-[10px] p-5 w-full">
+               <h3 className="mb-4 text-[18px] font-bold leading-tight text-[#344054] shrink-0">Materials</h3>
+               <ul className="flex flex-col gap-4">
                   {categories.map((item, idx) => {
                      const isActive = activeCategory === item;
                      return (
@@ -138,41 +133,28 @@ export function MaterialsClient({ products }: { products: Product[] }) {
             </div>
 
             {/* Price Filter */}
-            <div 
-              className="flex flex-col bg-white shadow-sm"
-              style={{
-                width: '100%',
-                maxWidth: '319px',
-                height: '105.99px',
-                gap: '13.41px',
-                paddingTop: '13.41px',
-                paddingRight: '20.12px',
-                paddingBottom: '13.41px',
-                paddingLeft: '20.12px',
-                borderRadius: '8.38px',
-                borderWidth: '0.84px',
-                borderColor: '#ECEFF2',
-                borderStyle: 'solid'
-              }}
-            >
-               <h3 className="m-0 text-[18px] font-bold text-[#344054] leading-none shrink-0">Price</h3>
-               <div className="flex flex-col flex-grow justify-between">
+            <div className="flex flex-col bg-white shadow-sm border border-[#ECEFF2] rounded-[10px] p-5 w-full">
+               <h3 className="mb-4 text-[18px] font-bold text-[#344054] leading-none shrink-0">Price</h3>
+               <div className="flex flex-col gap-4">
                   <div className="relative w-full pt-1">
                      <style dangerouslySetInnerHTML={{__html: `
                        input[type=range]::-webkit-slider-thumb {
                          -webkit-appearance: none;
-                         height: 14px;
-                         width: 14px;
+                         height: 16px;
+                         width: 16px;
                          border-radius: 50%;
-                         background: #344054;
+                         background: #13184f;
                          cursor: pointer;
-                         margin-top: -6px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
+                         margin-top: -7px;
+                         border: 2px solid white;
+                         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                        }
                        input[type=range]::-webkit-slider-runnable-track {
                          width: 100%;
-                         height: 2px;
+                         height: 3px;
                          cursor: pointer;
-                         background: #D0D5DD;
+                         background: #E2E8F0;
+                         border-radius: 3px;
                        }
                      `}} />
                      <input 
@@ -182,47 +164,39 @@ export function MaterialsClient({ products }: { products: Product[] }) {
                        step="10000"
                        value={Math.max(20000, maxPrice)}
                        onChange={(e) => setMaxPrice(Number(e.target.value))}
-                       className="w-full accent-[#344054] cursor-pointer h-[2px] bg-[#D0D5DD] appearance-none"
+                       className="w-full accent-[#344054] cursor-pointer h-[3px] bg-[#D0D5DD] appearance-none"
                      />
                   </div>
-                  <div className="flex items-center justify-between text-[14px] font-bold tracking-tight pb-1 mt-1 shrink-0">
-                     <span className="text-[#344054]">N20,000</span>
-                     <span className="text-[#344054]">N800,000,000</span>
+                  <div className="flex flex-col gap-1 text-[12px] font-bold tracking-tight shrink-0">
+                     <div className="flex justify-between text-slate-400 uppercase tracking-widest text-[10px]">
+                        <span>Min</span>
+                        <span>Max</span>
+                     </div>
+                     <div className="flex justify-between text-[#13184f]">
+                        <span>N20k</span>
+                        <span>N{ (maxPrice/1000000).toFixed(1) }M</span>
+                     </div>
                   </div>
                </div>
             </div>
 
             {/* Bulk Promo Box */}
-            <div 
-              className="flex flex-col bg-[#FA5F29] border-[#FA5F29] border-solid shadow-sm relative overflow-hidden"
-              style={{
-                width: '100%',
-                maxWidth: '319px',
-                height: '217px',
-                gap: '13.41px',
-                paddingTop: '13.41px',
-                paddingRight: '15px',
-                paddingBottom: '13.41px',
-                paddingLeft: '15px',
-                borderRadius: '8.38px',
-                borderWidth: '0.84px'
-              }}
-            >
-               <div className="shrink-0">
+            <div className="flex flex-col bg-[#FA5F29] shadow-sm relative overflow-hidden rounded-[10px] p-6 w-full min-h-[220px]">
+               <div className="shrink-0 mb-4">
                   <Image
                     alt="Procurely"
-                    className="h-[22px] w-auto object-contain"
+                    className="h-[22px] w-auto object-contain brightness-0 invert"
                     height={22}
                     src="/assets/design/logo-dark.png"
                     width={110}
                   />
                </div>
-               <h4 className="text-[20px] m-0 font-extrabold leading-tight tracking-tight text-white transition-transform">Need Bulk Pricing?</h4>
-               <p className="text-[14px] m-0 font-medium leading-[1.4] text-white">Submit your BOQ for custom quotes from verified suppliers.</p>
+               <h4 className="text-[20px] m-0 font-extrabold leading-tight tracking-tight text-white mb-2">Need Bulk Pricing?</h4>
+               <p className="text-[14px] m-0 font-medium leading-[1.4] text-white/90 mb-6">Submit your BOQ for custom quotes from verified suppliers.</p>
                <Link 
                  href="/contact-quote" 
                  onClick={() => setShowFilters(false)} 
-                 className="mt-auto flex h-[44px] w-full shrink-0 items-center justify-center rounded-[8px] bg-[#04071E] text-[14px] font-bold text-white shadow-md transition-all hover:bg-black active:scale-[0.98]"
+                 className="mt-auto flex h-[46px] w-full shrink-0 items-center justify-center rounded-xl bg-[#04071E] text-[14px] font-bold text-white shadow-lg transition-all hover:bg-black active:scale-[0.98]"
                 >
                   Submit BOQ
                </Link>

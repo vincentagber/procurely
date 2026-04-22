@@ -112,21 +112,13 @@ const renderOverlay = (item: SiteContent["categoriesSection"]["items"][0]) => {
 export function CategorySection({ section }: CategorySectionProps) {
   return (
     <section className="container-shell py-16 md:py-24">
-      {/* Custom Heading to match image exactly */}
-      <div className="relative mb-12 border-b border-slate-100 pb-5 flex items-end justify-between">
-        <div>
-          <h2 className="text-[2.2rem] font-bold text-slate-500 tracking-tight leading-none">
-            Shop Popular <span className="text-[#0001FF]">Category</span>
-          </h2>
-          <div className="absolute -bottom-[2.5px] left-0 h-[4px] w-[320px] bg-[#FF5C00]" />
-        </div>
-        <Link 
-          href="/materials" 
-          className="group flex items-center gap-1.5 text-[15px] font-bold text-slate-800 transition hover:text-[#0001FF]"
-        >
-          View All
-          <ChevronRight className="size-5 text-[#FF5C00] transition-transform group-hover:translate-x-1" strokeWidth={3} />
-        </Link>
+      <div className="mb-12">
+        <SectionHeading 
+          lead="Shop Popular" 
+          accent="Category" 
+          actionLabel="View All" 
+          actionHref="/materials"
+        />
       </div>
 
       <div className="grid gap-4 sm:gap-6 md:grid-cols-12 md:auto-rows-[180px] lg:auto-rows-[220px]">

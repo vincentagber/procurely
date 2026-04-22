@@ -33,22 +33,22 @@ export function AccountClientWrapper({ children }: { children: React.ReactNode }
     <SidebarProvider>
       <div className="min-h-screen bg-[#F8F9FA] text-slate-800 font-sans flex flex-col">
         {/* Breadcrumbs Section */}
-        <div className="flex justify-center pt-8 pb-4">
-          <div className="w-full max-w-[1240px] h-[81px] bg-white rounded-[10px] flex items-center px-10 shadow-sm border border-slate-100">
-            <div className="flex items-center gap-2 text-[14px] font-bold">
-               <span className="text-slate-400">Home</span>
-               <span className="text-slate-300">/</span>
-               <span className="text-slate-400 font-medium">pages</span>
-               <span className="text-slate-300">/</span>
-               <span className="text-[#0A1140] font-black">my account</span>
+        <div className="flex justify-center pt-4 sm:pt-8 pb-4 px-4">
+          <div className="w-full max-w-[1240px] h-auto min-h-[60px] sm:h-[81px] bg-white rounded-[10px] flex items-center px-6 sm:px-10 shadow-sm border border-slate-100">
+            <div className="flex items-center gap-2 text-[12px] sm:text-[14px] font-bold overflow-hidden">
+               <span className="text-slate-400 shrink-0">Home</span>
+               <span className="text-slate-300 shrink-0">/</span>
+               <span className="text-slate-400 font-medium shrink-0">pages</span>
+               <span className="text-slate-300 shrink-0">/</span>
+               <span className="text-[#0A1140] font-black truncate">my account</span>
             </div>
           </div>
         </div>
 
         <div className="flex-1 flex justify-center py-4">
-          <div className="w-full max-w-[1240px] flex flex-col md:flex-row gap-[40px] px-4 md:px-6 lg:px-0 items-start">
+          <div className="w-full max-w-[1240px] flex flex-col lg:flex-row gap-6 lg:gap-[40px] px-4 md:px-6 xl:px-0 items-start">
             <DashboardSidebar />
-            <main className="flex-1 w-full min-w-0 pb-[100px]">
+            <main className="flex-1 w-full min-w-0 pb-[60px] sm:pb-[100px]">
               <React.Suspense fallback={<div className="bg-[#F8F9FA] min-h-screen animate-pulse" />}>
                 {children}
               </React.Suspense>

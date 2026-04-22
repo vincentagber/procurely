@@ -47,11 +47,11 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
   const wishlistCount = wishlist?.items.length ?? 0;
 
   return (
-    <header className="w-full h-[179px] sticky top-0 z-[60] shadow-sm">
+    <header className="w-full h-auto lg:h-[179px] sticky top-0 z-[60] shadow-sm bg-white">
       {/* Top Bar - Dark Blue (38px) */}
-      <div className="bg-[#000099] text-white overflow-hidden">
+      <div className="bg-[#000099] text-white">
         <div className="container-shell mx-auto flex h-[38px] items-center justify-between px-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <InstagramIcon className="size-3.5 opacity-90 transition hover:opacity-100" />
             <FacebookIcon className="size-3.5 opacity-90 transition hover:opacity-100" />
             <YoutubeIcon />
@@ -59,8 +59,8 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
             <PinterestIcon />
             <TikTokIcon />
           </div>
-          <div className="flex items-center gap-2.5 text-[12px] font-medium tracking-tight">
-            <UserRound className="size-4" strokeWidth={1.5} />
+          <div className="flex items-center justify-end gap-2.5 text-[11px] sm:text-[12px] font-medium tracking-tight">
+            <UserRound className="size-3.5 sm:size-4" strokeWidth={1.5} />
             {mounted && user ? (
               <Link href="/account" className="hover:text-white/80">Account: {user.fullName.split(' ')[0]}</Link>
             ) : (
@@ -71,11 +71,11 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
       </div>
 
       {/* Middle Bar - light silver (81px) */}
-      <div className="bg-[#E7E8EE] h-[81px] flex items-center border-b border-white/40">
-        <div className="container-shell mx-auto flex items-center justify-between px-4 w-full">
+      <div className="bg-[#E7E8EE] h-[70px] lg:h-[81px] flex items-center border-b border-white/40">
+        <div className="container-shell mx-auto flex items-center justify-between px-4 w-full gap-4">
           <Link href="/" className="shrink-0 flex items-center">
-            <h2 className="text-[26px] font-black text-[#0B1457] tracking-tighter">
-              Procurely<span className="text-[12px] align-super ml-0.5">™</span>
+            <h2 className="text-[20px] lg:text-[26px] font-black text-[#0B1457] tracking-tighter">
+              Procurely<span className="text-[10px] lg:text-[12px] align-super ml-0.5">™</span>
             </h2>
           </Link>
 
@@ -105,35 +105,35 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
             </button>
           </form>
 
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-3 sm:gap-6 lg:gap-8">
             <Link href="/wishlist" className="relative p-1 text-[#0B1457] transition hover:scale-105">
-              <Heart className="size-[28px]" strokeWidth={2} />
+              <Heart className="size-5 sm:size-[28px]" strokeWidth={2} />
               {mounted && wishlistCount > 0 && (
-                <span className="absolute -right-2 -top-1 flex size-[18px] items-center justify-center rounded-full bg-[#FF4242] text-[10px] font-bold text-white">
+                <span className="absolute -right-1 -top-0.5 flex size-4 sm:size-[18px] items-center justify-center rounded-full bg-[#FF4242] text-[9px] sm:text-[10px] font-bold text-white">
                   {wishlistCount}
                 </span>
               )}
             </Link>
-            <Link href="/account" className="p-1 text-[#0B1457] transition hover:scale-105">
-              <UserRound className="size-[28px]" strokeWidth={2} />
+            <Link href="/account" className="hidden sm:block p-1 text-[#0B1457] transition hover:scale-105">
+              <UserRound className="size-6 sm:size-[28px]" strokeWidth={2} />
             </Link>
             <button onClick={openCart} className="relative p-1 text-[#0B1457] transition hover:scale-105">
-              <ShoppingBag className="size-[28px]" strokeWidth={2} />
+              <ShoppingBag className="size-5 sm:size-[28px]" strokeWidth={2} />
               {mounted && cartCount > 0 && (
-                <span className="absolute -right-2 -top-1 flex size-[16px] items-center justify-center rounded-full bg-[#0001FF] text-[8px] font-bold text-white">
+                <span className="absolute -right-1 -top-0.5 flex size-3.5 sm:size-[16px] items-center justify-center rounded-full bg-[#0001FF] text-[8px] font-bold text-white">
                   {cartCount}
                 </span>
               )}
             </button>
-            <button className="lg:hidden" onClick={() => setMenuOpen(!menuOpen)}>
-              <Menu className="size-[28px] text-[#0B1457]" />
+            <button className="lg:hidden p-1" onClick={() => setMenuOpen(!menuOpen)}>
+              <Menu className="size-6 sm:size-[28px] text-[#0B1457]" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Bottom Bar - White (60px) */}
-      <div className="bg-white h-[60px] flex items-center">
+      <div className="bg-white h-[50px] lg:h-[60px] flex items-center border-b lg:border-none border-slate-100">
         <div className="container-shell mx-auto flex items-center justify-between px-4 w-full">
           <nav className="hidden lg:flex items-center gap-10">
             {navigation.primaryLinks.map((link) => {
@@ -155,7 +155,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
 
           <Link
             href="/contact-quote"
-            className="flex h-[42px] items-center justify-center rounded-[8px] bg-[#0001FF] px-8 text-[14px] font-bold text-white transition active:scale-[0.98] hover:bg-blue-800"
+            className="flex h-[38px] lg:h-[42px] w-full lg:w-auto items-center justify-center rounded-[6px] lg:rounded-[8px] bg-[#0001FF] px-4 lg:px-8 text-[12px] lg:text-[14px] font-bold text-white transition active:scale-[0.98] hover:bg-blue-800"
           >
             Submit BOQ / Contact
           </Link>
@@ -178,26 +178,38 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 right-0 top-0 z-drawer w-[280px] bg-white p-8 shadow-2xl lg:hidden"
+              className="fixed bottom-0 right-0 top-0 z-drawer w-[280px] bg-white p-8 shadow-2xl lg:hidden flex flex-col"
             >
-              <div className="flex items-center justify-between mb-10">
-                <p className="text-xl font-bold text-[#0A1140]">Menu</p>
+              <div className="flex items-center justify-between mb-8">
+                <p className="text-xl font-black text-[#0B1457] tracking-tight">Menu</p>
                 <button onClick={() => setMenuOpen(false)}>
-                  <X className="size-6 text-slate-400 hover:text-[#1D4ED8]" />
+                  <X className="size-6 text-slate-400 hover:text-[#0B1457]" />
                 </button>
               </div>
-              <nav className="flex flex-col gap-6 font-bold text-[#0A1140]">
+              
+              <nav className="flex flex-col gap-6 font-bold text-[#0A1140] overflow-y-auto pb-8">
                 {navigation.primaryLinks.map((link) => (
-                  <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)} className="hover:text-[#1D4ED8]">
+                  <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)} className="text-lg hover:text-[#0001FF]">
                     {link.label}
                   </Link>
                 ))}
-                <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col gap-6">
+                
+                <div className="mt-4 pt-6 border-t border-slate-100 flex flex-col gap-5">
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-400">Account</p>
                   {navigation.accountLinks.map((link) => (
-                    <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)}>
+                    <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)} className="hover:text-[#0001FF]">
                       {link.label}
                     </Link>
                   ))}
+                  <Link href="/wishlist" onClick={() => setMenuOpen(false)} className="hover:text-[#0001FF]">
+                    My Wishlist
+                  </Link>
+                </div>
+
+                <div className="mt-auto pt-10 flex items-center gap-4">
+                  <InstagramIcon className="size-5 text-slate-400" />
+                  <FacebookIcon className="size-5 text-slate-400" />
+                  <LinkedinIcon className="size-5 text-slate-400" />
                 </div>
               </nav>
             </motion.aside>

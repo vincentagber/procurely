@@ -29,40 +29,31 @@ export function HeroSection({ hero, features }: HeroSectionProps) {
 
   return (
     <section id="how-it-works" className="w-full bg-white">
-      <div className="relative isolate overflow-hidden mx-auto w-full max-w-[1440px] h-[433px] bg-[#0A1140]">
+      <div className="relative isolate overflow-hidden mx-auto w-full max-w-[1440px] h-[320px] sm:h-[380px] lg:h-[433px] bg-[#0A1140]">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${hero.backgroundImage})` }}
         />
 
-        <div className="absolute inset-0 w-full max-w-[1440px] mx-auto">
+        <div className="absolute inset-0 w-full max-w-[1440px] mx-auto bg-black/20 lg:bg-transparent">
           <Reveal
-            className="absolute top-1/2 -translate-y-1/2 left-5 xl:top-[103px] xl:translate-y-0 xl:left-[164px] w-[90%] max-w-[550px] xl:h-[228px] flex flex-col gap-[10px] z-10"
+            className="absolute top-1/2 -translate-y-1/2 left-5 lg:top-[103px] lg:translate-y-0 lg:left-[164px] w-[90%] max-w-[550px] flex flex-col gap-3 lg:gap-[10px] z-10"
             distance={44}
           >
             <h1 className="flex flex-col gap-0 uppercase text-white w-full font-display">
-              <span
-                className="block font-bold tracking-tight"
-                style={{ fontSize: '66.11px', lineHeight: '66.79px' }}
-              >
+              <span className="block font-bold tracking-tight text-[32px] sm:text-[48px] lg:text-[66.11px] leading-[1] lg:leading-[66.79px]">
                 {firstLine}
               </span>
-              <span
-                className="flex items-baseline gap-x-[15px] mt-[-4px]"
-                style={{ fontSize: '66.11px', lineHeight: '66.79px' }}
-              >
-                <span className="font-bold tracking-tight text-white whitespace-nowrap">
+              <span className="flex flex-wrap items-baseline gap-x-3 lg:gap-x-[15px] mt-0 lg:mt-[-4px]">
+                <span className="font-bold tracking-tight text-white whitespace-nowrap text-[32px] sm:text-[48px] lg:text-[66.11px] leading-[1] lg:leading-[66.79px]">
                   DEVELOPERS.
                 </span>
-                <span
-                  className="font-normal tracking-tight text-white/95 whitespace-nowrap"
-                  style={{ fontSize: '50px', lineHeight: '66.79px', fontWeight: 400 }}
-                >
+                <span className="font-normal tracking-tight text-white/95 text-[24px] sm:text-[36px] lg:text-[50px] leading-[1] lg:leading-[66.79px] font-normal">
                   {trailingLine}
                 </span>
               </span>
             </h1>
-            <p className="max-w-[480px] text-[13px] leading-[1.6] text-white opacity-90 font-medium whitespace-pre-line">
+            <p className="max-w-[480px] text-[11px] sm:text-[13px] leading-[1.6] text-white opacity-90 font-medium whitespace-pre-line line-clamp-3 sm:line-clamp-none">
               {hero.description}
             </p>
             <motion.div
@@ -72,10 +63,10 @@ export function HeroSection({ hero, features }: HeroSectionProps) {
               whileTap={{ scale: 0.985 }}
             >
               <Link
-                className="inline-flex h-[44px] items-center gap-[10px] rounded-[5px] bg-[#03001C] px-[#24px] text-[15px] font-bold text-white shadow-lg transition-interactive hover:bg-slate-900 pr-7 pl-6"
+                className="inline-flex h-[38px] sm:h-[44px] items-center gap-[8px] lg:gap-[10px] rounded-[5px] bg-[#03001C] px-4 sm:px-[24px] text-[13px] sm:text-[15px] font-bold text-white shadow-lg transition-interactive hover:bg-slate-900"
                 href={hero.ctaHref}
               >
-                <ArrowUpRight className="size-[18px] text-[#FFB6A0]" strokeWidth={2.5} />
+                <ArrowUpRight className="size-4 lg:size-[18px] text-[#FFB6A0]" strokeWidth={2.5} />
                 {hero.ctaLabel}
               </Link>
             </motion.div>

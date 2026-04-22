@@ -114,30 +114,31 @@ export default function AccountDashboardClient() {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6 sm:space-y-10">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 mt-2 pb-6 border-b border-slate-200">
-        <div 
-          className="flex flex-col w-full"
-          style={{ maxWidth: '886px', minHeight: '76.10px', gap: '8px' }}
-        >
-          <h1 className="text-4xl font-extrabold text-[#0001FF] tracking-tight m-0 leading-none">Hello {user?.roles?.includes('admin') ? 'Admin' : (user?.fullName?.split(' ')[0] || 'Admin')}!</h1>
-          <p className="text-[14px] font-medium text-slate-400 m-0 leading-tight">Welcome back, lets manage your procurement.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 sm:mb-8 mt-2 pb-6 border-b border-slate-200 gap-6">
+        <div className="flex flex-col w-full max-w-3xl">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-[#0001FF] tracking-tight m-0 leading-tight">
+            Hello {user?.roles?.includes('admin') ? 'Admin' : (user?.fullName?.split(' ')[0] || 'Admin')}!
+          </h1>
+          <p className="text-[13px] sm:text-[14px] font-medium text-slate-400 mt-2 leading-tight">
+            Welcome back, let's manage your procurement.
+          </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <NotificationDropdown />
-          <button className="w-12 h-12 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-sm group hover:bg-slate-50 hover:shadow-md transition-all">
-            <Settings size={20} />
+          <button className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-sm group hover:bg-slate-50 hover:shadow-md transition-all">
+            <Settings size={18} />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_229.97px] gap-[40px]">
+      <div className="grid grid-cols-1 lg:grid-cols-1 xl:grid-cols-[1fr_229.97px] gap-8 xl:gap-[40px]">
         {/* Main Content (Left) */}
         <div className="space-y-[18px] min-w-0">
           
           {/* Top Stat Cards Row */}
-          <div className="flex flex-col sm:flex-row gap-[10.11px] w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-[10.11px] w-full">
             {/* Stat Card 1 */}
             <Link href="/account/profile-order" className="flex-1 h-[84px] bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center justify-between overflow-hidden hover:bg-slate-50 transition-colors">
                <div>

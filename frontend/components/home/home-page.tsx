@@ -53,10 +53,10 @@ export function HomePage({
         topActionLabel={content.bestSellerSection.linkLabel}
         style={{
           backgroundColor: '#F9FAFB',
-          marginTop: '100px',
           paddingTop: '60px',
           paddingBottom: '60px'
         }}
+        className="mt-[40px] md:mt-[100px]"
       />
       
       <PromoBanner 

@@ -43,33 +43,33 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
         whileHover="hover"
       >
-        <div className="relative rounded-[16px] bg-[#f8f9fa] h-[260px] flex items-center justify-center transition-all duration-300 group-hover:bg-[#f1f3f6] overflow-hidden">
+        <div className="relative rounded-[12px] sm:rounded-[16px] bg-[#f8f9fa] h-[180px] sm:h-[260px] flex items-center justify-center transition-all duration-300 group-hover:bg-[#f1f3f6] overflow-hidden">
           {product.badge ? (
-            <span className="absolute left-4 top-4 z-20 inline-flex h-[22px] items-center rounded-full bg-[#1D4ED8] px-2.5 text-[11px] font-bold lowercase tracking-wider text-white">
+            <span className="absolute left-2 sm:left-4 top-2 sm:top-4 z-20 inline-flex h-[18px] sm:h-[22px] items-center rounded-full bg-[#1D4ED8] px-2 sm:px-2.5 text-[9px] sm:text-[11px] font-bold lowercase tracking-wider text-white">
               {product.badge}
             </span>
           ) : null}
           
           {/* Floating Actions Stack */}
-          <div className="absolute right-3 top-3 z-30 flex flex-col gap-2">
+          <div className="absolute right-2 sm:right-3 top-2 sm:top-3 z-30 flex flex-col gap-1.5 sm:gap-2">
             <button 
               type="button"
               onClick={toggleWishlist}
               disabled={mounted ? wishlistLoading : false}
-              className={`flex size-[38px] cursor-pointer items-center justify-center rounded-full border shadow-sm transition-all hover:scale-110 disabled:opacity-50 ${
+              className={`flex size-8 sm:size-[38px] cursor-pointer items-center justify-center rounded-full border shadow-sm transition-all hover:scale-110 disabled:opacity-50 ${
                 isFavorited 
                   ? "border-[#ff6f4d] bg-[#ff6f4d] text-white" 
                   : "border-[#ff6f4d]/10 bg-[#fff5f2] text-[#ff6f4d] hover:bg-[#ff6f4d] hover:text-white"
               }`}
             >
-              <Heart size={18} fill={isFavorited ? "currentColor" : "none"} strokeWidth={2.5} />
+              <Heart size={14} className="sm:w-[18px] sm:h-[18px]" fill={isFavorited ? "currentColor" : "none"} strokeWidth={2.5} />
             </button>
 
             <Link 
               href={`/products/${product.id}`}
-              className="flex size-[38px] items-center justify-center rounded-full border border-[#ff6f4d]/10 bg-[#fff5f2] text-[#ff6f4d] shadow-sm transition-all hover:scale-110 hover:bg-[#ff6f4d] hover:text-white"
+              className="flex size-8 sm:size-[38px] items-center justify-center rounded-full border border-[#ff6f4d]/10 bg-[#fff5f2] text-[#ff6f4d] shadow-sm transition-all hover:scale-110 hover:bg-[#ff6f4d] hover:text-white"
             >
-              <Eye size={18} strokeWidth={2.5} />
+              <Eye size={14} className="sm:w-[18px] sm:h-[18px]" strokeWidth={2.5} />
             </Link>
           </div>
 

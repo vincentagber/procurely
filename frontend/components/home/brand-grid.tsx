@@ -11,22 +11,11 @@ type BrandGridProps = {
 
 export function BrandGrid({ brands }: BrandGridProps) {
   return (
-    <section 
-      className="mx-auto w-full max-w-[1113px] px-4 pt-[35px]"
-      style={{ height: '255.91px' }}
-    >
+    <section className="mx-auto w-full max-w-[1113px] px-4 pt-[35px] pb-10">
       <div className="flex flex-col gap-[20px]">
         <Reveal>
           <div 
-            className="flex items-center"
-            style={{
-              height: '49.91px',
-              paddingTop: '10px',
-              paddingRight: '9.91px',
-              paddingBottom: '9.91px',
-              paddingLeft: '9.91px',
-              gap: '9.91px',
-            }}
+            className="flex items-center min-h-[50px] py-2 px-[10px] gap-[10px]"
           >
             <h2 
               className="font-display m-0 p-0 text-[#98A2B3] whitespace-nowrap"

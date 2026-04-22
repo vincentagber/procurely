@@ -96,22 +96,13 @@ export default function OrderHistoryClient() {
                      </h1>
 
                      {/* Order Summary Box */}
-                     <div 
-                        className="bg-white shadow-sm border border-slate-100 flex flex-col"
-                        style={{ 
-                          maxWidth: '669px', 
-                          minHeight: '225.57px', 
-                          borderRadius: '8.84px', 
-                          padding: '17.68px',
-                          gap: '8.84px'
-                        }}
-                     >
-                        <div className="flex items-center justify-between mb-2">
+                     <div className="bg-white shadow-sm border border-slate-100 flex flex-col rounded-[10px] p-5 sm:p-6 gap-4 w-full">
+                        <div className="flex items-center justify-between">
                            <h3 className="text-[14px] font-bold text-[#0A1140]">Order Summary</h3>
                         </div>
-                        <div className="border-t border-slate-100 mb-3 -mx-[17.68px]"></div>
+                        <div className="border-t border-slate-100 -mx-6"></div>
                         
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-[11px] mb-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                            <SummaryStat icon={<ShoppingBag size={18} />} color="text-[#FF5C00]" value="256" label="Total Orders" sub="orders" />
                            <SummaryStat icon={<FileText size={18} />} color="text-[#FF5C00]" value="24" label="Active Orders" sub="ongoing" />
                            <SummaryStat icon={<CheckCircle2 size={18} />} color="text-[#FF5C00]" value="187" label="Completed Orders" sub="delivered" />
@@ -119,19 +110,11 @@ export default function OrderHistoryClient() {
                         </div>
 
                         {/* Wallet Banner Inside - Optimized Compact Theme */}
-                        <div 
-                           className="bg-[#F0F2FF] rounded-[8.84px] flex items-center gap-[10px] shadow-sm mt-auto mx-auto"
-                           style={{ 
-                             width: '633.64px',
-                             height: '44px', 
-                             padding: '0 16px',
-                             border: '1px solid #E0E4FF'
-                           }}
-                        >
+                        <div className="bg-[#F0F2FF] rounded-[10px] flex items-center gap-3 shadow-sm mt-2 p-3 sm:p-4 border border-[#E0E4FF] w-full">
                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
                               <Wallet size={16} className="text-white" />
                            </div>
-                           <p className="text-[12px] font-bold text-[#0A1140] leading-none flex items-center gap-2">
+                           <p className="text-[12px] font-bold text-[#0A1140] leading-snug flex flex-wrap items-center gap-x-2">
                               Your wallet balance can be used to pay for orders...
                               <Link href="/account/wallet" className="font-black text-[#0001FF] hover:underline whitespace-nowrap">Learn more</Link>
                            </p>
@@ -352,15 +335,7 @@ export default function OrderHistoryClient() {
 function SummaryStat({ icon, color, value, label, sub }: any) {
    return (
       <div 
-         className={`flex flex-col border border-slate-50 transition-all hover:shadow-sm`}
-         style={{
-            width: '150.66px',
-            height: '72.71px',
-            borderRadius: '5.58px',
-            padding: '9.3px',
-            gap: '9.3px',
-            background: '#E6E6FF80'
-         }}
+         className={`flex flex-col border border-slate-50 transition-all hover:shadow-sm rounded-[6px] p-3 gap-2 bg-[#E6E6FF80] flex-1 min-w-[140px]`}
       >
          <div className="flex items-center gap-2">
             <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white shadow-sm ${color}`}>
@@ -373,9 +348,8 @@ function SummaryStat({ icon, color, value, label, sub }: any) {
          </div>
          <div className="flex items-baseline gap-1.5 mt-auto">
             <span 
-               className="font-black text-[#0A1140] leading-none shrink-0"
+               className="font-black text-[#0A1140] leading-none shrink-0 text-xl sm:text-2xl"
                style={{ 
-                 fontSize: '23.25px', 
                  fontFamily: "'Circular Std', 'Inter', system-ui, sans-serif" 
                }}
             >
