@@ -54,10 +54,35 @@ export const getProcurelyContent = async (): Promise<SiteContent> => {
     } catch (fallbackErr) {
       console.error("[getProcurelyContent] Critical: Both API and local fallback failed.", fallbackErr);
       return {
-        site: { name: "Procurely", tagline: "Infrastructure Made Simple", primaryColor: "#1D4ED8", logoDark: "", logoLight: "" },
-        navigation: { primaryLinks: [], socialLinks: [], accountLinks: [] },
+        site: { 
+          name: "Procurely", 
+          tagline: "Infrastructure Made Simple", 
+          primaryColor: "#1900ff", 
+          logoDark: "/assets/design/logo-dark.png", 
+          logoLight: "/assets/design/logo-light.png" 
+        },
+        navigation: { 
+          primaryLinks: [
+            { label: "Home", href: "/" },
+            { label: "Materials", href: "/materials" }
+          ], 
+          socialLinks: [], 
+          accountLinks: [] 
+        },
         footer: { address: [], accountLinks: [], quickLinks: [] },
+        hero: { title: "PROCUREMENT DONE RIGHT", description: "", ctaLabel: "Shop", ctaHref: "/materials", backgroundImage: "" },
+        features: [],
+        categoriesSection: { eyebrowLead: "", eyebrowAccent: "", linkLabel: "", items: [] },
+        brands: [],
+        bestSellerSection: { monthLabel: "", eyebrowLead: "", eyebrowAccent: "", linkLabel: "", productIds: [] },
+        exploreSection: { monthLabel: "", eyebrowLead: "", eyebrowAccent: "", ctaLabel: "", productIds: [] },
         products: [],
+        promotions: { 
+          financing: { title: "", description: "", ctaLabel: "", href: "" },
+          renovation: { title: "", description: "", ctaLabel: "", href: "" }
+        },
+        faqs: [],
+        testimonials: { title: "", items: [] }
       } as any;
     }
   }

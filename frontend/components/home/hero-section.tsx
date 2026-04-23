@@ -21,8 +21,8 @@ const iconMap: Record<string, string> = {
 
 const heroShellClassName =
   "mx-auto w-full max-w-[1440px] px-5 sm:px-6 lg:px-8 xl:px-10";
-export function HeroSection({ hero, features }: HeroSectionProps) {
-  const normalizedTitle = hero.title.toUpperCase();
+export function HeroSection({ hero, features = [] }: HeroSectionProps) {
+  const normalizedTitle = (hero?.title || "").toUpperCase();
   const titleSegments = normalizedTitle.split("DEVELOPERS.");
   const firstLine = titleSegments.length > 1 ? titleSegments[0].trim() : normalizedTitle;
   const trailingLine = titleSegments.length > 1 ? titleSegments[1].trim() : "";
@@ -32,7 +32,7 @@ export function HeroSection({ hero, features }: HeroSectionProps) {
       <div className="relative isolate overflow-hidden mx-auto w-full max-w-[1440px] h-[320px] sm:h-[380px] lg:h-[433px] bg-[#0A1140]">
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${hero.backgroundImage})` }}
+          style={{ backgroundImage: `url(${hero?.backgroundImage || ""})` }}
         />
 
         <div className="absolute inset-0 w-full max-w-[1440px] mx-auto bg-black/20 lg:bg-transparent">
@@ -54,7 +54,7 @@ export function HeroSection({ hero, features }: HeroSectionProps) {
               </span>
             </h1>
             <p className="max-w-[480px] text-[11px] sm:text-[13px] leading-[1.6] text-white opacity-90 font-medium whitespace-pre-line line-clamp-3 sm:line-clamp-none">
-              {hero.description}
+              {hero?.description || ""}
             </p>
             <motion.div
               className="inline-flex"
@@ -64,10 +64,10 @@ export function HeroSection({ hero, features }: HeroSectionProps) {
             >
               <Link
                 className="inline-flex h-[38px] sm:h-[44px] items-center gap-[8px] lg:gap-[10px] rounded-[5px] bg-[#03001C] px-4 sm:px-[24px] text-[13px] sm:text-[15px] font-bold text-white shadow-lg transition-interactive hover:bg-slate-900"
-                href={hero.ctaHref}
+                href={hero?.ctaHref || "/materials"}
               >
                 <ArrowUpRight className="size-4 lg:size-[18px] text-[#FFB6A0]" strokeWidth={2.5} />
-                {hero.ctaLabel}
+                {hero?.ctaLabel || "Shop"}
               </Link>
             </motion.div>
           </Reveal>

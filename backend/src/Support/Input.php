@@ -166,10 +166,10 @@ final class Input
 
         if ($singleLine) {
             $normalized = preg_replace('/\s+/u', ' ', $normalized) ?? $normalized;
+            return Sanitizer::strict($normalized);
         } else {
             $normalized = preg_replace("/\r\n?/", "\n", $normalized) ?? $normalized;
+            return htmlspecialchars(trim($normalized), ENT_QUOTES, 'UTF-8');
         }
-
-        return trim($normalized);
     }
 }

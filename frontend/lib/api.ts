@@ -6,8 +6,9 @@ import type {
   Order,
 } from "@/lib/types";
 
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+const rawBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+// Normalize: Remove trailing slash to avoid double-slash when concatenated with paths
+const apiBaseUrl = rawBaseUrl.replace(/\/$/, "");
 
 if (
   typeof process !== "undefined" &&
@@ -39,7 +40,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
 
   try {
-    response = await fetch(`${apiBaseUrl}${path}`, {
+    const url = `${apiBaseUrl}${path}`;
+    response = await fetch(url, {
       ...init,
       headers,
       credentials: "include", // Required for Cookie-based Auth
@@ -50,8 +52,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       throw new Error("The request timed out. Please try again.");
     }
 
-    console.error(`[Procurely API] Fetch failed to ${path}:`, error);
-    throw new Error("Unable to reach the Procurely API. Ensure the backend is running and CORS is allowed.");
+    console.error(`[Procurely API] Fetch failed to ${apiBaseUrl}${path}:`, error);
+    throw new Error(`Unable to reach the Procurely API at ${apiBaseUrl}. Ensure the backend is running and CORS is allowed.`);
   }
 
   const contentType = response.headers.get("content-type") ?? "";
@@ -60,10 +62,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     : null;
 
   if (!response.ok || !payload || "error" in payload) {
+    console.warn(`[Procurely API] Request to ${path} failed with status ${response.status}:`, payload);
+    
     const message =
       payload && "error" in payload
         ? payload.error.message
-        : "Unable to complete the request.";
+        : `Request failed with status ${response.status}.`;
     throw new Error(message);
   }
 
@@ -148,6 +152,12 @@ export const api = {
   },
   getCart(cartToken: string) {
     return request<Cart>(`/api/cart/${cartToken}`);
+  },
+  mergeCart(payload: { sourceToken: string; destinationToken: string }) {
+    return request<Cart>("/api/cart/merge", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
   },
   addCartItem(payload: {
     cartToken: string;

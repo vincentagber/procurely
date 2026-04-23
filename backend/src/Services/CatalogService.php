@@ -25,7 +25,10 @@ final class CatalogService
     {
         $pdo = $this->database->connection();
 
-        $sql = 'SELECT * FROM products WHERE 1=1';
+        $sql = 'SELECT p.*, COALESCE(i.stock_level, 0) as stock_level 
+                FROM products p 
+                LEFT JOIN inventory i ON p.id = i.product_id 
+                WHERE 1=1';
         $params = [];
 
         $slot = Input::string($filters['slot'] ?? '');

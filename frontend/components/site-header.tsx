@@ -136,7 +136,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
       <div className="bg-white h-[50px] lg:h-[60px] flex items-center border-b lg:border-none border-slate-100">
         <div className="container-shell mx-auto flex items-center justify-between px-4 w-full">
           <nav className="hidden lg:flex items-center gap-10">
-            {navigation.primaryLinks.map((link) => {
+            {(navigation?.primaryLinks || []).map((link) => {
               const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
               return (
                 <Link
@@ -154,10 +154,10 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
           </nav>
 
           <Link
-            href="/contact-quote"
+            href={navigation?.submitCta?.href || "/contact-quote"}
             className="flex h-[38px] lg:h-[42px] w-full lg:w-auto items-center justify-center rounded-[6px] lg:rounded-[8px] bg-[#0001FF] px-4 lg:px-8 text-[12px] lg:text-[14px] font-bold text-white transition active:scale-[0.98] hover:bg-blue-800"
           >
-            Submit BOQ / Contact
+            {navigation?.submitCta?.label || "Submit BOQ / Contact"}
           </Link>
         </div>
       </div>
@@ -188,7 +188,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
               </div>
               
               <nav className="flex flex-col gap-6 font-bold text-[#0A1140] overflow-y-auto pb-8">
-                {navigation.primaryLinks.map((link) => (
+                {(navigation?.primaryLinks || []).map((link) => (
                   <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)} className="text-lg hover:text-[#0001FF]">
                     {link.label}
                   </Link>
@@ -196,7 +196,7 @@ export function SiteHeader({ navigation, site }: SiteHeaderProps) {
                 
                 <div className="mt-4 pt-6 border-t border-slate-100 flex flex-col gap-5">
                   <p className="text-xs font-black uppercase tracking-widest text-slate-400">Account</p>
-                  {navigation.accountLinks.map((link) => (
+                  {(navigation?.accountLinks || []).map((link) => (
                     <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)} className="hover:text-[#0001FF]">
                       {link.label}
                     </Link>

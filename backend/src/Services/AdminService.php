@@ -104,9 +104,21 @@ final class AdminService
 
     // ─── Product Management ───────────────────────────────────────────────────
 
-    public function listProducts(): array
+    public function listProducts(int $limit = 50, int $offset = 0): array
     {
-        return $this->contentStore->products();
+        $pdo = $this->database->connection();
+        $stmt = $pdo->prepare('
+            SELECT p.*, COALESCE(i.stock_level, 0) as stock_level 
+            FROM products p 
+            LEFT JOIN inventory i ON p.id = i.product_id 
+            ORDER BY p.name ASC 
+            LIMIT :limit OFFSET :offset
+        ');
+        $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        return array_map([$this->contentStore, 'normalizeProduct'], $stmt->fetchAll());
     }
 
     public function saveProduct(array $payload): array

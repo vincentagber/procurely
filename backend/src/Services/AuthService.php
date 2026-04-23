@@ -144,6 +144,63 @@ final class AuthService
         ];
     }
 
+    public function resetPassword(array $payload): array
+    {
+        $token = (string) ($payload['token'] ?? '');
+        $password = (string) ($payload['password'] ?? '');
+
+        if ($token === '') {
+            throw new ApiException('Reset token is required.', 422);
+        }
+
+        if (mb_strlen($password) < 8) {
+            throw new ApiException('Password must be at least 8 characters.', 422);
+        }
+
+        $pdo = $this->database->connection();
+        $tokenHash = hash('sha256', $token);
+        $now = (new DateTimeImmutable())->format('Y-m-d H:i:s');
+
+        $stmt = $pdo->prepare('
+            SELECT user_id FROM password_reset_requests 
+            WHERE token_hash = :token_hash AND expires_at > :now 
+            LIMIT 1
+        ');
+        $stmt->execute(['token_hash' => $tokenHash, 'now' => $now]);
+        $request = $stmt->fetch();
+
+        if ($request === false) {
+            throw new ApiException('Invalid or expired reset token.', 422);
+        }
+
+        $userId = (int) $request['user_id'];
+        $passwordHash = password_hash($password, PASSWORD_ARGON2ID, [
+            'memory_cost' => 65536,
+            'time_cost' => 4,
+            'threads' => 3
+        ]);
+
+        $pdo->beginTransaction();
+        try {
+            $update = $pdo->prepare('UPDATE users SET password_hash = :hash, updated_at = :now WHERE id = :id');
+            $update->execute(['hash' => $passwordHash, 'now' => $now, 'id' => $userId]);
+
+            $cleanup = $pdo->prepare('DELETE FROM password_reset_requests WHERE user_id = :id');
+            $cleanup->execute(['id' => $userId]);
+
+            // Revoke all active sessions for security
+            $revoke = $pdo->prepare('DELETE FROM user_sessions WHERE user_id = :id');
+            $revoke->execute(['id' => $userId]);
+
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+
+        return ['message' => 'Password has been reset successfully.'];
+    }
+
     public function forgotPassword(array $payload): array
     {
         $email = Input::email($payload, 'email', 'email address');

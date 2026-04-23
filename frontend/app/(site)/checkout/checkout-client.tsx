@@ -4,7 +4,7 @@ import { useCart } from "@/components/cart/cart-provider";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { persistOrderRef } from "@/lib/api";
+import { persistOrderRef, api } from "@/lib/api";
 
 export function CheckoutPageClient() {
   const { cart, checkout, clearCart, loading } = useCart();
@@ -79,11 +79,25 @@ export function CheckoutPageClient() {
         amount: order.total * 100, // Paystack expects amount in kobo/cents
         currency: isNgn ? 'NGN' : 'USD',
         ref: order.orderNumber,
-        callback: function(response: any) {
-          // 4. Payment successful, redirect to confirmation
-          persistOrderRef(order.orderNumber, cartTokenSnap);
-          clearCart();
-          router.push("/order-confirmation");
+        callback: async function(response: any) {
+          // 4. Payment successful, verify on backend first
+          try {
+            const verification = await api.confirmPaymentIntent(response.reference);
+            if (verification.success) {
+              persistOrderRef(order.orderNumber, cartTokenSnap);
+              clearCart();
+              router.push("/order-confirmation");
+            } else {
+              alert("Payment verification failed. Please contact support if your account was debited.");
+              setIsProcessing(false);
+            }
+          } catch (vErr) {
+             console.error("Verification error:", vErr);
+             // Fallback to optimistic redirect if verification API is down but we have a success ref
+             persistOrderRef(order.orderNumber, cartTokenSnap);
+             clearCart();
+             router.push("/order-confirmation");
+          }
         },
         onClose: function() {
           setIsProcessing(false);

@@ -164,6 +164,7 @@ final class ContentStore
             'homepageSlot' => $row['homepage_slot'],
             'createdAt' => $row['created_at'],
             'updatedAt' => $row['updated_at'],
+            'stockLevel' => (int) ($row['stock_level'] ?? 0),
         ];
     }
 

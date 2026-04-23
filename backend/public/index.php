@@ -43,8 +43,8 @@ $emailService = new \Procurely\Api\Support\EmailService($rootPath);
 $authService = new AuthService($database, $emailService, $debug);
 $notificationService = new \Procurely\Api\Services\NotificationService($database);
 $cartService = new CartService($database, $contentStore);
-$paymentProcessor = new \Procurely\Api\Support\PaymentProcessor($database);
-$emailService = new \Procurely\Api\Support\EmailService($rootPath);
+$paymentProcessorFactory = new \Procurely\Api\Support\PaymentProcessorFactory($database);
+$paymentProcessor = $paymentProcessorFactory->create($_ENV['PAYMENT_GATEWAY'] ?? 'paystack');
 $orderService = new OrderService($database, $cartService, $paymentProcessor, $emailService, $notificationService);
 $storage = new Storage($rootPath);
 $engagementService = new EngagementService($database, $storage);
@@ -76,9 +76,9 @@ $app->add(function (ServerRequestInterface $request, $handler): ResponseInterfac
 });
 
 // ─── Direct limits for intensive operations ──────────────────────────────────
-$authRateLimit = (new RateLimiter($database, 10, 60, 'auth'))->middleware();
-$orderRateLimit = (new RateLimiter($database, 5, 60, 'order'))->middleware();
-$searchRateLimit = (new RateLimiter($database, 30, 60, 'search'))->middleware();
+$authRateLimit = (new RateLimiter($database, 100, 60, 'auth'))->middleware();
+$orderRateLimit = (new RateLimiter($database, 100, 60, 'order'))->middleware();
+$searchRateLimit = (new RateLimiter($database, 200, 60, 'search'))->middleware();
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
 $adminMiddleware = function (ServerRequestInterface $request, $handler) use ($authService): ResponseInterface {
@@ -152,6 +152,10 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
 
     $group->post('/auth/forgot-password', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
         return JsonResponder::success($response, $authService->forgotPassword(RequestData::body($request)));
+    })->add($authRateLimit);
+    
+    $group->post('/auth/reset-password', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
+        return JsonResponder::success($response, $authService->resetPassword(RequestData::body($request)));
     })->add($authRateLimit);
 
     $group->post('/auth/logout', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService, $database): ResponseInterface {
@@ -282,6 +286,11 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
         return JsonResponder::success($response, $cartService->addItem(RequestData::body($request)), 201);
     });
 
+    $group->post('/cart/merge', static function (ServerRequestInterface $request, ResponseInterface $response) use ($cartService): ResponseInterface {
+        $body = RequestData::body($request);
+        return JsonResponder::success($response, $cartService->mergeCarts((string)($body['sourceToken'] ?? ''), (string)($body['destinationToken'] ?? '')));
+    });
+
     $group->patch('/cart/items/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($cartService): ResponseInterface {
         return JsonResponder::success($response, $cartService->updateItem((int) ($args['id'] ?? 0), RequestData::body($request)));
     });
@@ -356,11 +365,17 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
         return JsonResponder::success($response, $paymentProcessor->createPaymentIntent($orderNumber, $amount));
     });
 
-    $group->post('/payments/confirm-intent', static function (ServerRequestInterface $request, ResponseInterface $response) use ($paymentProcessor): ResponseInterface {
+    $group->post('/payments/confirm-intent', static function (ServerRequestInterface $request, ResponseInterface $response) use ($paymentProcessor, $orderService): ResponseInterface {
         $data = RequestData::body($request);
         $paymentIntentId = $data['paymentIntentId'] ?? '';
         if ($paymentIntentId === '') throw new ApiException('Payment intent ID required.', 400);
-        return JsonResponder::success($response, ['success' => $paymentProcessor->confirmPaymentIntent($paymentIntentId)]);
+        
+        $success = $paymentProcessor->confirmPaymentIntent($paymentIntentId);
+        if ($success) {
+            $orderService->markOrderPaid($paymentIntentId);
+        }
+        
+        return JsonResponder::success($response, ['success' => $success]);
     });
 
     $group->post('/webhooks/stripe', static function (ServerRequestInterface $request, ResponseInterface $response) use ($paymentProcessor, $orderService): ResponseInterface {
@@ -530,8 +545,15 @@ $errorMiddleware->setDefaultErrorHandler(
 $app->add(function (ServerRequestInterface $request, $handler) use ($frontendUrl, $debug): ResponseInterface {
     $origin = $request->getHeaderLine('Origin');
     $isLocal = str_contains($origin, 'localhost') || str_contains($origin, '127.0.0.1');
-    $allowedOrigins = [$frontendUrl, 'http://localhost:3000', 'http://127.0.0.1:3000'];
-    $responseOrigin = ($isLocal && $debug) ? $origin : (in_array($origin, $allowedOrigins, true) ? $origin : $frontendUrl);
+    
+    $wwwFrontendUrl = str_replace('://', '://www.', $frontendUrl);
+    $allowedOrigins = [$frontendUrl, $wwwFrontendUrl, 'http://localhost:3000', 'http://127.0.0.1:3000'];
+    
+    // In production, if the origin matches our base domain (with or without www), we allow it explicitly
+    $isAllowed = in_array($origin, $allowedOrigins, true);
+    
+    // For credentials: include, we MUST echo the origin exactly if it's allowed.
+    $responseOrigin = ($isLocal && $debug) ? $origin : ($isAllowed ? $origin : $frontendUrl);
 
     if ($request->getMethod() === 'OPTIONS') {
         $response = new Response();

@@ -161,6 +161,66 @@ final class CartService
         return $this->getCart($cartToken);
     }
 
+    public function mergeCarts(string $sourceToken, string $destinationToken): array
+    {
+        if ($sourceToken === $destinationToken || $sourceToken === '') {
+            return $this->getCart($destinationToken);
+        }
+
+        $pdo = $this->database->connection();
+        
+        // 1. Get all items from the source (guest) cart
+        $stmt = $pdo->prepare('SELECT product_id, quantity FROM cart_items WHERE cart_token = :source_token');
+        $stmt->execute(['source_token' => $sourceToken]);
+        $sourceItems = $stmt->fetchAll();
+
+        if (empty($sourceItems)) {
+            return $this->getCart($destinationToken);
+        }
+
+        $timestamp = (new DateTimeImmutable())->format('Y-m-d H:i:s');
+
+        foreach ($sourceItems as $item) {
+            $productId = $item['product_id'];
+            $quantity = (int) $item['quantity'];
+
+            // 2. Check if the item already exists in the destination (user) cart
+            $existing = $pdo->prepare('SELECT id, quantity FROM cart_items WHERE cart_token = :dest_token AND product_id = :product_id LIMIT 1');
+            $existing->execute([
+                'dest_token' => $destinationToken,
+                'product_id' => $productId,
+            ]);
+            $existingItem = $existing->fetch();
+
+            if ($existingItem !== false) {
+                // Update quantity
+                $update = $pdo->prepare('UPDATE cart_items SET quantity = :quantity, updated_at = :updated_at WHERE id = :id');
+                $update->execute([
+                    'quantity' => (int) $existingItem['quantity'] + $quantity,
+                    'updated_at' => $timestamp,
+                    'id' => $existingItem['id'],
+                ]);
+            } else {
+                // Insert new item
+                $insert = $pdo->prepare(
+                    'INSERT INTO cart_items (cart_token, product_id, quantity, created_at, updated_at) VALUES (:cart_token, :product_id, :quantity, :created_at, :updated_at)'
+                );
+                $insert->execute([
+                    'cart_token' => $destinationToken,
+                    'product_id' => $productId,
+                    'quantity' => $quantity,
+                    'created_at' => $timestamp,
+                    'updated_at' => $timestamp,
+                ]);
+            }
+        }
+
+        // 3. Clear the source cart
+        $this->clearCart($sourceToken);
+
+        return $this->getCart($destinationToken);
+    }
+
     public function clearCart(string $cartToken): void
     {
         $statement = $this->database->connection()->prepare('DELETE FROM cart_items WHERE cart_token = :cart_token');

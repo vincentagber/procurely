@@ -421,13 +421,26 @@ final class OrderService
     public function markOrderPaid(string $orderNumber): void
     {
         $pdo = $this->database->connection();
-        $stmt = $pdo->prepare(
-            'UPDATE orders SET status = :status, paid_at = :paid_at WHERE order_number = :order_number'
-        );
-        $stmt->execute([
-            'status' => 'paid',
-            'paid_at' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
-            'order_number' => $orderNumber,
-        ]);
+        
+        $stmt = $pdo->prepare('SELECT status, paid_at, cart_token FROM orders WHERE order_number = :order_number LIMIT 1');
+        $stmt->execute(['order_number' => $orderNumber]);
+        $order = $stmt->fetch();
+
+        if ($order === false || $order['status'] === 'paid') {
+            return;
+        }
+
+        $this->database->transaction(function (PDO $pdo) use ($orderNumber, $order) {
+            $now = (new DateTimeImmutable())->format('Y-m-d H:i:s');
+            $update = $pdo->prepare('UPDATE orders SET status = "paid", paid_at = :paid_at WHERE order_number = :order_number');
+            $update->execute(['paid_at' => $now, 'order_number' => $orderNumber]);
+
+            if (!empty($order['cart_token'])) {
+                $this->cartService->clearCart((string) $order['cart_token']);
+            }
+
+            $orderData = $this->findByOrderNumber($orderNumber, '', '', true);
+            $this->emailService->sendOrderConfirmation($orderData);
+        });
     }
 }

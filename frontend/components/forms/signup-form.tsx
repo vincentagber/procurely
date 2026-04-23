@@ -27,6 +27,23 @@ export function SignupForm() {
           setMessage(null);
           const response = await api.register(form);
           window.localStorage.setItem("procurely-auth-token", response.token);
+          
+          // Architecture Sync: Merge guest cart into user cart if we have a token
+          const guestToken = window.sessionStorage.getItem("procurely-cart-token");
+          if (guestToken) {
+            try {
+              // We use the user's UUID as the persistent cart destination to link them
+              await api.mergeCart({
+                sourceToken: guestToken,
+                destinationToken: response.user.id
+              });
+              // Update session storage to use the persistent user-linked token
+              window.sessionStorage.setItem("procurely-cart-token", response.user.id);
+            } catch (mergeError) {
+              console.warn("Cart merge failed during signup, continuing anyway:", mergeError);
+            }
+          }
+
           await refreshUser();
           setMessage("Account created. Redirecting...");
           startTransition(() => {

@@ -34,33 +34,32 @@ final class RateLimiter
             $resetAt = $now + $this->windowSeconds;
 
             $pdo = $this->database->connection();
-            $pdo->beginTransaction();
+            $isMysql = ($_ENV['DB_DRIVER'] ?? 'sqlite') === 'mysql';
+            $sql = $isMysql 
+                ? "INSERT INTO rate_limits (`key`, hits, reset_at) 
+                   VALUES (:key, 1, :reset_at) 
+                   ON DUPLICATE KEY UPDATE hits = hits + 1"
+                : "INSERT INTO rate_limits (`key`, hits, reset_at) 
+                   VALUES (:key, 1, :reset_at) 
+                   ON CONFLICT(`key`) DO UPDATE SET hits = hits + 1";
+
             try {
-                // Stochastic cleanup: Only delete old records 10% of the time to reduce DB load.
-                if (random_int(1, 10) === 1) {
+                // Stochastic cleanup: Only delete old records 5% of the time to reduce DB load.
+                if (random_int(1, 20) === 1) {
                     $pdo->exec('DELETE FROM rate_limits WHERE reset_at < ' . $now);
                 }
 
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute(['key' => $key, 'reset_at' => $resetAt]);
+
+                // Fetch the updated count
                 $stmt = $pdo->prepare('SELECT hits, reset_at FROM rate_limits WHERE `key` = :key LIMIT 1');
                 $stmt->execute(['key' => $key]);
                 $row = $stmt->fetch();
-
-                if ($row === false) {
-                    $insert = $pdo->prepare('INSERT INTO rate_limits (`key`, hits, reset_at) VALUES (:key, 1, :reset_at)');
-                    $insert->execute(['key' => $key, 'reset_at' => $resetAt]);
-                    $hits = 1;
-                    $currentResetAt = $resetAt;
-                } else {
-                    $hits = (int) $row['hits'] + 1;
-                    $currentResetAt = (int) $row['reset_at'];
-                    $update = $pdo->prepare('UPDATE rate_limits SET hits = :hits WHERE `key` = :key');
-                    $update->execute(['hits' => $hits, 'key' => $key]);
-                }
-
-                $pdo->commit();
+                $hits = (int) $row['hits'];
+                $currentResetAt = (int) $row['reset_at'];
             } catch (\Throwable $e) {
-                $pdo->rollBack();
-                // Fail open to avoid blocking users if DB is struggling, but log in real app
+                // Fail open
                 return $handler->handle($request);
             }
 
@@ -95,17 +94,31 @@ final class RateLimiter
     private function resolveIp(ServerRequestInterface $request): string
     {
         $serverParams = $request->getServerParams();
-        $ip = (string) ($serverParams['REMOTE_ADDR'] ?? '0.0.0.0');
+        
+        // Priority list of headers for IP detection
+        $ipSources = [
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_CLIENT_IP',
+            'HTTP_X_REAL_IP',
+            'REMOTE_ADDR'
+        ];
 
-        // Check for common proxy headers (X-Forwarded-For)
-        // Note: In highly secure environments, you should only trust this if you know the proxy.
-        // For a general fix, we'll take the first IP in the list.
-        $forwardedFor = $request->getHeaderLine('X-Forwarded-For');
-        if ($forwardedFor !== '') {
-            $ips = array_map('trim', explode(',', $forwardedFor));
-            $ip = $ips[0] ?? $ip;
+        foreach ($ipSources as $source) {
+            $ip = (string) ($serverParams[$source] ?? '');
+            if ($ip !== '') {
+                // Handle comma-separated lists from proxies
+                $parts = explode(',', $ip);
+                return trim($parts[0]);
+            }
         }
 
-        return $ip;
+        // Check PSR-7 headers as fallback if server params don't have them
+        $forwardedFor = $request->getHeaderLine('X-Forwarded-For');
+        if ($forwardedFor !== '') {
+            $ips = explode(',', $forwardedFor);
+            return trim($ips[0]);
+        }
+
+        return (string) ($serverParams['REMOTE_ADDR'] ?? '0.0.0.0');
     }
 }

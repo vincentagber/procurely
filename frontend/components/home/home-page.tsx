@@ -25,8 +25,8 @@ export function HomePage({
       .map((id) => content.products.find((product) => product.id === id))
       .filter((product): product is Product => Boolean(product));
 
-  const bestSellers = resolveProducts(content.bestSellerSection.productIds);
-  const exploreProducts = resolveProducts(content.exploreSection.productIds);
+  const bestSellers = resolveProducts(content.bestSellerSection?.productIds || []);
+  const exploreProducts = resolveProducts(content.exploreSection?.productIds || []);
   
   const filteredExploreProducts = searchResults ?? (query
     ? exploreProducts.filter((product) =>
@@ -40,17 +40,17 @@ export function HomePage({
     <>
       <HeroSection features={content.features} hero={content.hero} />
       
-      <CategorySection section={content.categoriesSection} />
+      <CategorySection section={content.categoriesSection || { eyebrowLead: "", eyebrowAccent: "", linkLabel: "", items: [] }} />
       
-      <BrandGrid brands={content.brands} />
+      <BrandGrid brands={content.brands || []} />
       
       <ProductSection
-        accent={content.bestSellerSection.eyebrowAccent}
-        eyebrow={content.bestSellerSection.monthLabel}
+        accent={content.bestSellerSection?.eyebrowAccent || ""}
+        eyebrow={content.bestSellerSection?.monthLabel || ""}
         id="best-sellers"
-        lead={content.bestSellerSection.eyebrowLead}
+        lead={content.bestSellerSection?.eyebrowLead || ""}
         products={bestSellers}
-        topActionLabel={content.bestSellerSection.linkLabel}
+        topActionLabel={content.bestSellerSection?.linkLabel}
         style={{
           backgroundColor: '#F9FAFB',
           paddingTop: '60px',
@@ -60,17 +60,17 @@ export function HomePage({
       />
       
       <PromoBanner 
-        banner={content.promotions.financing} 
+        banner={content.promotions?.financing || { title: "", description: "", ctaLabel: "", href: "" }} 
         controls 
         style={{ backgroundColor: '#F9FAFB' }}
       />
       
       <ProductSection
-        accent={content.exploreSection.eyebrowAccent}
-        bottomActionLabel={content.exploreSection.ctaLabel}
-        eyebrow={content.exploreSection.monthLabel}
+        accent={content.exploreSection?.eyebrowAccent || ""}
+        bottomActionLabel={content.exploreSection?.ctaLabel}
+        eyebrow={content.exploreSection?.monthLabel || ""}
         id="explore-products"
-        lead={content.exploreSection.eyebrowLead}
+        lead={content.exploreSection?.eyebrowLead || ""}
         products={filteredExploreProducts}
         searchQuery={query}
         showCarouselControls
@@ -82,13 +82,13 @@ export function HomePage({
         }}
       />
       
-      <PromoBanner banner={content.promotions.renovation} id="quote" />
+      <PromoBanner banner={content.promotions?.renovation || { title: "", description: "", ctaLabel: "", href: "" }} id="quote" />
       
-      <FaqSection faqs={content.faqs} />
+      <FaqSection faqs={content.faqs || []} />
       
       <TestimonialSection
-        items={content.testimonials.items}
-        title={content.testimonials.title}
+        items={content.testimonials?.items || []}
+        title={content.testimonials?.title || ""}
       />
     </>
   );
