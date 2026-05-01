@@ -53,6 +53,7 @@ $accountService = new \Procurely\Api\Services\AccountService($database);
 $adminService = new \Procurely\Api\Services\AdminService($database, $contentStore, $storage);
 
 $app = AppFactory::create();
+$app->setBasePath('/api');
 $app->addBodyParsingMiddleware();
 $app->add(new \Procurely\Api\Support\AuthMiddleware($authService));
 

@@ -34,7 +34,7 @@ export const getProcurelyContent = async (): Promise<SiteContent> => {
     const response = await fetch(`${serverApiBase}/api/homepage`, {
       cache: isBuildTime ? "force-cache" : "no-store",
       next: isBuildTime ? { revalidate: 3600 } : { revalidate: 0 },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(15000), // Increased to 15s for live data stability
     });
 
     if (!response.ok) {
@@ -116,7 +116,7 @@ export const searchProducts = cache(
     try {
       const response = await fetch(`${serverApiBase}/api/products?${params.toString()}`, {
         next: { revalidate: 60 },
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(15000),
       });
 
       if (!response.ok) {

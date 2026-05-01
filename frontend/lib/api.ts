@@ -45,7 +45,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       ...init,
       headers,
       credentials: "include", // Required for Cookie-based Auth
-      signal: init?.signal ?? AbortSignal.timeout(15000), // Increased to 15s for enterprise stability
+      signal: init?.signal ?? AbortSignal.timeout(30000), // Increased to 30s for production resilience
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === "TimeoutError") {

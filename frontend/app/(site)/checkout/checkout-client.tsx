@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { persistOrderRef, api } from "@/lib/api";
 
 export function CheckoutPageClient() {
-  const { cart, checkout, clearCart, loading } = useCart();
+  const { cart, checkout, clearCart, loading, error: cartError } = useCart();
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState({
@@ -25,6 +25,12 @@ export function CheckoutPageClient() {
   if (!cart || cart.items.length === 0) {
     return (
       <div className="container-shell mx-auto px-4 py-16 text-center">
+        {cartError && (
+          <div className="mb-8 mx-auto max-w-md rounded-lg bg-rose-50 p-4 text-rose-600 font-medium border border-rose-100 flex items-center gap-3 text-left">
+            <span className="text-lg">⚠️</span>
+            {cartError}
+          </div>
+        )}
         <h2 className="mb-4 text-2xl font-semibold text-[#13184f]">Your cart is empty</h2>
         <Link href="/" className="rounded bg-[#0b103e] px-6 py-3 text-white transition hover:bg-[#13184f]">Return to Shop</Link>
       </div>
@@ -76,7 +82,7 @@ export function CheckoutPageClient() {
       const handler = paystack.setup({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email: formData.email,
-        amount: order.total * 100, // Paystack expects amount in kobo/cents
+        amount: Math.round(order.total * 100), // Paystack expects amount in kobo/cents as integer
         currency: isNgn ? 'NGN' : 'USD',
         ref: order.orderNumber,
         callback: async function(response: any) {
@@ -113,7 +119,7 @@ export function CheckoutPageClient() {
     }
   };
 
-  const currentError = useCart().error;
+  const currentError = cartError;
 
   return (
     <div className="container-shell mx-auto px-4 pb-20 sm:px-6">

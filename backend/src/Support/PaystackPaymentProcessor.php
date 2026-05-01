@@ -57,6 +57,7 @@ final class PaystackPaymentProcessor implements PaymentProcessorInterface
             $response = $this->postRequest($url, $fields);
             
             if (!($response['status'] ?? false)) {
+                error_log('[Paystack] Initialization failed: ' . json_encode($response));
                 throw new \RuntimeException($response['message'] ?? 'Paystack initialization failed.');
             }
 
@@ -66,8 +67,9 @@ final class PaystackPaymentProcessor implements PaymentProcessorInterface
                 'reference' => $response['data']['reference'],
             ];
         } catch (\Throwable $e) {
+            error_log('[Paystack] Exception: ' . $e->getMessage());
             $this->recordFailure();
-            throw new ApiException('Payment gateway communication error.', 502);
+            throw new ApiException('Payment gateway communication error: ' . $e->getMessage(), 502);
         }
     }
 
