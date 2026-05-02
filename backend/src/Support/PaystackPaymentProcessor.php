@@ -20,9 +20,7 @@ final class PaystackPaymentProcessor implements PaymentProcessorInterface
         $this->secretKey = $_ENV['PAYSTACK_SECRET_KEY'] ?? '';
         
         if ($this->secretKey === '') {
-            // Log as critical for production monitoring
-            error_log('[Procurely] CRITICAL: PAYSTACK_SECRET_KEY is missing in environment.');
-            throw new \RuntimeException('Payment gateway configuration is missing.');
+            error_log('[Procurely] WARNING: PAYSTACK_SECRET_KEY is missing. Payment features will be disabled.');
         }
     }
 

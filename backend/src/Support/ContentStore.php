@@ -16,7 +16,13 @@ final class ContentStore
         private readonly string $contentPath,
         ?Database $database = null
     ) {
-        $this->database = $database ?? new Database(dirname($this->contentPath, 3) . '/backend/' . ($_ENV['DATABASE_PATH'] ?? 'storage/procurely.sqlite'));
+        if ($database !== null) {
+            $this->database = $database;
+        } else {
+            $backendDir = dirname($contentPath, 2) . '/backend';
+            $dbPath = $backendDir . '/' . ($_ENV['DATABASE_PATH'] ?? 'storage/procurely.sqlite');
+            $this->database = new Database($dbPath);
+        }
     }
 
     public function all(): array

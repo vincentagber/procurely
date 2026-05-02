@@ -17,6 +17,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  isAuthenticated: boolean;
   loading: boolean;
   logout: () => void;
   refreshUser: (force?: boolean) => Promise<void>;
@@ -83,6 +84,9 @@ export function AuthProvider({
     } catch (e) {
       console.warn("Server-side logout failed:", e);
     }
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("procurely-auth-token");
+    }
     lastRefreshed.current = 0;
     setUser(null);
     setLoading(false);
@@ -93,6 +97,7 @@ export function AuthProvider({
     <AuthContext.Provider
       value={{
         user,
+        isAuthenticated: user !== null,
         loading: mounted ? loading : true,
         logout,
         refreshUser,

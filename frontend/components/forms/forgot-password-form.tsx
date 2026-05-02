@@ -49,10 +49,9 @@ export function ForgotPasswordForm({
           setError(null);
           setMessage(null);
           setTokenPreview(null);
-          const response = await api.forgotPassword({ email: normalizedEmail });
-          setMessage(response.message);
-          setTokenPreview(response.resetTokenPreview ?? null);
-          setEmail(normalizedEmail);
+           const response = await api.forgotPassword({ email: normalizedEmail });
+           setMessage(response.message);
+           setEmail(normalizedEmail);
         } catch (nextError) {
           setError(
             nextError instanceof Error
@@ -74,16 +73,11 @@ export function ForgotPasswordForm({
         </p>
       </div>
 
-      {message ? (
-        <AuthFeedback tone="success">
-          <span>{message}</span>
-          {tokenPreview ? (
-            <span className="mt-1.5 block text-xs leading-5 text-state-success-700/90">
-              Preview token: <span className="font-semibold">{tokenPreview}</span>
-            </span>
-          ) : null}
-        </AuthFeedback>
-      ) : null}
+       {message ? (
+         <AuthFeedback tone="success">
+           <span>{message}</span>
+         </AuthFeedback>
+       ) : null}
 
       {error ? <AuthFeedback tone="error">{error}</AuthFeedback> : null}
 

@@ -136,4 +136,44 @@ final class AccountService
         $stmt->execute(['uuid' => $userUuid]);
         return $stmt->fetchAll();
     }
+
+    public function addPaymentMethod(string $userUuid, array $payload): array
+    {
+        $type = Input::requiredString($payload, 'type', 'Payment Type', 50);
+        $provider = Input::requiredString($payload, 'provider', 'Provider', 100);
+        $last4 = Input::requiredString($payload, 'last4', 'Last 4 digits', 4);
+        $isDefault = (int) ($payload['isDefault'] ?? 0);
+
+        $pdo = $this->database->connection();
+        $createdAt = (new DateTimeImmutable())->format(DateTimeImmutable::ATOM);
+
+        if ($isDefault === 1) {
+            $pdo->prepare('UPDATE user_payment_methods SET is_default = 0 WHERE user_uuid = :uuid')
+                ->execute(['uuid' => $userUuid]);
+        }
+
+        $stmt = $pdo->prepare('
+            INSERT INTO user_payment_methods (user_uuid, type, provider, last4, is_default, created_at)
+            VALUES (:uuid, :type, :provider, :last4, :is_default, :created_at)
+        ');
+        $stmt->execute([
+            'uuid' => $userUuid,
+            'type' => $type,
+            'provider' => $provider,
+            'last4' => $last4,
+            'is_default' => $isDefault,
+            'created_at' => $createdAt,
+        ]);
+
+        return ['id' => (int) $pdo->lastInsertId(), 'message' => 'Payment method added successfully.'];
+    }
+
+    public function deletePaymentMethod(string $userUuid, int $paymentMethodId): array
+    {
+        $pdo = $this->database->connection();
+        $stmt = $pdo->prepare('DELETE FROM user_payment_methods WHERE id = :id AND user_uuid = :uuid');
+        $stmt->execute(['id' => $paymentMethodId, 'uuid' => $userUuid]);
+
+        return ['message' => 'Payment method deleted successfully.'];
+    }
 }

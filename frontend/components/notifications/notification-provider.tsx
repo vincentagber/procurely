@@ -29,7 +29,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  const refreshNotifications = useCallback(async () => {
+  const refreshNotifications = useCallback(async (signal?: AbortSignal) => {
     if (!user) {
       setNotifications([]);
       setUnreadCount(0);
@@ -38,11 +38,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     try {
       setIsLoading(true);
-      const data = await api.getNotifications();
+      const data = await api.getNotifications(signal);
       // Assume getNotifications only returns unread based on backend logic
       setNotifications(data);
       setUnreadCount(data.length);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') return;
       console.error("[Notifications] Failed to fetch:", error);
     } finally {
       setIsLoading(false);
@@ -59,12 +60,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Poll for notifications every 30 seconds for "realtime" feel
+  // Poll for notifications every 60 seconds for "realtime" feel
   useEffect(() => {
+    const controller = new AbortController();
+    
     if (user) {
-      refreshNotifications();
-      const interval = setInterval(refreshNotifications, 30000);
-      return () => clearInterval(interval);
+      refreshNotifications(controller.signal);
+      const interval = setInterval(() => refreshNotifications(controller.signal), 60000);
+      return () => {
+        controller.abort();
+        clearInterval(interval);
+      };
     }
   }, [user, refreshNotifications]);
 

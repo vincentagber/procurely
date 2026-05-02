@@ -12,7 +12,9 @@ import {
   ShoppingBag,
   User,
   AlertCircle,
-  LayoutDashboard
+  LayoutDashboard,
+  Clock,
+  FilePlus
 } from "lucide-react";
 import { cn } from "@/lib/format";
 
@@ -53,10 +55,10 @@ export function DashboardTools({
   
   // Default data for Activity Summary
   const stats = activityStats || [
-    { label: "Requests created", val: "142", icon: <LayoutDashboard size={14} />, color: "text-[#FF5C00]", bg: "bg-orange-50" },
-    { label: "Orders delivered", val: "95", icon: <ShoppingBag size={14} />, color: "text-[#1D4ED8]", bg: "bg-blue-50" },
-    { label: "Suppliers engaged", val: "37", icon: <User size={14} />, color: "text-blue-400", bg: "bg-sky-50" },
-    { label: "Deliveries in progress", val: "4", icon: <AlertCircle size={14} />, color: "text-amber-500", bg: "bg-amber-50" },
+    { label: "Requests created", val: "142", icon: <FileText size={14} />, color: "text-orange-500", bg: "bg-orange-50" },
+    { label: "Orders delivered", val: "95", icon: <ShoppingBag size={14} />, color: "text-orange-600", bg: "bg-orange-50" },
+    { label: "Suppliers engaged", val: "37", icon: <UserPlus size={14} />, color: "text-blue-500", bg: "bg-blue-50" },
+    { label: "Deliveries in progress", val: "4", icon: <Clock size={14} />, color: "text-amber-500", bg: "bg-amber-50" },
   ];
 
   // Default data for Quick Tools
@@ -73,8 +75,8 @@ export function DashboardTools({
       id: "create-rfq",
       title: "Created New RFQ",
       subtitle: "2 MB",
-      icon: <PlusCircle size={16} className="text-[#13184F]" />,
-      iconBg: "bg-slate-100",
+      icon: <FilePlus size={16} className="text-orange-500" />,
+      iconBg: "bg-orange-50",
       href: "/account/rfq/new"
     },
     {

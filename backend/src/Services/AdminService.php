@@ -14,6 +14,8 @@ final class AdminService
         private readonly Database $database,
         private readonly ContentStore $contentStore,
         private readonly \Procurely\Api\Support\Storage $storage,
+        private readonly \Procurely\Api\Support\EmailService $emailService,
+        private readonly NotificationService $notificationService,
     ) {
     }
 
@@ -77,7 +79,7 @@ final class AdminService
         $stmt = $pdo->prepare('
             SELECT u.uuid, u.full_name, u.email, u.created_at, GROUP_CONCAT(r.name) as roles
             FROM users u
-            LEFT JOIN user_roles ur ON u.id = ur.user_id
+            LEFT JOIN user_roles ur ON u.uuid = ur.user_uuid
             LEFT JOIN roles r ON ur.role_id = r.id
             GROUP BY u.id
             ORDER BY u.created_at DESC 
@@ -93,13 +95,170 @@ final class AdminService
         }, $stmt->fetchAll());
     }
 
+    private const VALID_STATUSES = [
+        'pending',
+        'processing',
+        'paid',
+        'fulfilled',
+        'dispatched',
+        'delivered',
+        'cancelled',
+        'refunded',
+        'pending_delivery',
+    ];
+
+    private const ALLOWED_TRANSITIONS = [
+        'processing' => ['paid', 'fulfilled', 'cancelled'],
+        'paid' => ['fulfilled', 'cancelled', 'refunded'],
+        'fulfilled' => ['dispatched', 'cancelled'],
+        'dispatched' => ['delivered', 'cancelled'],
+        'delivered' => ['refunded'],
+        'pending_delivery' => ['paid', 'delivered', 'cancelled'],
+        'pending' => ['processing', 'cancelled'],
+        'cancelled' => [],
+        'refunded' => [],
+    ];
+
     public function updateOrderStatus(string $orderNumber, string $status): array
     {
-        $pdo = $this->database->connection();
-        $stmt = $pdo->prepare('UPDATE orders SET status = :status WHERE order_number = :order_number');
-        $stmt->execute(['status' => $status, 'order_number' => $orderNumber]);
+        if (!in_array($status, self::VALID_STATUSES, true)) {
+            throw new ApiException('Invalid order status. Allowed: ' . implode(', ', self::VALID_STATUSES), 422);
+        }
 
-        return ['message' => 'Order status updated.'];
+        $pdo = $this->database->connection();
+
+        $check = $pdo->prepare('SELECT status, customer_email, customer_name, total FROM orders WHERE order_number = :order_number LIMIT 1');
+        $check->execute(['order_number' => $orderNumber]);
+        $current = $check->fetch();
+
+        if ($current === false) {
+            throw new ApiException('Order not found.', 404);
+        }
+
+        $oldStatus = (string) $current['status'];
+
+        if ($oldStatus === $status) {
+            return ['message' => 'Order status is already set to this value.', 'oldStatus' => $oldStatus, 'newStatus' => $status];
+        }
+
+        $allowed = self::ALLOWED_TRANSITIONS[$oldStatus] ?? [];
+        if (!in_array($status, $allowed, true)) {
+            $validTargets = $allowed !== [] ? implode(', ', $allowed) : 'none (terminal state)';
+            throw new ApiException(
+                sprintf('Invalid state transition from "%s" to "%s". Allowed transitions: %s.', $oldStatus, $status, $validTargets),
+                422
+            );
+        }
+
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        $updateFields = ['status' => $status];
+        if ($status === 'paid' && $oldStatus !== 'paid') {
+            $updateFields['paid_at'] = $now;
+        }
+        if (in_array($status, ['cancelled', 'refunded'], true)) {
+            $updateFields['paid_at'] = null;
+        }
+
+        $setClause = implode(', ', array_map(fn($k) => "$k = :$k", array_keys($updateFields)));
+        $stmt = $pdo->prepare("UPDATE orders SET {$setClause} WHERE order_number = :order_number");
+        $stmt->execute(array_merge($updateFields, ['order_number' => $orderNumber]));
+
+        $auditStmt = $pdo->prepare('
+            INSERT INTO audit_logs (user_id, action, resource, resource_id, old_values, new_values, created_at)
+            SELECT u.id, "order.status_changed", "order", :order_number, :old_values, :new_values, :created_at
+            FROM users u JOIN user_sessions us ON u.id = us.user_id
+            WHERE us.token = :admin_token AND us.expires_at > :now
+            LIMIT 1
+        ');
+        $auditStmt->execute([
+            'order_number' => $orderNumber,
+            'old_values' => json_encode(['status' => $oldStatus]),
+            'new_values' => json_encode(['status' => $status]),
+            'created_at' => $now,
+            'admin_token' => $this->getAdminToken(),
+            'now' => $now
+        ]);
+
+        if ($status === 'cancelled' && !in_array($oldStatus, ['cancelled', 'processing'], true)) {
+            $this->restoreInventory($orderNumber, $pdo);
+        }
+
+        try {
+            $orderData = $this->getOrderDataForNotification($orderNumber, $pdo);
+            $this->emailService->sendOrderStatusUpdate($orderData, $status, $oldStatus);
+
+            $stmt = $pdo->prepare('SELECT user_id FROM orders WHERE order_number = :order_number LIMIT 1');
+            $stmt->execute(['order_number' => $orderNumber]);
+            $orderRow = $stmt->fetch();
+            if ($orderRow && $orderRow['user_id']) {
+                $this->notificationService->createNotification(
+                    (int) $orderRow['user_id'],
+                    'order.status_changed',
+                    sprintf('Order %s Status Updated', $orderNumber),
+                    sprintf('Your order status changed from "%s" to "%s".', $oldStatus, $status),
+                    ['orderId' => $orderNumber, 'oldStatus' => $oldStatus, 'newStatus' => $status]
+                );
+            }
+        } catch (\Throwable $e) {
+            \Procurely\Api\Support\Telemetry::error('Status update notification failed', ['error' => $e->getMessage()]);
+        }
+
+        return ['message' => 'Order status updated.', 'oldStatus' => $oldStatus, 'newStatus' => $status];
+    }
+
+    public function getAllowedTransitions(string $currentStatus): array
+    {
+        return self::ALLOWED_TRANSITIONS[$currentStatus] ?? [];
+    }
+
+    private function getOrderDataForNotification(string $orderNumber, PDO $pdo): array
+    {
+        $stmt = $pdo->prepare('
+            SELECT order_number, customer_name, customer_email, phone, total, status, payment_method
+            FROM orders WHERE order_number = :order_number LIMIT 1
+        ');
+        $stmt->execute(['order_number' => $orderNumber]);
+        $order = $stmt->fetch();
+
+        return [
+            'orderNumber' => $order['order_number'],
+            'customerName' => $order['customer_name'],
+            'customerEmail' => $order['customer_email'],
+            'phone' => $order['phone'],
+            'total' => (int) $order['total'],
+            'status' => $order['status'],
+            'paymentMethod' => $order['payment_method'] ?? 'card',
+        ];
+    }
+
+    private function restoreInventory(string $orderNumber, PDO $pdo): void
+    {
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        
+        // Get order items
+        $itemsStmt = $pdo->prepare('
+            SELECT oi.product_id, oi.quantity 
+            FROM order_items oi
+            JOIN orders o ON oi.order_id = o.id
+            WHERE o.order_number = :order_number
+        ');
+        $itemsStmt->execute(['order_number' => $orderNumber]);
+        $items = $itemsStmt->fetchAll();
+        
+        // Restore stock
+        $restoreStmt = $pdo->prepare('
+            UPDATE inventory 
+            SET stock_level = stock_level + :qty, updated_at = :now 
+            WHERE product_id = :product_id
+        ');
+        
+        foreach ($items as $item) {
+            $restoreStmt->execute([
+                'qty' => $item['quantity'],
+                'now' => $now,
+                'product_id' => $item['product_id']
+            ]);
+        }
     }
 
     // ─── Product Management ───────────────────────────────────────────────────
@@ -128,10 +287,14 @@ final class AdminService
             throw new ApiException('Product name is required.', 422);
         }
 
-        $price = (int) ($payload['price'] ?? 0);
-        if ($price <= 0) {
+        // Convert price from Naira to kobo for internal storage.
+        // Admin forms and API clients send price in Naira (e.g., 18500 = ₦18,500).
+        // Internal system stores all monetary values in kobo (smallest currency unit).
+        $priceNaira = (int) ($payload['price'] ?? 0);
+        if ($priceNaira <= 0) {
             throw new ApiException('Product price must be a positive number.', 422);
         }
+        $price = $priceNaira * 100;
 
         // Generate slug + id from name if not provided
         $slug = trim((string) ($payload['slug'] ?? ''));

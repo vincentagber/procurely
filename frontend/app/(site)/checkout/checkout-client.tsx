@@ -1,13 +1,17 @@
 "use client";
 
 import { useCart } from "@/components/cart/cart-provider";
+import { useAuth } from "@/components/auth/auth-provider";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { persistOrderRef, api } from "@/lib/api";
+import { usePaymentPolling } from "@/hooks/use-payment-polling";
+import { formatCurrency } from "@/lib/format";
 
 export function CheckoutPageClient() {
   const { cart, checkout, clearCart, loading, error: cartError } = useCart();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState({
@@ -19,15 +23,81 @@ export function CheckoutPageClient() {
     phone: "",
     email: "",
     saveInfo: true,
-    paymentMethod: "bank",
+    paymentMethod: "card",
   });
+  const [paystackLoaded, setPaystackLoaded] = useState(false);
+  const [useWallet, setUseWallet] = useState(false);
+  const pollingCleanupRef = useRef<(() => void) | null>(null);
+
+  const handlePaymentConfirmed = useCallback((orderNumber: string) => {
+    persistOrderRef(orderNumber, cart?.cartToken || "");
+    clearCart();
+    router.push("/order-confirmation");
+  }, [cart?.cartToken, clearCart, router]);
+
+  const handlePaymentTimeout = useCallback((_orderNumber: string, _attempts: number) => {
+    setIsProcessing(false);
+  }, []);
+
+  const handlePaymentError = useCallback((_error: Error) => {
+    setIsProcessing(false);
+  }, []);
+
+  const { startPolling, stop: stopPolling } = usePaymentPolling({
+    intervalMs: 3000,
+    maxAttempts: 30,
+    onSuccess: handlePaymentConfirmed,
+    onTimeout: handlePaymentTimeout,
+    onError: handlePaymentError,
+  });
+
+  const pollPaymentStatus = useCallback(async (orderNumber: string, cartToken: string): Promise<boolean> => {
+    for (let attempt = 0; attempt < 10; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      try {
+        const order = await api.getOrder(orderNumber, cartToken);
+        if (order.status === "paid") {
+          persistOrderRef(orderNumber, cartToken);
+          clearCart();
+          router.push("/order-confirmation");
+          return true;
+        }
+      } catch {
+        // Continue polling
+      }
+    }
+    return false;
+  }, [clearCart, router]);
+
+  useEffect(() => {
+    return () => {
+      stopPolling();
+    };
+  }, [stopPolling]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && (window as unknown as Record<string, unknown>).PaystackPop) {
+      setPaystackLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: user.fullName || "",
+        email: user.email || "",
+        phone: user.phone || "",
+      }));
+    }
+  }, [isAuthenticated, user]);
 
   if (!cart || cart.items.length === 0) {
     return (
       <div className="container-shell mx-auto px-4 py-16 text-center">
         {cartError && (
           <div className="mb-8 mx-auto max-w-md rounded-lg bg-rose-50 p-4 text-rose-600 font-medium border border-rose-100 flex items-center gap-3 text-left">
-            <span className="text-lg">⚠️</span>
+            <span className="text-lg">Warning</span>
             {cartError}
           </div>
         )}
@@ -37,10 +107,10 @@ export function CheckoutPageClient() {
     );
   }
 
-  const isNgn = cart.items[0]?.product.currency === 'NGN';
   const total = cart.total;
   const vat = cart.vat;
   const shipping = cart.shippingFee;
+  const canUseWallet = isAuthenticated && user && (user.walletBalance || 0) >= total;
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,14 +118,14 @@ export function CheckoutPageClient() {
 
     try {
       const cartTokenSnap = cart.cartToken;
-      
-      // 1. Create the order
+      const paymentMethod = useWallet && canUseWallet ? "wallet" : formData.paymentMethod;
+
       const order = await checkout({
         customerName: formData.firstName,
         customerEmail: formData.email,
         phone: formData.phone,
         address: `${formData.address}, ${formData.city}`,
-        paymentMethod: formData.paymentMethod,
+        paymentMethod,
       });
 
       if (!order) {
@@ -63,58 +133,65 @@ export function CheckoutPageClient() {
         return;
       }
 
-      // 2. Decide if we need Paystack
-      // Only use Paystack for 'card', 'bank' or if explicitly requested. 
-      // For now, only 'cod' skips the gateway.
-      if (formData.paymentMethod === 'cod') {
+      if (paymentMethod === "wallet") {
         persistOrderRef(order.orderNumber, cartTokenSnap);
         clearCart();
         router.push("/order-confirmation");
         return;
       }
 
-      // 3. Initialize Paystack (for card payments)
-      // @ts-ignore
-      const paystack = typeof window !== "undefined" ? (window as any).PaystackPop : null;
-      if (!paystack) {
+      if (paymentMethod === "cod") {
+        persistOrderRef(order.orderNumber, cartTokenSnap);
+        clearCart();
+        router.push("/order-confirmation");
+        return;
+      }
+
+      if (!paystackLoaded) {
         throw new Error("Payment provider not loaded. Please refresh and try again.");
       }
-      const handler = paystack.setup({
+
+      const paystack = (window as unknown as Record<string, unknown>).PaystackPop as Record<string, unknown>;
+      const handler = (paystack.setup as (options: Record<string, unknown>) => { openIframe: () => void })({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email: formData.email,
-        amount: Math.round(order.total * 100), // Paystack expects amount in kobo/cents as integer
-        currency: isNgn ? 'NGN' : 'USD',
+        amount: order.total, // Backend returns total in kobo, Paystack expects kobo
+        currency: 'NGN',
         ref: order.orderNumber,
-        callback: async function(response: any) {
-          // 4. Payment successful, verify on backend first
-          try {
-            const verification = await api.confirmPaymentIntent(response.reference);
-            if (verification.success) {
-              persistOrderRef(order.orderNumber, cartTokenSnap);
-              clearCart();
-              router.push("/order-confirmation");
-            } else {
-              alert("Payment verification failed. Please contact support if your account was debited.");
-              setIsProcessing(false);
+        callback: function(response: Record<string, string>) {
+          (async () => {
+            try {
+              const verification = await api.confirmPaymentIntent(response.reference);
+              if (verification.success) {
+                persistOrderRef(order.orderNumber, cartTokenSnap);
+                clearCart();
+                router.push("/order-confirmation");
+              } else {
+                const polled = await pollPaymentStatus(order.orderNumber, cartTokenSnap);
+                if (!polled) {
+                  alert("Payment verification failed. Please contact support if your account was debited.");
+                  setIsProcessing(false);
+                }
+              }
+            } catch {
+              const polled = await pollPaymentStatus(order.orderNumber, cartTokenSnap);
+              if (!polled) {
+                setIsProcessing(false);
+                alert("Payment confirmation is being processed. You will receive a confirmation email shortly.");
+              }
             }
-          } catch (vErr) {
-             console.error("Verification error:", vErr);
-             // Fallback to optimistic redirect if verification API is down but we have a success ref
-             persistOrderRef(order.orderNumber, cartTokenSnap);
-             clearCart();
-             router.push("/order-confirmation");
-          }
+          })();
         },
         onClose: function() {
           setIsProcessing(false);
-          alert('Transaction was not completed, window closed.');
         }
       });
 
       handler.openIframe();
 
-    } catch (err: any) {
-      alert(err.message || "An error occurred during checkout");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An error occurred during checkout";
+      alert(message);
       setIsProcessing(false);
     }
   };
@@ -127,7 +204,7 @@ export function CheckoutPageClient() {
 
       {currentError && (
         <div className="mb-8 rounded-lg bg-rose-50 p-4 text-rose-600 font-medium border border-rose-100 flex items-center gap-3">
-          <span className="text-lg">⚠️</span>
+          <span className="text-lg">Warning</span>
           {currentError}
         </div>
       )}
@@ -181,53 +258,69 @@ export function CheckoutPageClient() {
                      </div>
                      <span className="font-medium">{item.product.name}</span>
                   </div>
-                  <span className="font-semibold">₦{item.lineTotal.toLocaleString()}</span>
+                  <span className="font-semibold">{formatCurrency(item.lineTotal)}</span>
                 </div>
               ))}
 
               <div className="border-y border-slate-200 py-4 space-y-4">
                  <div className="flex justify-between">
                     <span className="font-medium text-[#13184f]">Subtotal:</span>
-                    <span className="font-semibold">₦{cart.subtotal.toLocaleString()}</span>
+                    <span className="font-semibold">{formatCurrency(cart.subtotal)}</span>
                  </div>
                  <div className="flex justify-between">
-                    <span className="font-medium text-[#13184f]">VAT:</span>
-                    <span className="font-semibold">₦{vat.toLocaleString()}</span>
+                    <span className="font-medium text-[#13184f]">VAT (7.5%):</span>
+                    <span className="font-semibold">{formatCurrency(vat)}</span>
                  </div>
                  <div className="flex justify-between">
                     <span className="font-medium text-[#13184f]">Shipping:</span>
-                    <span className="font-semibold">₦{shipping.toLocaleString()}</span>
+                    <span className="font-semibold">{shipping === 0 ? "Free" : formatCurrency(shipping)}</span>
                  </div>
               </div>
 
               <div className="flex justify-between font-bold text-lg">
                 <span>Total:</span>
-                <span>₦{total.toLocaleString()}</span>
+                <span>{formatCurrency(total)}</span>
               </div>
 
               <div className="space-y-4 pt-4">
-                 <label className="flex items-center gap-4 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="payment" 
-                      value="bank" 
-                      className="size-5 accent-[#13184f]" 
-                      checked={formData.paymentMethod === 'bank'}
-                      onChange={() => setFormData({...formData, paymentMethod: 'bank'})}
+                {canUseWallet && (
+                  <label className="flex items-center gap-4 cursor-pointer rounded-lg border border-green-200 bg-green-50 p-3">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="wallet"
+                      className="size-5 accent-green-600"
+                      checked={useWallet}
+                      onChange={() => setUseWallet(true)}
                     />
-                    <span className="font-medium">Bank</span>
+                    <div>
+                      <span className="font-medium">Pay with Wallet</span>
+                      <p className="text-xs text-slate-500">Balance: {formatCurrency(user?.walletBalance || 0)}</p>
+                    </div>
+                  </label>
+                )}
+                 <label className="flex items-center gap-4 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="card"
+                      className="size-5 accent-[#13184f]"
+                      checked={formData.paymentMethod === 'card' && !useWallet}
+                      onChange={() => { setUseWallet(false); setFormData({...formData, paymentMethod: 'card'}); }}
+                    />
+                    <span className="font-medium">Card (Paystack)</span>
                  </label>
                  <label className="flex items-center gap-4 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="payment" 
-                      value="cod" 
-                      className="size-5 accent-[#13184f]" 
-                      checked={formData.paymentMethod === 'cod'}
-                      onChange={() => setFormData({...formData, paymentMethod: 'cod'})}
-                    />
-                    <span className="font-medium">Cash on delivery</span>
-                 </label>
+                     <input
+                       type="radio"
+                       name="payment"
+                       value="cod"
+                       className="size-5 accent-[#13184f]"
+                       checked={formData.paymentMethod === 'cod' && !useWallet}
+                       onChange={() => { setUseWallet(false); setFormData({...formData, paymentMethod: 'cod'}); }}
+                     />
+                     <span className="font-medium">Cash on delivery</span>
+                  </label>
               </div>
 
               <div className="flex gap-4 pt-6">

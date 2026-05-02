@@ -95,7 +95,9 @@ final class CatalogService
         $page = Input::intRange($filters['page'] ?? null, 'Page', 1, 1000, 1);
         $offset = ($page - 1) * $limit;
 
-        $sql .= " LIMIT $limit OFFSET $offset";
+        $sql .= " LIMIT :limit OFFSET :offset";
+        $params['limit'] = $limit;
+        $params['offset'] = $offset;
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);

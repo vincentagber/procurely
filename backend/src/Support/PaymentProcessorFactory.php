@@ -21,8 +21,8 @@ final class PaymentProcessorFactory
     {
         return match (strtolower($gateway)) {
             'paystack' => new PaystackPaymentProcessor($this->database),
+            'stripe'   => new StripePaymentProcessor($this->database),
             'manual'   => new ManualPaymentProcessor(),
-            // 'stripe' => new StripePaymentProcessor($this->database), 
             default => throw new \InvalidArgumentException(sprintf('Payment gateway "%s" is not supported.', $gateway)),
         };
     }

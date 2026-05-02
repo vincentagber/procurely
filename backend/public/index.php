@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+// Prevent PHP from outputting HTML error pages (which break JSON responses)
+ini_set('display_errors', '0');
+
 use Dotenv\Dotenv;
 use Procurely\Api\Services\AuthService;
 use Procurely\Api\Services\CartService;
@@ -11,6 +14,7 @@ use Procurely\Api\Services\OrderService;
 use Procurely\Api\Support\ApiException;
 use Procurely\Api\Support\ContentStore;
 use Procurely\Api\Support\Database;
+use Procurely\Api\Support\Input;
 use Procurely\Api\Support\JsonResponder;
 use Procurely\Api\Support\RateLimiter;
 use Procurely\Api\Support\RequestData;
@@ -28,7 +32,12 @@ if (file_exists($rootPath . '/.env')) {
     Dotenv::createImmutable($rootPath)->safeLoad();
 }
 
-$debug = filter_var($_ENV['APP_DEBUG'] ?? 'false', FILTER_VALIDATE_BOOL);
+$debug = false; // Default to production mode
+if (file_exists($rootPath . '/.env')) {
+    Dotenv::createImmutable($rootPath)->safeLoad();
+    $debug = filter_var($_ENV['APP_DEBUG'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+}
+
 $frontendUrl = $_ENV['FRONTEND_URL'] ?? 'http://localhost:3000';
 $databasePath = $_ENV['DATABASE_PATH'] ?? 'storage/procurely.sqlite';
 
@@ -45,15 +54,22 @@ $notificationService = new \Procurely\Api\Services\NotificationService($database
 $cartService = new CartService($database, $contentStore);
 $paymentProcessorFactory = new \Procurely\Api\Support\PaymentProcessorFactory($database);
 $paymentProcessor = $paymentProcessorFactory->create($_ENV['PAYMENT_GATEWAY'] ?? 'paystack');
-$orderService = new OrderService($database, $cartService, $paymentProcessor, $emailService, $notificationService);
+
+try {
+    $stripeProcessor = $paymentProcessorFactory->create('stripe');
+} catch (\Throwable $e) {
+    $stripeProcessor = null;
+}
+
+$reconciliationService = new \Procurely\Api\Services\ReconciliationService($database);
+$orderService = new OrderService($database, $cartService, $paymentProcessor, $emailService, $notificationService, $reconciliationService);
 $storage = new Storage($rootPath);
 $engagementService = new EngagementService($database, $storage);
 $wishlistService = new \Procurely\Api\Services\WishlistService($database, $contentStore);
 $accountService = new \Procurely\Api\Services\AccountService($database);
-$adminService = new \Procurely\Api\Services\AdminService($database, $contentStore, $storage);
+$adminService = new \Procurely\Api\Services\AdminService($database, $contentStore, $storage, $emailService, $notificationService);
 
 $app = AppFactory::create();
-$app->setBasePath('/api');
 $app->addBodyParsingMiddleware();
 $app->add(new \Procurely\Api\Support\AuthMiddleware($authService));
 
@@ -81,32 +97,17 @@ $authRateLimit = (new RateLimiter($database, 100, 60, 'auth'))->middleware();
 $orderRateLimit = (new RateLimiter($database, 100, 60, 'order'))->middleware();
 $searchRateLimit = (new RateLimiter($database, 200, 60, 'search'))->middleware();
 
-// ─── Middleware ──────────────────────────────────────────────────────────────
-$adminMiddleware = function (ServerRequestInterface $request, $handler) use ($authService): ResponseInterface {
-    $authHeader = $request->getHeaderLine('Authorization');
-    $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
-
-    if ($token === '') {
-        throw new ApiException('Authorization token required.', 401);
-    }
-
-    $user = $authService->resolveToken($token);
-    if (!$user || !isset($user['roles']) || !in_array('admin', (array)$user['roles'], true)) {
-        throw new ApiException('Forbidden: Admin access only.', 403);
-    }
-
-    return $handler->handle($request);
-};
+$adminMiddleware = new \Procurely\Api\Support\AdminMiddleware($authService);
 
 // ─── API Routes Group ──────────────────────────────────────────────────────────
 $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
     $catalogService, $authService, $notificationService, $accountService,
     $cartService, $wishlistService, $orderService, $paymentProcessor,
-    $adminService, $engagementService, $adminMiddleware, $authRateLimit,
+    $stripeProcessor, $reconciliationService, $adminService, $engagementService, $adminMiddleware, $authRateLimit,
     $orderRateLimit, $searchRateLimit, $database
 ) {
     // ─── Health check ─────────────────────────────────────────────────────────────
-    $group->get('', static function (ServerRequestInterface $request, ResponseInterface $response): ResponseInterface {
+    $group->get('[/]', static function (ServerRequestInterface $request, ResponseInterface $response): ResponseInterface {
         return JsonResponder::success($response, ['message' => 'Procurely API is running.']);
     });
 
@@ -133,20 +134,22 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
     });
 
     // ─── Auth ──────────────────────────────────────────────────────────────────────
-    $group->post('/auth/register', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
+    $group->post('/auth/register', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService, $debug): ResponseInterface {
         $data = $authService->register(RequestData::body($request));
         $token = $data['token'] ?? '';
         
-        $cookie = sprintf('procurely_auth_token=%s; Max-Age=2592000; Path=/; HttpOnly; SameSite=Lax; Secure', $token);
+        $secureFlag = $debug ? '' : '; Secure';
+        $cookie = sprintf('procurely_auth_token=%s; Max-Age=2592000; Path=/; HttpOnly; SameSite=Lax%s', $token, $secureFlag);
         
         return JsonResponder::success($response->withHeader('Set-Cookie', $cookie), $data, 201);
     })->add($authRateLimit);
 
-    $group->post('/auth/login', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService): ResponseInterface {
+    $group->post('/auth/login', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService, $debug): ResponseInterface {
         $data = $authService->login(RequestData::body($request));
         $token = $data['token'] ?? '';
         
-        $cookie = sprintf('procurely_auth_token=%s; Max-Age=2592000; Path=/; HttpOnly; SameSite=Lax; Secure', $token);
+        $secureFlag = $debug ? '' : '; Secure';
+        $cookie = sprintf('procurely_auth_token=%s; Max-Age=2592000; Path=/; HttpOnly; SameSite=Lax%s', $token, $secureFlag);
 
         return JsonResponder::success($response->withHeader('Set-Cookie', $cookie), $data);
     })->add($authRateLimit);
@@ -159,8 +162,9 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
         return JsonResponder::success($response, $authService->resetPassword(RequestData::body($request)));
     })->add($authRateLimit);
 
-    $group->post('/auth/logout', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService, $database): ResponseInterface {
-        $clearCookie = 'procurely_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax; Secure';
+    $group->post('/auth/logout', static function (ServerRequestInterface $request, ResponseInterface $response) use ($authService, $database, $debug): ResponseInterface {
+        $secureFlag = $debug ? '' : '; Secure';
+        $clearCookie = sprintf('procurely_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax%s', $secureFlag);
         $response = $response->withHeader('Set-Cookie', $clearCookie);
 
         $user = $request->getAttribute('user');
@@ -278,6 +282,21 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
         return JsonResponder::success($response, $accountService->getPaymentMethods($user['uuid']));
     });
 
+    $group->post('/account/payment-methods', static function (ServerRequestInterface $request, ResponseInterface $response) use ($accountService): ResponseInterface {
+        $user = $request->getAttribute('user');
+        if (!$user) throw new ApiException('Authentication required.', 401);
+
+        $payload = (array) $request->getParsedBody();
+        return JsonResponder::success($response, $accountService->addPaymentMethod($user['uuid'], $payload), 201);
+    });
+
+    $group->delete('/account/payment-methods/{id}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($accountService): ResponseInterface {
+        $user = $request->getAttribute('user');
+        if (!$user) throw new ApiException('Authentication required.', 401);
+
+        return JsonResponder::success($response, $accountService->deletePaymentMethod($user['uuid'], (int) $args['id']));
+    });
+
     // ─── Cart ──────────────────────────────────────────────────────────────────────
     $group->get('/cart/{token}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($cartService): ResponseInterface {
         return JsonResponder::success($response, $cartService->getCart((string) ($args['token'] ?? '')));
@@ -324,12 +343,24 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
             $user = $authService->resolveToken($token);
             if ($user) $userId = (int) $user['id'];
         }
-        $result = $orderService->checkout(RequestData::body($request), $userId);
-        
+        $body = RequestData::body($request);
+        $paymentMethod = (string) ($body['paymentMethod'] ?? 'card');
+
+        // Wallet payments: create order first, then process wallet deduction
+        if ($paymentMethod === 'wallet') {
+            if (!$userId) {
+                throw new ApiException('Authentication required for wallet payments.', 401);
+            }
+            $order = $orderService->createOrder($body, $userId);
+            $result = $orderService->payWithWallet($userId, $order['orderNumber']);
+            return JsonResponder::success($response, $result, 201);
+        }
+
+        $result = $orderService->checkout($body, $userId);
+
         // Clear cart if successful and NOT card (card is async via webhook)
-        $paymentMethod = $result['paymentMethod'] ?? 'card';
-        if (in_array($paymentMethod, ['cod', 'bank'])) {
-            $cartToken = Input::cartToken(RequestData::body($request));
+        if (in_array($paymentMethod, ['cod'])) {
+            $cartToken = Input::cartToken($body);
             $cartService->clearCart($cartToken);
         }
 
@@ -379,10 +410,14 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
         return JsonResponder::success($response, ['success' => $success]);
     });
 
-    $group->post('/webhooks/stripe', static function (ServerRequestInterface $request, ResponseInterface $response) use ($paymentProcessor, $orderService): ResponseInterface {
+    $group->post('/webhooks/stripe', static function (ServerRequestInterface $request, ResponseInterface $response) use ($stripeProcessor, $orderService): ResponseInterface {
+        if ($stripeProcessor === null) {
+            throw new ApiException('Stripe payment gateway is not configured.', 503);
+        }
+
         $payload = (string) $request->getBody();
         $signature = $request->getHeaderLine('stripe-signature');
-        $event = $paymentProcessor->processWebhook($payload, $signature);
+        $event = $stripeProcessor->processWebhook($payload, $signature);
         if ($event['event_type'] === 'payment_intent.succeeded') {
             $paymentIntent = $event['event_data'];
             $orderNumber = $paymentIntent->metadata->order_number ?? '';
@@ -394,10 +429,79 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
     $group->post('/webhooks/paystack', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService): ResponseInterface {
         $payload = (string) $request->getBody();
         $signature = $request->getHeaderLine('x-paystack-signature');
+        
+        // Get client IP
+        $serverParams = $request->getServerParams();
+        $ip = $serverParams['REMOTE_ADDR'] ?? '';
+        if ($ip === '' && isset($serverParams['HTTP_X_FORWARDED_FOR'])) {
+            $ips = explode(',', $serverParams['HTTP_X_FORWARDED_FOR']);
+            $ip = trim($ips[0]);
+        }
+        
         $paystack = new \Procurely\Api\Support\Paystack();
-        if (!$paystack->isValidSignature($payload, $signature)) throw new ApiException('Invalid signature', 401);
+        $validation = $paystack->validateWebhook($payload, $signature, $ip);
+        
+        if (!$validation['valid']) {
+            Telemetry::error('Webhook validation failed', ['reason' => $validation['reason']]);
+            throw new ApiException('Invalid webhook: ' . $validation['reason'], 401);
+        }
+        
         $data = json_decode($payload, true);
-        return JsonResponder::success($response, $orderService->handleWebhook($data));
+        $result = $orderService->handleWebhook($data);
+        
+        // Log successful webhook (scrubbed)
+        Telemetry::info('Webhook processed', \Procurely\Api\Support\Paystack::scrub($data));
+        
+        return JsonResponder::success($response, $result);
+    });
+
+    // ─── Reconciliation (Admin only) ─────────────────────────────────────────────
+    $group->get('/admin/reconcile', static function (ServerRequestInterface $request, ResponseInterface $response) use ($reconciliationService): ResponseInterface {
+        return JsonResponder::success($response, $reconciliationService->reconcile());
+    })->add($adminMiddleware);
+
+    $group->get('/admin/payment-logs', static function (ServerRequestInterface $request, ResponseInterface $response) use ($reconciliationService): ResponseInterface {
+        $params = RequestData::query($request);
+        return JsonResponder::success($response, $reconciliationService->getPaymentLogs(
+            (int) ($params['limit'] ?? 50),
+            (int) ($params['offset'] ?? 0)
+        ));
+    })->add($adminMiddleware);
+
+    $group->post('/admin/cleanup-abandoned', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService): ResponseInterface {
+        $params = RequestData::query($request);
+        $ageMinutes = max(1, min(1440, (int) ($params['age_minutes'] ?? 30)));
+        $cleaned = $orderService->cleanupAbandonedOrders($ageMinutes);
+        return JsonResponder::success($response, ['cleaned' => $cleaned, 'age_minutes' => $ageMinutes]);
+    })->add($adminMiddleware);
+
+    // ─── Wallet Transactions ─────────────────────────────────────────────────────
+    $group->get('/account/wallet/transactions', static function (ServerRequestInterface $request, ResponseInterface $response) use ($reconciliationService, $authService): ResponseInterface {
+        $authHeader = $request->getHeaderLine('Authorization');
+        $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
+        if ($token === '') throw new ApiException('Authorization token required.', 401);
+        $user = $authService->resolveToken($token);
+        if (!$user) throw new ApiException('Invalid or expired token.', 401);
+        $params = RequestData::query($request);
+        return JsonResponder::success($response, $reconciliationService->getWalletTransactions(
+            (int) $user['id'],
+            (int) ($params['limit'] ?? 50),
+            (int) ($params['offset'] ?? 0)
+        ));
+    });
+
+    // ─── Wallet Payment for Orders ───────────────────────────────────────────────
+    $group->post('/wallet/pay-order', static function (ServerRequestInterface $request, ResponseInterface $response) use ($orderService, $authService): ResponseInterface {
+        $authHeader = $request->getHeaderLine('Authorization');
+        $token = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
+        if ($token === '') throw new ApiException('Authentication required.', 401);
+        $user = $authService->resolveToken($token);
+        if (!$user) throw new ApiException('Invalid or expired token.', 401);
+        $body = RequestData::body($request);
+        $orderNumber = (string) ($body['orderNumber'] ?? '');
+        if ($orderNumber === '') throw new ApiException('Order number is required.', 400);
+        $result = $orderService->payWithWallet((int) $user['id'], $orderNumber);
+        return JsonResponder::success($response, $result);
     });
 
     $group->get('/orders/{orderNumber}', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($orderService, $authService): ResponseInterface {
@@ -408,7 +512,7 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
         $isAdmin = false;
         if ($token !== '') {
             $user = $authService->resolveToken($token);
-            if ($user && $user['role'] === 'admin') $isAdmin = true;
+            if ($user && in_array('admin', $user['roles'], true)) $isAdmin = true;
         }
         return JsonResponder::success($response, $orderService->findByOrderNumber((string) ($args['orderNumber'] ?? ''), $cartToken, $email, $isAdmin));
     });
@@ -419,7 +523,12 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
         if ($token === '') throw new ApiException('Authorization token required.', 401);
         $user = $authService->resolveToken($token);
         if (!$user) throw new ApiException('Invalid or expired token.', 401);
-        return JsonResponder::success($response, $orderService->getUserOrders((int) $user['id']));
+        $params = RequestData::query($request);
+        return JsonResponder::success($response, $orderService->getUserOrders(
+            (int) $user['id'],
+            (int) ($params['limit'] ?? 50),
+            (int) ($params['offset'] ?? 0)
+        ));
     });
 
     // ─── Admin ────────────────────────────────────────────────────────────────────
@@ -448,6 +557,21 @@ $app->group('/api', function (\Slim\Routing\RouteCollectorProxy $group) use (
         $body = RequestData::body($request);
         $status = (string) ($body['status'] ?? '');
         return JsonResponder::success($response, $adminService->updateOrderStatus((string) ($args['orderNumber'] ?? ''), $status));
+    })->add($adminMiddleware);
+
+    $group->get('/admin/orders/{orderNumber}/transitions', static function (ServerRequestInterface $request, ResponseInterface $response, array $args) use ($adminService, $database): ResponseInterface {
+        $orderNumber = (string) ($args['orderNumber'] ?? '');
+        $pdo = $database->connection();
+        $stmt = $pdo->prepare('SELECT status FROM orders WHERE order_number = :order_number LIMIT 1');
+        $stmt->execute(['order_number' => $orderNumber]);
+        $order = $stmt->fetch();
+        if ($order === false) {
+            throw new \Procurely\Api\Support\ApiException('Order not found.', 404);
+        }
+        return JsonResponder::success($response, [
+            'currentStatus' => $order['status'],
+            'allowedTransitions' => $adminService->getAllowedTransitions((string) $order['status']),
+        ]);
     })->add($adminMiddleware);
 
     // ─── Admin Products ──────────────────────────────────────────────────────────

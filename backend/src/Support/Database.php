@@ -145,14 +145,15 @@ final class Database
             );
 
             CREATE TABLE IF NOT EXISTS user_roles (
-              user_id INT NOT NULL,
+              id $pk,
+              user_uuid VARCHAR(36) NOT NULL,
               role_id INT NOT NULL,
+              assigned_by VARCHAR(36),
               assigned_at $dateTime NOT NULL,
-              assigned_by INT,
-              PRIMARY KEY (user_id, role_id),
-              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+              UNIQUE(user_uuid, role_id),
+              FOREIGN KEY (user_uuid) REFERENCES users(uuid) ON DELETE CASCADE,
               FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
-              FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL
+              FOREIGN KEY (assigned_by) REFERENCES users(uuid) ON DELETE SET NULL
             );
 
             CREATE TABLE IF NOT EXISTS role_permissions (
@@ -267,6 +268,7 @@ final class Database
               status VARCHAR(50) NOT NULL,
               paid_at $dateTime,
               payment_method VARCHAR(50) DEFAULT 'card',
+              failure_reason TEXT,
               created_at $dateTime NOT NULL,
               FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
             );
@@ -347,12 +349,58 @@ final class Database
               UNIQUE(wishlist_token, product_id)
             );
 
+            CREATE TABLE IF NOT EXISTS webhook_events (
+              id $pk,
+              event_id VARCHAR(255) NOT NULL UNIQUE,
+              event_type VARCHAR(100) NOT NULL,
+              gateway VARCHAR(50) NOT NULL,
+              payload_hash VARCHAR(128) NOT NULL,
+              processed_at $dateTime NOT NULL,
+              status VARCHAR(50) NOT NULL DEFAULT 'processed',
+              created_at $dateTime NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS payment_logs (
+              id $pk,
+              order_number VARCHAR(50),
+              gateway VARCHAR(50) NOT NULL,
+              gateway_reference VARCHAR(255),
+              amount BIGINT NOT NULL,
+              currency VARCHAR(10) NOT NULL DEFAULT 'NGN',
+              status VARCHAR(50) NOT NULL,
+              metadata JSON,
+              created_at $dateTime NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS wallet_transactions (
+              id $pk,
+              user_id INT NOT NULL,
+              type VARCHAR(50) NOT NULL,
+              amount BIGINT NOT NULL,
+              balance_after BIGINT NOT NULL,
+              reference VARCHAR(255),
+              description $text,
+              created_at $dateTime NOT NULL,
+              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_webhook_events_event_id ON webhook_events (event_id);
+            CREATE INDEX IF NOT EXISTS idx_webhook_events_gateway ON webhook_events (gateway);
+            CREATE INDEX IF NOT EXISTS idx_webhook_events_status ON webhook_events (status);
+            CREATE INDEX IF NOT EXISTS idx_payment_logs_order_number ON payment_logs (order_number);
+            CREATE INDEX IF NOT EXISTS idx_payment_logs_gateway_reference ON payment_logs (gateway_reference);
+            CREATE INDEX IF NOT EXISTS idx_payment_logs_status ON payment_logs (status);
+            CREATE INDEX IF NOT EXISTS idx_payment_logs_created_at ON payment_logs (created_at);
+            CREATE INDEX IF NOT EXISTS idx_wallet_transactions_user_id ON wallet_transactions (user_id);
+            CREATE INDEX IF NOT EXISTS idx_wallet_transactions_type ON wallet_transactions (type);
+            CREATE INDEX IF NOT EXISTS idx_wallet_transactions_created_at ON wallet_transactions (created_at);
+
             CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
             CREATE INDEX IF NOT EXISTS idx_users_uuid ON users (uuid);
             CREATE INDEX IF NOT EXISTS idx_users_created_at ON users (created_at);
             CREATE INDEX IF NOT EXISTS idx_roles_name ON roles (name);
             CREATE INDEX IF NOT EXISTS idx_permissions_name ON permissions (name);
-            CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles (user_id);
+            CREATE INDEX IF NOT EXISTS idx_user_roles_user_uuid ON user_roles (user_uuid);
             CREATE INDEX IF NOT EXISTS idx_user_roles_role_id ON user_roles (role_id);
             CREATE INDEX IF NOT EXISTS idx_role_permissions_role_id ON role_permissions (role_id);
             CREATE INDEX IF NOT EXISTS idx_role_permissions_permission_id ON role_permissions (permission_id);
@@ -389,8 +437,8 @@ final class Database
 
             -- Link admin user to admin role (assumes id 1 if fresh, but better handled by service usually)
             -- However, for a seed, we can attempt a subquery link
-            $insertIgnore INTO user_roles (user_id, role_id, assigned_at)
-            SELECT u.id, r.id, $now FROM users u, roles r WHERE u.email = 'admin@procurely.com' AND r.name = 'admin';
+            $insertIgnore INTO user_roles (user_uuid, role_id, assigned_at)
+            SELECT u.uuid, r.id, $now FROM users u, roles r WHERE u.email = 'admin@procurely.com' AND r.name = 'admin';
 
             $insertIgnore INTO permissions (name, description, created_at) VALUES 
             ('user.create', 'Create users', $now),
@@ -421,7 +469,7 @@ SQL;
             'idx_users_created_at' => 'CREATE INDEX idx_users_created_at ON users (created_at)',
             'idx_roles_name' => 'CREATE INDEX idx_roles_name ON roles (name)',
             'idx_permissions_name' => 'CREATE INDEX idx_permissions_name ON permissions (name)',
-            'idx_user_roles_user_id' => 'CREATE INDEX idx_user_roles_user_id ON user_roles (user_id)',
+            'idx_user_roles_user_uuid' => 'CREATE INDEX idx_user_roles_user_uuid ON user_roles (user_uuid)',
             'idx_user_roles_role_id' => 'CREATE INDEX idx_user_roles_role_id ON user_roles (role_id)',
             'idx_role_permissions_role_id' => 'CREATE INDEX idx_role_permissions_role_id ON role_permissions (role_id)',
             'idx_role_permissions_permission_id' => 'CREATE INDEX idx_role_permissions_permission_id ON role_permissions (permission_id)',
@@ -448,6 +496,16 @@ SQL;
             'idx_order_items_order_id' => 'CREATE INDEX idx_order_items_order_id ON order_items (order_id)',
             'idx_orders_status' => 'CREATE INDEX idx_orders_status ON orders (status)',
             'idx_orders_cart_token' => 'CREATE INDEX idx_orders_cart_token ON orders (cart_token)',
+            'idx_webhook_events_event_id' => 'CREATE INDEX idx_webhook_events_event_id ON webhook_events (event_id)',
+            'idx_webhook_events_gateway' => 'CREATE INDEX idx_webhook_events_gateway ON webhook_events (gateway)',
+            'idx_webhook_events_status' => 'CREATE INDEX idx_webhook_events_status ON webhook_events (status)',
+            'idx_payment_logs_order_number' => 'CREATE INDEX idx_payment_logs_order_number ON payment_logs (order_number)',
+            'idx_payment_logs_gateway_reference' => 'CREATE INDEX idx_payment_logs_gateway_reference ON payment_logs (gateway_reference)',
+            'idx_payment_logs_status' => 'CREATE INDEX idx_payment_logs_status ON payment_logs (status)',
+            'idx_payment_logs_created_at' => 'CREATE INDEX idx_payment_logs_created_at ON payment_logs (created_at)',
+            'idx_wallet_transactions_user_id' => 'CREATE INDEX idx_wallet_transactions_user_id ON wallet_transactions (user_id)',
+            'idx_wallet_transactions_type' => 'CREATE INDEX idx_wallet_transactions_type ON wallet_transactions (type)',
+            'idx_wallet_transactions_created_at' => 'CREATE INDEX idx_wallet_transactions_created_at ON wallet_transactions (created_at)',
         ];
 
         $statements = array_filter(array_map('trim', explode(';', $sql)));
@@ -478,6 +536,30 @@ SQL;
             } catch (\PDOException) {
                 // Silent fail for indexes if they already exist
             }
+        }
+
+        $this->addColumnIfMissing($pdo, 'orders', 'failure_reason', 'TEXT', $isMysql);
+    }
+
+    private function addColumnIfMissing(PDO $pdo, string $table, string $column, string $type, bool $isMysql): void
+    {
+        try {
+            if ($isMysql) {
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?");
+                $stmt->execute([$table, $column]);
+                if ((int)$stmt->fetchColumn() === 0) {
+                    $pdo->exec("ALTER TABLE `$table` ADD COLUMN `$column` $type");
+                }
+            } else {
+                $stmt = $pdo->prepare("PRAGMA table_info($table)");
+                $stmt->execute();
+                $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                if (!in_array($column, $columns, true)) {
+                    $pdo->exec("ALTER TABLE $table ADD COLUMN $column $type");
+                }
+            }
+        } catch (\PDOException) {
+            // Column may already exist or table doesn't exist yet
         }
     }
 }

@@ -4,6 +4,7 @@ import { useCart } from "@/components/cart/cart-provider";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { formatCurrency } from "@/lib/format";
 
 export function CartPageClient() {
   const { cart, updateItemQuantity, removeItem } = useCart();
@@ -44,7 +45,7 @@ export function CartPageClient() {
               <h3 className="text-base font-semibold text-[#13184f]">{item.product.name}</h3>
             </div>
             <div className="col-span-2 text-center text-[#13184f] font-medium lg:block">
-               ₦{item.product.price.toLocaleString()}
+               {formatCurrency(item.product.price)}
             </div>
             <div className="col-span-2 flex justify-center">
                <div className="flex w-[80px] items-center justify-between rounded border border-slate-300 px-3 py-2 text-[#13184f]">
@@ -60,7 +61,7 @@ export function CartPageClient() {
                </div>
             </div>
             <div className="col-span-2 text-right text-base font-bold text-[#13184f]">
-               ₦{item.lineTotal.toLocaleString()}
+               {formatCurrency(item.lineTotal)}
             </div>
           </div>
         ))}
@@ -94,15 +95,27 @@ export function CartPageClient() {
             <div className="space-y-4 text-[#13184f]">
                <div className="flex justify-between border-b border-slate-100 pb-4 text-sm font-semibold">
                   <span>Subtotal:</span>
-                  <span>₦{cart.subtotal.toLocaleString()}</span>
+                  <span>{formatCurrency(cart.subtotal)}</span>
                </div>
+               {cart.vat > 0 && (
+               <div className="flex justify-between border-b border-slate-100 pb-4 text-sm font-semibold">
+                  <span>VAT (7.5%):</span>
+                  <span>{formatCurrency(cart.vat)}</span>
+               </div>
+               )}
                <div className="flex justify-between border-b border-slate-100 pb-4 text-sm font-semibold">
                   <span>Shipping:</span>
-                  <span>Free</span>
+                  <span>{cart.shippingFee === 0 ? "Free" : formatCurrency(cart.shippingFee)}</span>
                </div>
-               <div className="flex justify-between pb-4 font-bold">
+               {cart.serviceFee > 0 && (
+               <div className="flex justify-between border-b border-slate-100 pb-4 text-sm font-semibold">
+                  <span>Service Fee:</span>
+                  <span>{formatCurrency(cart.serviceFee)}</span>
+               </div>
+               )}
+               <div className="flex justify-between pb-4 font-bold text-lg">
                   <span>Total:</span>
-                  <span>₦{cart.subtotal.toLocaleString()}</span>
+                  <span>{formatCurrency(cart.total)}</span>
                </div>
             </div>
             <Link href="/checkout" className="mt-4 flex w-full justify-center rounded bg-[#0b103e] py-4 font-semibold text-white transition hover:bg-[#13184f] shadow-md hover:shadow-lg">

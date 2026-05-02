@@ -32,11 +32,13 @@ export function SignupForm() {
           const guestToken = window.sessionStorage.getItem("procurely-cart-token");
           if (guestToken) {
             try {
-              // We use the user's UUID as the persistent cart destination to link them
-              await api.mergeCart({
-                sourceToken: guestToken,
-                destinationToken: response.user.id
-              });
+               // Merge guest cart into user's cart using the user's cart token
+               // The backend expects a cart token, not a user ID
+               const userCartToken = response.user.id; // Backend uses user ID as cart token for logged-in users
+               await api.mergeCart({
+                 sourceToken: guestToken,
+                 destinationToken: userCartToken
+               });
               // Update session storage to use the persistent user-linked token
               window.sessionStorage.setItem("procurely-cart-token", response.user.id);
             } catch (mergeError) {
@@ -106,17 +108,19 @@ export function SignupForm() {
         value={form.password}
       />
 
-      <p className="text-xs leading-5 text-slate-500">
-        You are agreeing to the{" "}
-        <span className="font-semibold text-[var(--color-brand-blue)]">
-          Terms of Services
-        </span>{" "}
-        and{" "}
-        <span className="font-semibold text-[var(--color-brand-blue)]">
-          Privacy Policy
-        </span>
-        .
-      </p>
+       <label className="flex items-start gap-2 cursor-pointer">
+         <input type="checkbox" required className="mt-1 size-4 rounded border-slate-300 accent-[#db4444]" />
+         <span className="text-xs leading-5 text-slate-500">
+           I agree to the{" "}
+           <Link href="/terms-of-use" className="font-semibold text-[var(--color-brand-blue)]">
+             Terms of Services
+           </Link>{" "}
+           and{" "}
+           <Link href="/privacy-policy" className="font-semibold text-[var(--color-brand-blue)]">
+             Privacy Policy
+           </Link>
+         </span>
+       </label>
 
       <button
         className="inline-flex h-12 w-full items-center justify-center rounded-[12px] bg-[var(--color-brand-navy)] text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60"

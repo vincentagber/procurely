@@ -20,6 +20,7 @@ final class OrderService
         private readonly PaymentProcessorInterface $paymentProcessor,
         private readonly \Procurely\Api\Support\EmailService $emailService,
         private readonly NotificationService $notificationService,
+        private readonly \Procurely\Api\Services\ReconciliationService $reconciliationService,
     ) {
     }
 
@@ -40,7 +41,12 @@ final class OrderService
         $customerEmail = Input::email($payload, 'customerEmail', 'customer email');
         $phone = Input::phone($payload, 'phone', 'phone number');
         $address = Input::requiredString($payload, 'address', 'Address', 400, false);
-        $paymentMethod = (string) ($payload['paymentMethod'] ?? 'card');
+        $paymentMethod = Input::enum(
+            $payload['paymentMethod'] ?? 'card',
+            ['card', 'cod', 'wallet'],
+            'Payment method',
+            'card'
+        );
 
         $cart = $this->cartService->getCart($cartToken);
         if (($cart['items'] ?? []) === []) {
@@ -94,7 +100,6 @@ final class OrderService
             // Map payment method to initial status
             $initialStatus = 'processing';
             if ($paymentMethod === 'cod') $initialStatus = 'pending_delivery';
-            if ($paymentMethod === 'bank') $initialStatus = 'awaiting_confirmation';
 
             $insertOrder = $pdo->prepare('
                 INSERT INTO orders (user_id, order_number, cart_token, customer_name, customer_email, phone, address, subtotal, vat, shipping_fee, service_fee, total, status, payment_method, created_at)
@@ -140,13 +145,17 @@ final class OrderService
             // 5. Finalize State
             $finalOrder = $this->findByOrderNumber($orderNumber, '', '', true);
 
-            // Skip immediate capture if it's COD, Bank, or we explicitly asked to skip (for Paystack flow)
-            $isAsyncPayment = in_array($paymentMethod, ['cod', 'bank', 'card']); 
+            // Skip immediate capture if it's COD, Card, or Wallet (wallet needs separate processing)
+            $isAsyncPayment = in_array($paymentMethod, ['cod', 'card', 'wallet']); 
             
             if (!$skipPayment && !$isAsyncPayment) {
                 if (!$this->paymentProcessor->capture($orderNumber, (int) $cart['total'], $customerEmail)) {
                     throw new ApiException('Payment verification failed. Please try again.', 502);
                 }
+            }
+            
+            // Send confirmation email for all successful orders (including COD)
+            if (!$skipPayment) {
                 $this->emailService->sendOrderConfirmation($finalOrder);
             }
 
@@ -163,7 +172,7 @@ final class OrderService
             $pdo = $this->database->connection();
             $adminStmt = $pdo->prepare('
                 SELECT u.id FROM users u
-                JOIN user_roles ur ON u.id = ur.user_id
+                JOIN user_roles ur ON u.uuid = ur.user_uuid
                 JOIN roles r ON ur.role_id = r.id
                 WHERE r.name = "admin"
             ');
@@ -303,9 +312,19 @@ final class OrderService
     {
         $status = (string) ($event['event'] ?? '');
         $reference = (string) ($event['data']['reference'] ?? '');
+        $eventId = (string) ($event['id'] ?? $reference);
+
+        if ($status === 'charge.failed' || $status === 'charge.timeout' || $status === 'charge.expired') {
+            return $this->handleWebhookFailure($event, $status, $eventId);
+        }
 
         if ($status !== 'charge.success') {
             return ['status' => 'ignored'];
+        }
+
+        if ($this->reconciliationService->isWebhookProcessed($eventId, 'paystack')) {
+            Telemetry::info('Duplicate webhook ignored', ['event_id' => $eventId]);
+            return ['status' => 'already_processed'];
         }
 
         Telemetry::start('webhook_processing');
@@ -313,7 +332,7 @@ final class OrderService
         $metadata = $event['data']['metadata'] ?? [];
         $isWalletFunding = ($metadata['type'] ?? '') === 'wallet_funding';
 
-        return $this->database->transaction(function (PDO $pdo) use ($event, $status, $reference, $metadata, $isWalletFunding) {
+        return $this->database->transaction(function (PDO $pdo) use ($event, $status, $reference, $metadata, $isWalletFunding, $eventId) {
             if ($isWalletFunding) {
                 $userId = (int) ($metadata['user_id'] ?? 0);
                 $creditAmount = (int) ($metadata['amount'] ?? 0);
@@ -326,6 +345,29 @@ final class OrderService
                 $update = $pdo->prepare('UPDATE users SET wallet_balance = wallet_balance + :amount, updated_at = :now WHERE id = :id');
                 $update->execute(['amount' => $creditAmount, 'id' => $userId, 'now' => $now]);
 
+                $stmt = $pdo->prepare('SELECT wallet_balance FROM users WHERE id = :id LIMIT 1');
+                $stmt->execute(['id' => $userId]);
+                $newBalance = (int) ($stmt->fetchColumn() ?? 0);
+
+                $this->reconciliationService->recordWalletTransaction(
+                    $userId,
+                    'credit',
+                    $creditAmount,
+                    $newBalance,
+                    $reference,
+                    'Wallet funded via Paystack'
+                );
+
+                $this->reconciliationService->logPayment(
+                    'paystack',
+                    $reference,
+                    $creditAmount,
+                    'success',
+                    null,
+                    'NGN',
+                    ['type' => 'wallet_funding', 'user_id' => $userId]
+                );
+
                 $this->notificationService->createNotification(
                     $userId,
                     'wallet.funded',
@@ -333,6 +375,8 @@ final class OrderService
                     sprintf('Your wallet has been credited with N%s', number_format($creditAmount / 100, 2)),
                     ['amount' => $creditAmount]
                 );
+
+                $this->reconciliationService->recordWebhookEvent($eventId, $status, 'paystack', hash('sha256', json_encode($event)));
 
                 $duration = Telemetry::stop('webhook_processing');
                 Telemetry::info('Wallet funded via webhook', ['userId' => $userId, 'amount' => $creditAmount, 'ms' => $duration]);
@@ -344,15 +388,32 @@ final class OrderService
             $order = $stmt->fetch();
 
             if ($order === false) {
+                $this->reconciliationService->logPayment(
+                    'paystack',
+                    $reference,
+                    (int) ($event['data']['amount'] ?? 0),
+                    'orphan',
+                    null,
+                    'NGN',
+                    ['event_id' => $eventId]
+                );
                 return ['status' => 'order_not_found'];
             }
 
-            // Verify amount matches order total (Paystack sends amount in cents/kobo)
             $paidAmount = (int) ($event['data']['amount'] ?? 0);
             $expectedAmount = (int) $order['total'];
 
             if ($paidAmount !== $expectedAmount) {
                 Telemetry::error('Webhook amount mismatch', ['paid' => $paidAmount, 'expected' => $expectedAmount, 'ref' => $reference]);
+                $this->reconciliationService->logPayment(
+                    'paystack',
+                    $reference,
+                    $paidAmount,
+                    'amount_mismatch',
+                    $reference,
+                    'NGN',
+                    ['expected' => $expectedAmount, 'event_id' => $eventId]
+                );
                 return [
                     'status' => 'amount_mismatch',
                     'received' => $paidAmount,
@@ -368,18 +429,25 @@ final class OrderService
             $update = $pdo->prepare('UPDATE orders SET status = "paid", paid_at = :paid_at WHERE order_number = :reference');
             $update->execute(['paid_at' => $now, 'reference' => $reference]);
 
-            // Clear the associated cart
             if (!empty($order['cart_token'])) {
                 $this->cartService->clearCart((string) $order['cart_token']);
             }
 
-            // Fetch order data BEFORE commit so it's available for email + notification
+            $this->reconciliationService->logPayment(
+                'paystack',
+                $reference,
+                $paidAmount,
+                'success',
+                $reference,
+                'NGN',
+                ['event_id' => $eventId]
+            );
+
             $orderData = $this->findByOrderNumber($reference, '', '', true);
 
-            // Notify admins
             $adminStmt = $pdo->prepare('
                 SELECT u.id FROM users u
-                JOIN user_roles ur ON u.id = ur.user_id
+                JOIN user_roles ur ON u.uuid = ur.user_uuid
                 JOIN roles r ON ur.role_id = r.id
                 WHERE r.name = "admin"
             ');
@@ -396,9 +464,9 @@ final class OrderService
                 );
             }
 
-            // Email is a side-effect, outside the transaction usually, but here we are inside.
-            // Move it outside for better practice if needed, but for now we keep the logic.
             $this->emailService->sendOrderConfirmation($orderData);
+
+            $this->reconciliationService->recordWebhookEvent($eventId, $status, 'paystack', hash('sha256', json_encode($event)));
 
             $duration = Telemetry::stop('webhook_processing');
             Telemetry::info('Order paid via webhook', ['reference' => $reference, 'ms' => $duration]);
@@ -407,15 +475,106 @@ final class OrderService
         });
     }
 
-    public function getUserOrders(int $userId): array
+    public function payWithWallet(int $userId, string $orderNumber): array
+    {
+        return $this->database->transaction(function (PDO $pdo) use ($userId, $orderNumber) {
+            $userStmt = $pdo->prepare('SELECT wallet_balance, email, full_name FROM users WHERE id = :id LIMIT 1');
+            $userStmt->execute(['id' => $userId]);
+            $user = $userStmt->fetch();
+
+            if (!$user) {
+                throw new ApiException('User not found.', 404);
+            }
+
+            $orderStmt = $pdo->prepare('SELECT status, total, cart_token FROM orders WHERE order_number = :order_number LIMIT 1');
+            $orderStmt->execute(['order_number' => $orderNumber]);
+            $order = $orderStmt->fetch();
+
+            if (!$order) {
+                throw new ApiException('Order not found.', 404);
+            }
+
+            if ($order['status'] === 'paid') {
+                throw new ApiException('Order is already paid.', 409);
+            }
+
+            $walletBalance = (int) $user['wallet_balance'];
+            $orderTotal = (int) $order['total'];
+
+            if ($walletBalance < $orderTotal) {
+                throw new ApiException(
+                    sprintf('Insufficient wallet balance. Required: N%s, Available: N%s', number_format($orderTotal / 100, 2), number_format($walletBalance / 100, 2)),
+                    402
+                );
+            }
+
+            $newBalance = $walletBalance - $orderTotal;
+            $now = (new DateTimeImmutable())->format('Y-m-d H:i:s');
+
+            $updateUser = $pdo->prepare('UPDATE users SET wallet_balance = :balance, updated_at = :now WHERE id = :id');
+            $updateUser->execute(['balance' => $newBalance, 'now' => $now, 'id' => $userId]);
+
+            $updateOrder = $pdo->prepare('UPDATE orders SET status = "paid", paid_at = :paid_at, payment_method = "wallet" WHERE order_number = :order_number');
+            $updateOrder->execute(['paid_at' => $now, 'order_number' => $orderNumber]);
+
+            if (!empty($order['cart_token'])) {
+                $this->cartService->clearCart((string) $order['cart_token']);
+            }
+
+            $this->reconciliationService->recordWalletTransaction(
+                $userId,
+                'debit',
+                $orderTotal,
+                $newBalance,
+                $orderNumber,
+                sprintf('Payment for order %s', $orderNumber)
+            );
+
+            $this->reconciliationService->logPayment(
+                'wallet',
+                $orderNumber,
+                $orderTotal,
+                'success',
+                $orderNumber,
+                'NGN',
+                ['user_id' => $userId]
+            );
+
+            $orderData = $this->findByOrderNumber($orderNumber, '', '', true);
+
+            $this->emailService->sendOrderConfirmation($orderData);
+
+            return [
+                'success' => true,
+                'orderNumber' => $orderNumber,
+                'newWalletBalance' => $newBalance,
+                'message' => 'Order paid successfully from wallet.',
+            ];
+        });
+    }
+
+    public function getUserOrders(int $userId, int $limit = 50, int $offset = 0): array
     {
         $pdo = $this->database->connection();
-        $stmt = $pdo->prepare(
-            'SELECT order_number, status, total, created_at FROM orders WHERE user_id = :user_id ORDER BY created_at DESC'
-        );
-        $stmt->execute(['user_id' => $userId]);
 
-        return $stmt->fetchAll();
+        $stmt = $pdo->prepare('SELECT COUNT(*) as total FROM orders WHERE user_id = :user_id');
+        $stmt->execute(['user_id' => $userId]);
+        $total = (int) $stmt->fetchColumn();
+
+        $stmt = $pdo->prepare(
+            'SELECT order_number, status, total, payment_method, created_at FROM orders WHERE user_id = :user_id ORDER BY created_at DESC LIMIT :limit OFFSET :offset'
+        );
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return [
+            'data' => $stmt->fetchAll(),
+            'total' => $total,
+            'limit' => $limit,
+            'offset' => $offset,
+        ];
     }
 
     public function markOrderPaid(string $orderNumber): void
@@ -442,5 +601,134 @@ final class OrderService
             $orderData = $this->findByOrderNumber($orderNumber, '', '', true);
             $this->emailService->sendOrderConfirmation($orderData);
         });
+    }
+
+    public function markOrderFailed(string $orderNumber, string $reason = ''): array
+    {
+        $pdo = $this->database->connection();
+        
+        $stmt = $pdo->prepare('SELECT status, cart_token FROM orders WHERE order_number = :order_number LIMIT 1');
+        $stmt->execute(['order_number' => $orderNumber]);
+        $order = $stmt->fetch();
+
+        if ($order === false) {
+            throw new ApiException('Order not found.', 404);
+        }
+
+        if ($order['status'] === 'paid') {
+            throw new ApiException('Cannot mark a paid order as failed.', 422);
+        }
+
+        $restored = $this->restoreInventoryForOrder($orderNumber);
+
+        $now = (new DateTimeImmutable())->format('Y-m-d H:i:s');
+        $update = $pdo->prepare('UPDATE orders SET status = "failed", failure_reason = :reason, updated_at = :now WHERE order_number = :order_number');
+        $update->execute(['reason' => $reason, 'now' => $now, 'order_number' => $orderNumber]);
+
+        if (!empty($order['cart_token'])) {
+            $this->cartService->clearCart((string) $order['cart_token']);
+        }
+
+        return [
+            'message' => 'Order marked as failed.',
+            'restored_stock' => $restored,
+        ];
+    }
+
+    public function restoreInventoryForOrder(string $orderNumber): int
+    {
+        $pdo = $this->database->connection();
+
+        $stmt = $pdo->prepare('
+            SELECT oi.product_id, oi.quantity
+            FROM order_items oi
+            INNER JOIN orders o ON o.id = oi.order_id
+            WHERE o.order_number = :order_number
+        ');
+        $stmt->execute(['order_number' => $orderNumber]);
+        $items = $stmt->fetchAll();
+
+        $restored = 0;
+        $now = (new DateTimeImmutable())->format('Y-m-d H:i:s');
+        $restoreStmt = $pdo->prepare('UPDATE inventory SET stock_level = stock_level + :qty, updated_at = :now WHERE product_id = :product_id');
+
+        foreach ($items as $item) {
+            $restoreStmt->execute([
+                'qty' => (int) $item['quantity'],
+                'now' => $now,
+                'product_id' => (string) $item['product_id'],
+            ]);
+            $restored += (int) $item['quantity'];
+        }
+
+        return $restored;
+    }
+
+    public function cleanupAbandonedOrders(int $ageMinutes = 30): int
+    {
+        $pdo = $this->database->connection();
+        $isMysql = ($_ENV['DB_DRIVER'] ?? 'sqlite') === 'mysql';
+
+        $stmt = $pdo->prepare($isMysql
+            ? 'SELECT order_number FROM orders
+               WHERE status = "processing"
+               AND created_at < DATE_SUB(NOW(), INTERVAL :threshold MINUTE)'
+            : 'SELECT order_number FROM orders
+               WHERE status = "processing"
+               AND created_at < datetime("now", :threshold)'
+        );
+        $stmt->execute(['threshold' => '-' . $ageMinutes . ' minutes']);
+        $abandoned = $stmt->fetchAll();
+
+        $cleaned = 0;
+        foreach ($abandoned as $order) {
+            try {
+                $this->restoreInventoryForOrder((string) $order['order_number']);
+                
+                $now = (new DateTimeImmutable())->format('Y-m-d H:i:s');
+                $update = $pdo->prepare('UPDATE orders SET status = "abandoned", updated_at = :now WHERE order_number = :order_number');
+                $update->execute(['now' => $now, 'order_number' => $order['order_number']]);
+                
+                $cleaned++;
+            } catch (\Exception $e) {
+                Telemetry::error('Abandoned order cleanup failed', ['order' => $order['order_number'], 'error' => $e->getMessage()]);
+            }
+        }
+
+        return $cleaned;
+    }
+
+    private function handleWebhookFailure(array $event, string $eventType, string $eventId): array
+    {
+        $reference = (string) ($event['data']['reference'] ?? '');
+        $gatewayMessage = (string) ($event['data']['gateway_response'] ?? '');
+
+        if ($this->reconciliationService->isWebhookProcessed($eventId, 'paystack')) {
+            Telemetry::info('Duplicate failure webhook ignored', ['event_id' => $eventId]);
+            return ['status' => 'already_processed'];
+        }
+
+        try {
+            $result = $this->markOrderFailed($reference, $gatewayMessage ?: $eventType);
+
+            $this->reconciliationService->logPayment(
+                'paystack',
+                $reference,
+                (int) ($event['data']['amount'] ?? 0),
+                'failed',
+                null,
+                'NGN',
+                ['gateway_response' => $gatewayMessage, 'event_type' => $eventType]
+            );
+
+            $this->reconciliationService->recordWebhookEvent($eventId, $eventType, 'paystack', hash('sha256', json_encode($event)));
+
+            Telemetry::info('Payment failure handled via webhook', ['reference' => $reference, 'reason' => $gatewayMessage]);
+
+            return ['status' => 'failure_handled', 'reference' => $reference, 'restored_stock' => $result['restored_stock']];
+        } catch (\Exception $e) {
+            Telemetry::error('Failed to process payment failure webhook', ['reference' => $reference, 'error' => $e->getMessage()]);
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
     }
 }

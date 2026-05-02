@@ -208,6 +208,9 @@ export type Order = {
     quantity: number;
     lineTotal: number;
   }>;
+  supplierName?: string;
+  supplierContact?: string;
+  siteName?: string;
 };
 
 export type Wishlist = {

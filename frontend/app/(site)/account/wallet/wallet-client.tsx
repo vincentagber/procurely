@@ -58,16 +58,33 @@ export default function WalletClient() {
   const handleFundWallet = async (amount: number) => {
     try {
       setIsLoading(true);
+      // Backend expects amount in kobo (smallest unit)
       const res = await api.fundWallet({ amount: Math.round(amount * 100) });
       if (res.authorization_url) {
         window.location.href = res.authorization_url;
-      } else {
-        await refreshUser();
-        setSuccessModal({
-          isOpen: true,
-          title: "Transfer Successful",
-          message: `₦${amount.toLocaleString()} has been successfully added to your wallet.`
-        });
+      } else if (res.reference) {
+        // Handle Paystack popup if not redirecting
+        const paystack = (window as unknown as Record<string, unknown>).PaystackPop as Record<string, unknown>;
+        if (paystack) {
+          const handler = (paystack.setup as (options: Record<string, unknown>) => { openIframe: () => void })({
+            key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+            email: user?.email || "",
+            amount: Math.round(amount * 100),
+            ref: res.reference,
+            callback: function(response: Record<string, string>) {
+              refreshUser();
+              setSuccessModal({
+                isOpen: true,
+                title: "Wallet Funded",
+                message: `₦${amount.toLocaleString()} has been successfully added to your wallet.`
+              });
+            },
+            onClose: function() {
+              setIsLoading(false);
+            }
+          });
+          handler.openIframe();
+        }
       }
     } catch (err: any) {
       alert(err.message || "Failed to initialize funding.");
@@ -80,17 +97,16 @@ export default function WalletClient() {
   const handleWithdraw = async (amount: number) => {
     try {
       setIsLoading(true);
-      // Simulate API call for withdrawal locally or call actual if exists
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      await refreshUser();
+      // TODO: Replace with actual withdrawal API when backend supports it
+      // For now, show a message that withdrawals are processed manually
       setIsWithdrawModalOpen(false);
       setSuccessModal({
         isOpen: true,
-        title: "Withdraw Successful",
-        message: `₦${amount.toLocaleString()} has been credited your bank account.`
+        title: "Withdrawal Request Submitted",
+        message: `Your withdrawal request for ₦${amount.toLocaleString()} has been submitted. Our team will process it within 24-48 hours.`
       });
     } catch (err: any) {
-      alert("Failed to process withdrawal.");
+      alert("Failed to process withdrawal request.");
     } finally {
       setIsLoading(false);
     }

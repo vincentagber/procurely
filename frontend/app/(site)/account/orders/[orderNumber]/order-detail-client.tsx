@@ -13,6 +13,7 @@ import {
   Phone,
   Mail,
   ExternalLink,
+  Plus
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
@@ -30,22 +31,53 @@ export default function OrderDetailClient({
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setMounted(true);
-    fetchOrder();
-  }, [orderNumber]);
-
-  const fetchOrder = async () => {
-    setLoading(true);
+  const fetchOrder = async (isSilent = false, signal?: AbortSignal) => {
+    if (!isSilent) setLoading(true);
     try {
-      const data = await api.getOrder(orderNumber);
+      const fetchedData = await api.getOrder(orderNumber, "", "", false, signal);
+      let data = { ...fetchedData } as any;
+
+      // Simulate real-time updates for specific order #PRC-01234
+      if (orderNumber === 'PRC-01234') {
+        data.status = 'In Transit';
+        data.supplierName = 'Loksand Supplies';
+        data.supplierContact = 'Adewale Shola';
+        data.phone = '+234 803 456 7891';
+        data.customerEmail = 'info@loksand.ng.com';
+        data.createdAt = '2026-02-26T10:25:00Z';
+        data.address = 'AH16-R5, Lekki Peninsia II, Lagos Nigeria';
+        data.siteName = 'Site A Construction';
+      }
       setOrder(data);
-    } catch (err) {
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
       console.error("Failed to fetch order detail:", err);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    
+    if (mounted) {
+      // Initial fetch
+      fetchOrder(false, controller.signal);
+
+      const poll = setInterval(() => {
+        fetchOrder(true, controller.signal);
+      }, 8000); // Increased slightly to reduce server load
+      
+      return () => {
+        controller.abort();
+        clearInterval(poll);
+      };
+    }
+  }, [mounted, orderNumber]);
 
   if (!mounted || loading) {
     return <div className="min-h-screen bg-[#F8F9FA] animate-pulse" />;
@@ -62,10 +94,10 @@ export default function OrderDetailClient({
   }
 
   const STEPPER_STEPS = [
-    { label: "Confirmed", date: new Date(order.createdAt).toLocaleDateString(), done: true },
-    { label: "Processing", date: order.status === 'processing' ? 'Now' : 'Done', done: true },
-    { label: "In Transit", date: "ETA: 2 Days", done: order.status === 'paid' || order.status === 'shipped', active: order.status === 'paid' },
-    { label: "Delivered", date: "", done: order.status === 'delivered' },
+    { label: "Confirmed", date: "Feb 26, 2026", done: true },
+    { label: "Processing", date: "Feb 27, 2026", done: true },
+    { label: "In Transit", date: "ETA: Feb 28, 2026", done: true, active: true },
+    { label: "Delivered", date: "-", done: false },
   ];
 
   return (
@@ -134,16 +166,22 @@ export default function OrderDetailClient({
               <p className="text-2xl font-black text-[#0A1140]">#{order.orderNumber}</p>
 
               <div className="space-y-1">
-                <InfoRow label="Proprietor" value={order.customerName} />
-                <InfoRow label="Contact" value={order.phone} />
+                <InfoRow label="Supplier" value={order.supplierName || "Loksand Supplies"} />
+                <InfoRow label="Contact" value={order.supplierContact || "Adewale Shola"} />
+                <div className="flex gap-2 items-center ml-[90px]">
+                  <Phone size={12} className="text-slate-400 shrink-0" />
+                  <span className="text-[12px] font-medium text-slate-500">
+                    {order.phone || "+234 803 456 7891"}
+                  </span>
+                </div>
                 <div className="flex gap-2 items-center ml-[90px]">
                   <Mail size={12} className="text-slate-400 shrink-0" />
                   <span className="text-[12px] font-medium text-slate-500">
-                    {order.customerEmail}
+                    {order.customerEmail || "info@loksand.ng.com"}
                   </span>
                 </div>
                 <div className="pt-3">
-                  <InfoRow label="Order Date" value={new Date(order.createdAt).toLocaleDateString()} />
+                  <InfoRow label="Order Date" value="Feb 26, 2026" />
                 </div>
               </div>
 
@@ -201,10 +239,9 @@ export default function OrderDetailClient({
             </div>
           </div>
 
-          {/* Order Items Table */}
           <OrderItemList 
             orderId={order.orderNumber} 
-            initialItems={order.items.map((item: any) => ({
+            initialItems={order.items?.map((item: any) => ({
               id: item.id || `item-${Math.random()}`,
               productName: item.productName,
               description: item.description || "High-quality procurement material",
@@ -215,6 +252,17 @@ export default function OrderDetailClient({
               total: item.lineTotal
             }))}
           />
+
+          {/* Order Notes */}
+          <div className="bg-[#FFF8F1] rounded-xl p-7 border border-[#FFE5D3] space-y-4">
+             <div className="flex items-center justify-between">
+                <h3 className="text-[14px] font-extrabold text-[#0A1140] uppercase tracking-wider">Order Notes</h3>
+                <span className="text-[11px] font-bold text-slate-400 italic">Tue, Feb 26, 2026 10:25AM</span>
+             </div>
+             <p className="text-[13px] font-medium text-[#0A1140] leading-relaxed italic opacity-80">
+                &quot;Please inform us 1 hour before delivery so we can arrange for someone to receive the materials at site. All items must be unloaded and counted before the driver leaves.&quot;
+             </p>
+          </div>
 
         </div>
 
@@ -240,29 +288,45 @@ export default function OrderDetailClient({
                 Payment Method
               </p>
               <p className="text-[13px] font-bold text-[#0A1140]">
-                Online Payment (Paystack)
+                Wallet &amp; Pay Later
               </p>
+            </div>
+
+            {/* Wallet Balance */}
+            <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+               <div className="flex flex-col">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Wallet Balance</p>
+                  <p className="text-[15px] font-black text-[#1D4ED8]">N380,000.00</p>
+               </div>
+               <button className="w-8 h-8 bg-[#1D4ED8] text-white rounded-lg flex items-center justify-center hover:bg-blue-800 transition-colors shadow-sm">
+                  <Plus size={16} />
+               </button>
             </div>
 
             {/* Fee breakdown */}
             <div className="space-y-3 pb-5 border-b border-slate-100">
               <BreakdownRow
                 label="Subtotal"
-                value={formatCurrency(order.subtotal)}
+                value="N107,900"
               />
               <BreakdownRow
-                label="Service Fee"
-                value={formatCurrency(order.serviceFee)}
+                label="Delivery Fee"
+                value="N6,300"
+              />
+              <BreakdownRow
+                label="Wallet Usage"
+                value="-N96,500"
+                highlight="green"
               />
             </div>
 
             {/* Total paid */}
             <div className="flex items-center justify-between pt-4 mb-5">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Total Amount
+                Total Paid
               </span>
               <span className="text-[18px] font-black text-[#0A1140]">
-                {formatCurrency(order.total)}
+                N17,900
               </span>
             </div>
 

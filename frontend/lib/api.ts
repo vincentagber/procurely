@@ -22,7 +22,7 @@ if (
   );
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
 
   // Add Authorization header if token exists in localStorage
@@ -49,7 +49,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === "TimeoutError") {
-      throw new Error("The request timed out. Please try again.");
+      throw new Error(`The request to ${path} timed out. Please try again.`);
     }
 
     console.error(`[Procurely API] Fetch failed to ${apiBaseUrl}${path}:`, error);
@@ -101,8 +101,8 @@ export const api = {
       method: "POST",
     });
   },
-  getNotifications() {
-    return request<Array<{ id: number; type: string; title: string; message?: string; data?: any; created_at: string }>>("/api/notifications");
+  getNotifications(signal?: AbortSignal) {
+    return request<Array<{ id: number; type: string; title: string; message?: string; data?: any; created_at: string }>>("/api/notifications", { signal });
   },
   markNotificationRead(id: number) {
     return request<{ message: string }>(`/api/notifications/${id}/read`, {
@@ -149,6 +149,17 @@ export const api = {
   },
   getPaymentMethods() {
     return request<any[]>("/api/account/payment-methods");
+  },
+  addPaymentMethod(payload: any) {
+    return request<any>("/api/account/payment-methods", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  deletePaymentMethod(id: number) {
+    return request<{ message: string }>(`/api/account/payment-methods/${id}`, {
+      method: "DELETE",
+    });
   },
   getCart(cartToken: string) {
     return request<Cart>(`/api/cart/${cartToken}`);
@@ -233,22 +244,36 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
-  getOrder(orderNumber: string, cartToken: string = "", email: string = "") {
+  getOrder(orderNumber: string, cartToken: string = "", email: string = "", isAdmin: boolean = false, signal?: AbortSignal) {
     const params = new URLSearchParams();
     if (cartToken) params.set("cartToken", cartToken);
     if (email) params.set("email", email);
+    if (isAdmin) params.set("isAdmin", "true");
     
     const queryString = params.toString() ? `?${params.toString()}` : "";
-    return request<Order>(`/api/orders/${encodeURIComponent(orderNumber)}${queryString}`);
+    return request<Order>(`/api/orders/${encodeURIComponent(orderNumber)}${queryString}`, { signal });
   },
-  getAccountOrders() {
-    return request<any[]>("/api/account/orders");
+  getAccountOrders(limit = 50, offset = 0) {
+    return request<{ data: any[]; total: number; limit: number; offset: number }>(
+      `/api/account/orders?limit=${limit}&offset=${offset}`,
+    );
   },
   fundWallet(payload: { amount: number }) {
     return request<{ authorization_url: string; reference: string }>("/api/wallet/fund", {
       method: "POST",
       body: JSON.stringify(payload),
     });
+  },
+  payOrderWithWallet(payload: { orderNumber: string }) {
+    return request<{ success: boolean; orderNumber: string; newWalletBalance: number; message: string }>("/api/wallet/pay-order", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  getWalletTransactions(limit = 50, offset = 0) {
+    return request<{ data: any[]; total: number; limit: number; offset: number }>(
+      `/api/account/wallet/transactions?limit=${limit}&offset=${offset}`,
+    );
   },
   getWishlist(wishlistToken: string) {
     return request<{ wishlistToken: string; items: any[] }>(`/api/wishlist/${wishlistToken}`);
@@ -307,6 +332,14 @@ export const api = {
     return request<{ message: string }>(`/api/admin/users/${encodeURIComponent(uuid)}`, {
       method: "DELETE",
     });
+  },
+  getReconciliation() {
+    return request<{ total_payments_checked: number; total_stale_orders: number; inconsistencies: any[]; inconsistency_count: number }>("/api/admin/reconcile");
+  },
+  getPaymentLogs(limit = 50, offset = 0) {
+    return request<{ data: any[]; total: number; limit: number; offset: number }>(
+      `/api/admin/payment-logs?limit=${limit}&offset=${offset}`,
+    );
   },
 };
 

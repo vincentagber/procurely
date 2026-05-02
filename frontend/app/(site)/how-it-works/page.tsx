@@ -203,7 +203,7 @@ export default async function HowItWorksPage() {
             {[
               { icon: Search, title: "Browse Catalog", desc: "Browse thousands of materials with technical specs, and real-time stock and localized pricing." },
               { icon: ShoppingCart, title: "Build Your Cart", desc: "Add items, adjust quantities, and see estimated delivery dates for each supplier batch." },
-              { icon: CreditCard, title: "See Checkout", desc: "Pay via card, bank transfer, or multiple payment options are multiple supported." },
+              { icon: CreditCard, title: "See Checkout", desc: "Pay via card (Paystack) or cash on delivery." },
               { icon: MapPin, title: "Site Delivery", desc: "Real-time GPS tracking for your materials. schedule offloading and site access for arrival." },
             ].map((step, i) => (
               <div key={i} className="rounded-[16px] bg-white border border-slate-100 p-8 shadow-sm transition-shadow hover:shadow-md">

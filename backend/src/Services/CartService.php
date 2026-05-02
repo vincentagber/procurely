@@ -6,6 +6,7 @@ namespace Procurely\Api\Services;
 
 use DateTimeImmutable;
 use Procurely\Api\Support\ApiException;
+use Procurely\Api\Support\Config;
 use Procurely\Api\Support\ContentStore;
 use Procurely\Api\Support\Database;
 use Procurely\Api\Support\Input;
@@ -55,11 +56,9 @@ final class CartService
             ];
         }
 
-        $serviceFee = $subtotal >= 100000 ? 0 : ($subtotal > 0 ? 3500 : 0);
-        
-        // Centralized business rules for VAT and Shipping
-        $vat = round($subtotal * 0.075); // 7.5% VAT
-        $shippingFee = $subtotal > 0 ? 20000 : 0; // Flat N20k shipping for active carts
+        $serviceFee = Config::serviceFee($subtotal);
+        $vat = Config::vat($subtotal);
+        $shippingFee = $subtotal > 0 ? Config::shippingFee($subtotal) : 0;
 
         return [
             'cartToken' => $cartToken,

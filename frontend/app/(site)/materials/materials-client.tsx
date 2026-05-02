@@ -29,8 +29,7 @@ export function MaterialsClient({ products }: { products: Product[] }) {
   ];
 
   const catalog = useMemo(() => {
-     // Duplicating the json mock sample safely to generate a larger catalog feel
-     return [...products, ...products, ...products, ...products].map((p, i) => ({...p, listKey: `${p.id}-${i}`}));
+     return products.map((p, i) => ({...p, listKey: `${p.id}-${i}`}));
   }, [products]);
 
   const filteredProducts = useMemo(() => {

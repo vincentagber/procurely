@@ -27,6 +27,8 @@ import { api } from "@/lib/api";
 import { SuccessModal } from "@/components/account/success-modal";
 import { AuthenticatorModal } from "@/components/account/authenticator-modal";
 import { ChangePasswordModal } from "@/components/account/change-password-modal";
+import { AddAddressModal } from "@/components/account/add-address-modal";
+import { AddPaymentModal } from "@/components/account/add-payment-modal";
 
 export default function SettingsClient() {
    const router = useRouter();
@@ -36,6 +38,8 @@ export default function SettingsClient() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [successModal, setSuccessModal] = useState<{ isOpen: boolean; title?: string; message: string }>({
     isOpen: false,
     message: ""
@@ -60,6 +64,7 @@ export default function SettingsClient() {
   });
 
   const [addresses, setAddresses] = useState<any[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 
   useEffect(() => {
     setHasMounted(true);
@@ -73,6 +78,7 @@ export default function SettingsClient() {
       });
       fetchCompanyInfo();
       fetchAddresses();
+      fetchPaymentMethods();
     }
   }, [user]);
 
@@ -100,6 +106,15 @@ export default function SettingsClient() {
       setAddresses(data);
     } catch (err) {
       console.error("Failed to fetch addresses", err);
+    }
+  };
+
+  const fetchPaymentMethods = async () => {
+    try {
+      const data = await api.getPaymentMethods();
+      setPaymentMethods(data);
+    } catch (err) {
+      console.error("Failed to fetch payment methods", err);
     }
   };
 
@@ -187,6 +202,16 @@ export default function SettingsClient() {
     }
   };
 
+  const handleDeletePaymentMethod = async (id: number) => {
+    if (!confirm("Are you sure you want to remove this payment method?")) return;
+    try {
+      await api.deletePaymentMethod(id);
+      fetchPaymentMethods();
+    } catch (err) {
+      alert("Failed to remove payment method.");
+    }
+  };
+
   if (!hasMounted) {
     return <div className="bg-[#F8F9FA] min-h-screen animate-pulse" />;
   }
@@ -242,6 +267,47 @@ export default function SettingsClient() {
           isOpen={isPasswordModalOpen}
           onClose={() => setIsPasswordModalOpen(false)}
           onConfirm={handleChangePassword}
+          isLoading={isUpdating}
+        />
+
+        <AddAddressModal
+          isOpen={isAddressModalOpen}
+          onClose={() => setIsAddressModalOpen(false)}
+          onSave={async (data) => {
+            setIsUpdating(true);
+            const fullAddress = `${data.streetAddress}, ${data.city}, ${data.stateRegion}`;
+            await handleAddAddress({ label: data.addressTitle, address: fullAddress, isDefault: addresses.length === 0 ? 1 : 0 });
+            setIsAddressModalOpen(false);
+            setIsUpdating(false);
+          }}
+          isLoading={isUpdating}
+        />
+
+        <AddPaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          onSave={async (data) => {
+            setIsUpdating(true);
+            try {
+              const payload = {
+                type: "card",
+                provider: "Visa Card", // We can determine this from card number in the future
+                last4: data.cardNumber.slice(-4) || "****",
+                isDefault: paymentMethods.length === 0 ? 1 : 0
+              };
+              await api.addPaymentMethod(payload);
+              await fetchPaymentMethods();
+              setIsPaymentModalOpen(false);
+              setSuccessModal({
+                isOpen: true,
+                message: "Your payment method has been added successfully."
+              });
+            } catch (err) {
+              alert("Failed to add payment method.");
+            } finally {
+              setIsUpdating(false);
+            }
+          }}
           isLoading={isUpdating}
         />
 
@@ -489,11 +555,7 @@ export default function SettingsClient() {
                       {/* Add New Card */}
                       <button 
                         className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 text-slate-400 hover:border-blue-300 hover:text-[#1D4ED8] transition-all group min-h-[160px]"
-                        onClick={() => {
-                          const label = prompt("Address Label (e.g. Home, Office)");
-                          const address = prompt("Full Address");
-                          if (label && address) handleAddAddress({ label, address, isDefault: addresses.length === 0 ? 1 : 0 });
-                        }}
+                        onClick={() => setIsAddressModalOpen(true)}
                       >
                          <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
                             <Plus size={24} />
@@ -507,55 +569,47 @@ export default function SettingsClient() {
              {activeTab === "Payment Methods" && (
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                    <div className="flex flex-col space-y-4">
-                      {/* Payment Method 1 */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border border-slate-200 rounded-2xl bg-white hover:border-blue-200 hover:shadow-sm transition-all gap-4">
-                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100 shrink-0">
-                               <Building size={24} className="text-blue-600" />
-                            </div>
-                            <div>
-                               <div className="flex items-center gap-1.5">
-                                  <h4 className="text-[13px] font-bold text-[#0A1140]">Gibson Bank</h4>
-                                  <span className="text-[13px] font-medium text-slate-400">****4682</span>
-                               </div>
-                               <div className="flex items-center gap-1.5 mt-1 text-[#1D4ED8]">
-                                  <CheckSquare size={14} className="text-[#1D4ED8]" />
-                                  <span className="text-[11px] font-bold">Default</span>
-                               </div>
-                            </div>
-                         </div>
-                         <div className="flex items-center shrink-0 mt-3 sm:mt-0">
-                            <button className="h-8 px-5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-lg text-[11px] font-bold transition-colors border border-slate-200">
-                               Remove
-                            </button>
-                         </div>
-                      </div>
-
-                      {/* Payment Method 2 */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border border-slate-200 rounded-2xl bg-white hover:border-blue-200 hover:shadow-sm transition-all gap-4">
-                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100 shrink-0">
-                               <CreditCard size={24} className="text-blue-600" />
-                            </div>
-                            <div>
-                               <div className="flex items-center gap-1.5">
-                                  <h4 className="text-[13px] font-bold text-[#0A1140]">Visa Card</h4>
-                                  <span className="text-[13px] font-medium text-slate-400">***8391</span>
-                               </div>
-                            </div>
-                         </div>
-                         <div className="flex items-center shrink-0 mt-3 sm:mt-0">
-                            <button className="h-8 px-5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-lg text-[11px] font-bold transition-colors border border-slate-200">
-                               Remove
-                            </button>
-                         </div>
-                      </div>
+                      {paymentMethods.length === 0 && (
+                        <div className="text-center py-6 text-slate-500 text-[13px] font-medium border border-dashed border-slate-200 rounded-2xl">
+                          No payment methods saved yet.
+                        </div>
+                      )}
+                      
+                      {paymentMethods.map((method, i) => (
+                        <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border border-slate-200 rounded-2xl bg-white hover:border-blue-200 hover:shadow-sm transition-all gap-4">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100 shrink-0">
+                                 {method.type === 'bank' ? <Building size={24} className="text-blue-600" /> : <CreditCard size={24} className="text-blue-600" />}
+                              </div>
+                              <div>
+                                 <div className="flex items-center gap-1.5">
+                                    <h4 className="text-[13px] font-bold text-[#0A1140]">{method.provider}</h4>
+                                    <span className="text-[13px] font-medium text-slate-400">****{method.last4}</span>
+                                 </div>
+                                 {method.is_default === 1 && (
+                                   <div className="flex items-center gap-1.5 mt-1 text-[#1D4ED8]">
+                                      <CheckSquare size={14} className="text-[#1D4ED8]" />
+                                      <span className="text-[11px] font-bold">Default</span>
+                                   </div>
+                                 )}
+                              </div>
+                           </div>
+                           <div className="flex items-center shrink-0 mt-3 sm:mt-0">
+                              <button 
+                                onClick={() => handleDeletePaymentMethod(method.id)}
+                                className="h-8 px-5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-lg text-[11px] font-bold transition-colors border border-slate-200"
+                              >
+                                 Remove
+                              </button>
+                           </div>
+                        </div>
+                      ))}
                    </div>
 
                    {/* Add New Payment Button */}
                    <div className="mt-8">
                       <button
-                        onClick={() => router.push("/account/wallet")}
+                        onClick={() => setIsPaymentModalOpen(true)}
                         className="h-11 px-6 bg-[#0A1140] hover:bg-[#13184f] text-white rounded-xl text-[12px] font-bold shadow-md transition-colors flex items-center gap-2"
                       >
                          <Plus size={16} />

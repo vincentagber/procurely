@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   X,
+  FileText
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -23,7 +24,7 @@ export function DashboardSidebar() {
 
   const menuItems = [
     { icon: LayoutDashboard, label: "My Dashboard", href: "/account" },
-    { icon: ShoppingCart, label: "Orders", href: "/account/profile-order" },
+    { icon: FileText, label: "Orders", href: "/account/profile-order" },
     { icon: Wallet, label: "Wallet / Payments", href: "/account/wallet" },
     { icon: History, label: "Order History", href: "/account/orders?view=history" },
     { icon: Bookmark, label: "Saved Materials", href: "/account/saved-materials" },
@@ -31,17 +32,19 @@ export function DashboardSidebar() {
   ];
 
   const isLinkActive = (href: string) => {
-    if (href === "/account") return pathname === "/account";
-    return pathname.startsWith(href.split('?')[0]);
+    const p = pathname.replace(/\/$/, "");
+    const h = href.split('?')[0].replace(/\/$/, "");
+    if (h === "/account") return p === "/account";
+    return p.startsWith(h);
   };
 
    const sidebarContent = (
-    <div className="flex flex-col h-full bg-[#0C1457] pt-6 pb-6 px-4">
+    <div className="flex flex-col h-full bg-[#070B38] pt-[17.47px] pr-[8.73px] pb-6 pl-[8.73px] overflow-hidden">
       {/* Brand & User Card */}
-      <div className="shrink-0 mb-4 px-2">
-        <div className="flex items-center justify-between mb-6">
+      <div className="shrink-0 mb-2 px-2 mt-2">
+        <div className="flex items-center justify-between mb-8">
           <Link href="/" className="group">
-            <h2 className="text-2xl font-black text-white tracking-tight flex items-center">
+            <h2 className="text-[24px] font-black text-white tracking-tight flex items-center">
               Procurely<span className="text-[10px] align-super ml-0.5 font-normal">™</span>
             </h2>
           </Link>
@@ -50,8 +53,8 @@ export function DashboardSidebar() {
           </button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 bg-slate-800 shrink-0 shadow-lg">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-[50px] h-[50px] rounded-full overflow-hidden border-2 border-white/10 bg-slate-800 shrink-0 shadow-lg">
             <img 
               src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200&h=200" 
               className="w-full h-full object-cover" 
@@ -59,33 +62,33 @@ export function DashboardSidebar() {
             />
           </div>
           <div className="min-w-0">
-             <p className="font-bold text-[12px] leading-tight text-white/90">Olusegun</p>
-             <p className="font-black text-[15px] leading-tight text-white mb-0.5">Akapo</p>
-             <p className="text-[9px] text-white/40 font-bold uppercase tracking-wider">
+             <p className="font-bold text-[13px] leading-tight text-white/90">Olusegun</p>
+             <p className="font-black text-[16px] leading-tight text-white mb-0.5">Akapo</p>
+             <p className="text-[9px] text-white/50 font-bold tracking-wide">
                Procurement Manager
              </p>
           </div>
         </div>
 
-        <div className="mt-4 mb-4 border-t border-white/10 w-full" />
+        <div className="mt-2 mb-6 border-t border-white/20 w-full" />
 
-        <div className="text-[10px] font-black tracking-[0.2em] text-white/30 mb-3 px-1 uppercase">
+        <div className="text-[11px] font-black tracking-widest text-white/40 mb-4 px-1 uppercase">
           MAIN MENU
         </div>
       </div>
 
       {/* Nav */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
-        <nav className="flex flex-col gap-2">
+        <nav className="flex flex-col gap-[10px]">
           {menuItems.map((item) => {
             const active = isLinkActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all h-[46px] shadow-sm ${
+                className={`w-full flex items-center gap-3 px-4 py-2 rounded-[6.19px] transition-all h-[44px] shadow-sm ${
                   active
-                    ? "bg-[#0001FF] text-white shadow-blue-500/10"
+                    ? "bg-[#0001FF] text-white"
                     : "bg-white text-[#0C1457] hover:bg-slate-50"
                 }`}
               >
@@ -97,10 +100,10 @@ export function DashboardSidebar() {
             );
           })}
 
-          <div className="mt-6">
+          <div className="mt-2">
              <button
                onClick={logout}
-               className="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all h-[46px] bg-white text-[#0C1457] hover:bg-slate-50 shadow-sm"
+               className="w-full flex items-center gap-3 px-4 py-2 rounded-[6.19px] transition-all h-[44px] bg-white text-[#0C1457] hover:bg-slate-50 shadow-sm"
              >
                <LogOut size={18} strokeWidth={2.5} />
                <span className="text-[13px] font-bold tracking-tight">Logout</span>

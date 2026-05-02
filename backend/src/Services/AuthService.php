@@ -15,12 +15,120 @@ use Ramsey\Uuid\Uuid;
 final class AuthService
 {
     private const RESET_TOKEN_TTL_MINUTES = 15;
+    private const MAX_ADMIN_ACCOUNTS = 1;
 
     public function __construct(
         private readonly Database $database,
         private readonly EmailService $emailService,
         private readonly bool $debugMode = false,
     ) {
+    }
+
+    /**
+     * Enforce single admin rule - only one admin account allowed
+     * Returns true if admin creation is allowed
+     */
+    private function canCreateAdmin(PDO $pdo): bool
+    {
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) as cnt 
+            FROM user_roles ur 
+            JOIN roles r ON ur.role_id = r.id 
+            WHERE r.name = 'admin'
+        ");
+        $stmt->execute();
+        $result = $stmt->fetch();
+        return (int) ($result['cnt'] ?? 0) < self::MAX_ADMIN_ACCOUNTS;
+    }
+
+    /**
+     * Create admin account (restricted operation)
+     * Only allowed if no admin exists
+     */
+    public function createAdminAccount(string $fullName, string $email): array
+    {
+        $pdo = $this->database->connection();
+        
+        if (!$this->canCreateAdmin($pdo)) {
+            throw new ApiException('Only one admin account is allowed in the system.', 403);
+        }
+
+        // Check if user already exists
+        $existing = $pdo->prepare('SELECT id FROM users WHERE email = :email LIMIT 1');
+        $existing->execute(['email' => $email]);
+        
+        if ($existing->fetch() !== false) {
+            throw new ApiException('An account with this email already exists.', 409);
+        }
+
+        $createdAt = (new DateTimeImmutable())->format('Y-m-d H:i:s');
+        $uuid = Uuid::uuid7()->toString();
+        
+        $statement = $pdo->prepare(
+            'INSERT INTO users (uuid, full_name, email, password_hash, is_active, created_at, updated_at) 
+             VALUES (:uuid, :full_name, :email, :password_hash, 1, :created_at, :updated_at)'
+        );
+        $statement->execute([
+            'uuid' => $uuid,
+            'full_name' => $fullName,
+            'email' => $email,
+            'password_hash' => '--PENDING-RESET--',
+            'created_at' => $createdAt,
+            'updated_at' => $createdAt,
+        ]);
+
+        $userId = (int) $pdo->lastInsertId();
+
+        // Assign admin role
+        $roleStmt = $pdo->prepare('SELECT id FROM roles WHERE name = :name LIMIT 1');
+        $roleStmt->execute(['name' => 'admin']);
+        $role = $roleStmt->fetch();
+        
+        if ($role) {
+            $pdo->prepare('INSERT INTO user_roles (user_uuid, role_id, assigned_at) VALUES (:user_uuid, :role_id, :assigned_at)')
+                ->execute([
+                    'user_uuid' => $uuid,
+                    'role_id' => $role['id'],
+                    'assigned_at' => $createdAt,
+                ]);
+        }
+
+        // Log admin creation
+        $this->logAuditAction($pdo, $userId, 'admin_account_created', 'user', $uuid, [
+            'email' => $email,
+            'full_name' => $fullName,
+        ]);
+
+        return [
+            'id' => $uuid,
+            'email' => $email,
+            'fullName' => $fullName,
+            'roles' => ['admin'],
+            'message' => 'Admin account created. Password reset required.',
+        ];
+    }
+
+    /**
+     * Log actions to audit trail
+     */
+    private function logAuditAction(PDO $pdo, ?int $userId, string $action, string $resourceType, ?string $resourceId, array $details = []): void
+    {
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO audit_logs (user_id, action, resource_type, resource_id, details, created_at)
+                VALUES (:user_id, :action, :resource_type, :resource_id, :details, :created_at)
+            ");
+            $stmt->execute([
+                'user_id' => $userId,
+                'action' => $action,
+                'resource_type' => $resourceType,
+                'resource_id' => $resourceId,
+                'details' => json_encode($details),
+                'created_at' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
+            ]);
+        } catch (\Exception $e) {
+            // Silently fail - don't break the request if logging fails
+        }
     }
 
     public function register(array $payload): array
@@ -74,9 +182,9 @@ final class AuthService
         $roleStmt->execute(['name' => 'customer']);
         $role = $roleStmt->fetch();
         if ($role) {
-            $pdo->prepare('INSERT INTO user_roles (user_id, role_id, assigned_at) VALUES (:user_id, :role_id, :assigned_at)')
+            $pdo->prepare('INSERT INTO user_roles (user_uuid, role_id, assigned_at) VALUES (:user_uuid, :role_id, :assigned_at)')
                 ->execute([
-                    'user_id' => $userId,
+                    'user_uuid' => $uuid,
                     'role_id' => $role['id'],
                     'assigned_at' => $createdAt,
                 ]);
@@ -110,7 +218,7 @@ final class AuthService
         $statement = $pdo->prepare('
             SELECT u.id, u.uuid, u.full_name, u.email, u.password_hash, u.wallet_balance, GROUP_CONCAT(r.name) as roles
             FROM users u
-            LEFT JOIN user_roles ur ON u.id = ur.user_id
+            LEFT JOIN user_roles ur ON u.uuid = ur.user_uuid
             LEFT JOIN roles r ON ur.role_id = r.id
             WHERE u.email = :email
             GROUP BY u.id
@@ -291,7 +399,7 @@ final class AuthService
         $user = $pdo->prepare('
             SELECT u.uuid, u.full_name, u.email, u.phone, u.whatsapp, u.wallet_balance, GROUP_CONCAT(r.name) as roles
             FROM users u
-            LEFT JOIN user_roles ur ON u.id = ur.user_id
+            LEFT JOIN user_roles ur ON u.uuid = ur.user_uuid
             LEFT JOIN roles r ON ur.role_id = r.id
             WHERE u.id = :id
             GROUP BY u.id
@@ -322,7 +430,8 @@ final class AuthService
             FROM permissions p
             JOIN role_permissions rp ON p.id = rp.permission_id
             JOIN user_roles ur ON rp.role_id = ur.role_id
-            WHERE ur.user_id = :user_id
+            JOIN users u ON ur.user_uuid = u.uuid
+            WHERE u.id = :user_id
         ');
         $stmt->execute(['user_id' => $userId]);
         return array_column($stmt->fetchAll(), 'name');
@@ -338,7 +447,7 @@ final class AuthService
             'SELECT u.id, u.uuid, u.full_name, u.email, u.wallet_balance, GROUP_CONCAT(r.name) as roles
              FROM user_sessions us
              JOIN users u ON u.id = us.user_id
-             LEFT JOIN user_roles ur ON u.id = ur.user_id
+             LEFT JOIN user_roles ur ON u.uuid = ur.user_uuid
              LEFT JOIN roles r ON ur.role_id = r.id
              WHERE us.session_token_hash = :token_hash AND us.expires_at > :now
              GROUP BY u.id

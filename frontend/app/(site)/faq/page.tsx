@@ -36,7 +36,7 @@ const faqCategories = [
       },
       {
         question: "What payment methods do you accept?",
-        answer: "We accept bank transfers, debit/credit cards via Paystack, and corporate purchase orders (for pre-approved institutional clients)."
+        answer: "We accept debit/credit cards via Paystack and cash on delivery, as well as corporate purchase orders (for pre-approved institutional clients)."
       }
     ]
   },

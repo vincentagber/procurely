@@ -106,7 +106,7 @@ export default function ProfileDashboard() {
     setLoading(true);
     try {
       const ordersData = await api.getAccountOrders();
-      setOrders(ordersData);
+      setOrders(Array.isArray(ordersData) ? ordersData : ordersData.data ?? []);
     } catch (err) {
       console.error("Dashboard data fetch failure:", err);
     } finally {

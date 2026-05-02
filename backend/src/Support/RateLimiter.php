@@ -46,7 +46,8 @@ final class RateLimiter
             try {
                 // Stochastic cleanup: Only delete old records 5% of the time to reduce DB load.
                 if (random_int(1, 20) === 1) {
-                    $pdo->exec('DELETE FROM rate_limits WHERE reset_at < ' . $now);
+                    $cleanupStmt = $pdo->prepare('DELETE FROM rate_limits WHERE reset_at < :now');
+                    $cleanupStmt->execute(['now' => $now]);
                 }
 
                 $stmt = $pdo->prepare($sql);

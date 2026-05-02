@@ -25,13 +25,8 @@ final class Sanitizer
             // 2. Trim whitespace
             $value = trim($value);
 
-            // 3. Prevent XSS: Although React escapes by default, we want our data
-            // in the DB to be as clean as possible for other contexts (Admin emails, etc.)
-            // We use strip_tags for single-line inputs in Input.php, 
-            // but here we'll do a general HTML entity conversion for safety.
-            // Note: We don't use htmlspecialchars here because we might want 
-            // to allow some characters in certain fields. 
-            // Instead, we'll let Input.php handle specific field validation.
+            // 3. Strip HTML tags to prevent XSS
+            $value = strip_tags($value);
         }
 
         return $value;
