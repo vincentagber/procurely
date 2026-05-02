@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { OrderHistoryTable, Order } from "@/components/dashboard/order-history-table";
 
 const historyData = [
    { id: "PRO102563", subId: "A85164", supplier: "Traxus Industrial", subSup: "8 Items supplied", amount: "N80,000", subAmount: "N80,000", date: "Mar 1, 2024", subDate: "Mar 10, 2026", status: "Processing", statusColor: "orange" },
@@ -61,8 +62,8 @@ export default function OrderHistoryClient() {
    const fetchOrders = async () => {
       setLoading(true);
       try {
-         const data = await api.getAccountOrders();
-         setOrders(data);
+          const response = await api.getAccountOrders();
+          setOrders(Array.isArray(response) ? response : response.data ?? []);
       } catch (err) {
          console.error("Failed to fetch secure orders:", err);
       } finally {
@@ -160,63 +161,32 @@ export default function OrderHistoryClient() {
                         </div>
 
                         {/* Table Content with horizontal scroll & min-width */}
-                        <div className="overflow-x-auto w-full">
-                           <table className="w-full text-left min-w-[900px]">
-                              <thead>
-                                 <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50/50 whitespace-nowrap">
-                                    <th className="px-6 py-5 font-bold">Order ID</th>
-                                    <th className="px-6 py-5 font-bold">Supplier</th>
-                                    <th className="px-6 py-5 font-bold">Total Amount</th>
-                                    <th className="px-6 py-5 font-bold">Date Placed</th>
-                                    <th className="px-6 py-5 font-bold">Delivery Status</th>
-                                    <th className="px-6 py-5 font-bold text-center">Actions</th>
-                                 </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-100">
-                                 {loading ? (
-                                    <tr><td colSpan={6} className="py-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Synchronizing cloud ledger...</td></tr>
-                                 ) : orders.length > 0 ? (
-                                    orders.map((order, i) => (
-                                       <tr key={i} className="hover:bg-slate-50/80 transition-colors">
-                                          <td className="px-6 py-4 whitespace-nowrap">
-                                             <div className="font-bold text-[#0A1140] text-[14px]">{order.order_number || order.id}</div>
-                                             <div className="text-slate-400 text-[11px] font-medium mt-0.5">{order.uuid?.slice(0, 8) || "A85164"}</div>
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap">
-                                             <div className="font-bold text-[#0A1140] text-[14px]">{order.shipping_name || "Enterprise Partner"}</div>
-                                             <div className="text-slate-400 text-[11px] font-medium mt-0.5">{order.items?.length || 0} Items supplied</div>
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap">
-                                             <div className="font-bold text-[#0A1140] text-[14px]">N{(order.total / 100).toLocaleString()}</div>
-                                             <div className="text-slate-400 text-[11px] font-medium line-through mt-0.5">N{((order.total * 1.1) / 100).toLocaleString()}</div>
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap">
-                                             <div className="font-bold text-[#0A1140] text-[14px]">{new Date(order.created_at).toLocaleDateString()}</div>
-                                             <div className="text-slate-400 text-[11px] font-medium mt-0.5">{new Date(order.updated_at).toLocaleTimeString()}</div>
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap">
-                                             <StatusBadge 
-                                                status={order.status.charAt(0).toUpperCase() + order.status.slice(1)} 
-                                                type={order.status === 'paid' ? 'emerald' : order.status === 'pending' ? 'orange' : 'rose'} 
-                                             />
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap">
-                                             <div className="flex items-center justify-center">
-                                                <Link
-                                                   href={`/account/orders/${order.order_number || 'PRC-01234'}`}
-                                                   className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-[#1D4ED8] hover:text-white transition-colors"
-                                                >
-                                                   <Eye size={16} />
-                                                </Link>
-                                             </div>
-                                          </td>
-                                       </tr>
-                                    ))
-                                 ) : (
-                                    <tr><td colSpan={6} className="py-20 text-center text-slate-400 font-bold tracking-widest">No procurement records found.</td></tr>
-                                 )}
-                              </tbody>
-                           </table>
+                        <div className="w-full">
+                           {loading ? (
+                              <div className="py-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Synchronizing cloud ledger...</div>
+                           ) : orders.length > 0 ? (
+                              <OrderHistoryTable 
+                                 showTitle={false} 
+                                 orders={orders.map(order => ({
+                                    id: order.order_number || order.id,
+                                    subId: order.uuid?.slice(0, 8) || "A85164",
+                                    supplierName: order.shipping_name || "Enterprise Partner",
+                                    itemsCount: order.items?.length || 0,
+                                    amount: order.total / 100,
+                                    secondaryAmount: (order.total * 1.1) / 100,
+                                    datePlaced: order.created_at,
+                                    // Mapping statuses to the component's accepted types
+                                    status: order.status === 'paid' ? 'Delivered' : 
+                                            order.status === 'pending' ? 'Processing' : 
+                                            order.status === 'canceled' ? 'Canceled' : 'In Progress',
+                                    deliveryDate: order.updated_at,
+                                    actionType: 'view',
+                                    href: `/account/orders/${order.order_number || order.id}`
+                                 }))} 
+                              />
+                           ) : (
+                              <div className="py-20 text-center text-slate-400 font-bold tracking-widest">No procurement records found.</div>
+                           )}
                         </div>
 
                         {/* Pagination Footer */}

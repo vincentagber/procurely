@@ -17,6 +17,7 @@ import {
 import { api } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 import { useAuth } from "@/components/auth/auth-provider";
+import { OrderItemList } from "@/components/dashboard/order-item-list";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function OrderDetailClient({
@@ -201,81 +202,19 @@ export default function OrderDetailClient({
           </div>
 
           {/* Order Items Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="flex items-center justify-between px-7 py-5 border-b border-slate-100">
-              <h2 className="text-[15px] font-extrabold text-[#0A1140] tracking-tight">
-                Order Items
-              </h2>
-              <span className="text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-4 py-1.5 rounded-full uppercase tracking-wider">
-                {order.items.length} Items
-              </span>
-            </div>
-
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[680px] text-left">
-                <thead>
-                  <tr className="bg-slate-50/80 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
-                    <th className="px-7 py-4 font-black">Product</th>
-                    <th className="px-4 py-4 font-black">Unit Price</th>
-                    <th className="px-4 py-4 font-black">Quantity</th>
-                    <th className="px-4 py-4 font-black">Total</th>
-                    <th className="px-4 py-4 font-black text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {order.items.map((item: any, idx: number) => (
-                    <tr
-                      key={idx}
-                      className="hover:bg-slate-50/60 transition-colors group"
-                    >
-                      {/* Image + Name */}
-                      <td className="px-7 py-5">
-                        <div className="flex items-center gap-4">
-                          <div className="min-w-0">
-                            <p className="text-[13px] font-bold text-[#0A1140] leading-tight">
-                              {item.productName}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-5 whitespace-nowrap">
-                        <span className="text-[13px] font-bold text-[#0A1140]">
-                          {formatCurrency(item.unitPrice)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-5 whitespace-nowrap">
-                        <span className="text-[13px] font-bold text-[#0A1140]">
-                          {item.quantity}
-                        </span>
-                      </td>
-                      <td className="px-4 py-5 whitespace-nowrap">
-                        <span className="text-[13px] font-black text-[#0A1140]">
-                          {formatCurrency(item.lineTotal)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-5 whitespace-nowrap text-center">
-                        <button className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-[#1D4ED8] text-[#1D4ED8] rounded-xl text-[11px] font-bold hover:bg-blue-50 transition-colors shadow-sm">
-                          <RotateCcw size={13} />
-                          Reorder
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Total row */}
-            <div className="flex items-center justify-between px-7 py-5 bg-slate-50/50 border-t border-slate-100">
-              <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">
-                Basket Subtotal
-              </span>
-              <span className="text-[18px] font-black text-[#0A1140]">
-                {formatCurrency(order.subtotal)}
-              </span>
-            </div>
-          </div>
+          <OrderItemList 
+            orderId={order.orderNumber} 
+            initialItems={order.items.map((item: any) => ({
+              id: item.id || `item-${Math.random()}`,
+              productName: item.productName,
+              description: item.description || "High-quality procurement material",
+              productId: item.productId || "PRO-UNKNOWN",
+              unitPrice: item.unitPrice,
+              quantity: item.quantity,
+              unit: item.unit || "Units",
+              total: item.lineTotal
+            }))}
+          />
 
         </div>
 
